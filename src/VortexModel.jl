@@ -1,5 +1,7 @@
 module VortexModel
 
-# package code goes here
+export Vortex
 
-end # module
+include("Vortex.jl")
+
+end
