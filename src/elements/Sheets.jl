@@ -16,7 +16,7 @@ Vortex.impulse(s::Sheet) = Vortex.impulse(s.blobs)
 
 Vortex.allocate_velocity(s::Sheet) = zeros(Complex128, length(s.blobs))
 
-function Sheet(zs::AbstractArray{Complex128}, Γs::AbstractArray{Float64}, δ::Float64)
+function Sheet(zs::AbstractArray{T}, Γs::AbstractArray{Float64}, δ::Float64) where {T <: Number}
     dΓs = compute_trapezoidal_weights(Γs)
     blobs = Vortex.Blob.(zs, dΓs, δ)
 
