@@ -1,7 +1,10 @@
 module VortexModel
-
-export Vortex
+using Reexport
 
 include("Vortex.jl")
+
+@reexport using .Vortex
+
+export Vortex
 
 end
