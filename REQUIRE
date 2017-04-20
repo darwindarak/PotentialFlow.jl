@@ -3,3 +3,5 @@ Documenter
 TestSetExtensions
 Dierckx
 Reexport
+PyPlot
+IJulia
