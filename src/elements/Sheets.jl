@@ -60,7 +60,7 @@ end
 
 function Base.show(io::IO, s::Sheet)
     L = sum(abs, diff(getfield.(s.blobs, :z)))
-    println(io, "Vortex Sheet: L ≈ $(round(L, 3)), Γ = $(round(s.Γs[end] - s.Γs[1], 3)), δ = $(round(s.δ, 3))")
+    print(io, "Vortex Sheet: L ≈ $(round(L, 3)), Γ = $(round(s.Γs[end] - s.Γs[1], 3)), δ = $(round(s.δ, 3))")
 end
 
 include("sheets/surgery.jl")

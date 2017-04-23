@@ -44,8 +44,8 @@ end
 
 Vortex.advect(p::Point, w::Complex128, Δt::Float64) = Point(p.z + w*Δt, p.Γ)
 
-function Base.show(io::IO, b::Point)
-    println(io, "Point Vortex: z = $(round(p.z, 3)), Γ = $(round(p.Γ, 3))")
+function Base.show(io::IO, p::Point)
+    print(io, "Point Vortex: z = $(round(p.z, 3)), Γ = $(round(p.Γ, 3))")
 end
 
 end

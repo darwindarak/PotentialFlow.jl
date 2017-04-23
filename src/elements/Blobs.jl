@@ -54,7 +54,7 @@ end
 Vortex.advect(b::Blob, w::Complex128, Δt::Float64) = Blob(b.z + w*Δt, b.Γ, b.δ)
 
 function Base.show(io::IO, b::Blob)
-    println(io, "Vortex Blob: z = $(round(b.z, 3)), Γ = $(round(b.Γ, 3)), δ = $(round(b.δ, 3))")
+    print(io, "Vortex Blob: z = $(round(b.z, 3)), Γ = $(round(b.Γ, 3)), δ = $(round(b.δ, 3))")
 end
 
 end
