@@ -15,7 +15,7 @@ An infinitely thin, flat plate, represented as a bound vortex sheet
 $(FIELDS)
 
 # Constructors
-- `Plate(N, L, c, α[, ċ, α̇])`: the velocities are zero by default
+- `Plate(N, L, c, α)
 """
 mutable struct Plate <: Vortex.CompositeSource
     "chord length"
@@ -23,11 +23,7 @@ mutable struct Plate <: Vortex.CompositeSource
     "centroid"
     c::Complex128
     "centroid velocity"
-    ċ::Complex128
-    "angle of attack"
     α::Float64
-    "angular velocity"
-    α̇::Float64
 
     "total circulation"
     Γ::Float64
@@ -42,25 +38,28 @@ mutable struct Plate <: Vortex.CompositeSource
     A::MappedVector{Float64, Vector{Complex128}, typeof(imag)}
     "Chebyshev coefficients of the velocity induced along the plate by ambient vorticity"
     C::Vector{Complex128}
+    "zeroth Chebyshev coefficient associated with body motion"
+    B₀::Float64
+    "first Chebyshev coefficient associated with body motion"
+    B₁::Float64
 end
 
-function Plate(N, L, c, α, ċ = zero(Complex128), α̇ = 0.0)
+function Plate(N, L, c, α)
     ss = Float64[cos(θ) for θ in linspace(π, 0, N)]
     zs = c + 0.5L*ss*exp(im*α)
 
     C  = zeros(Complex128, N)
     A = MappedVector(imag, C, Float64, 1)
 
-    Plate(L, c, ċ, α, α̇, 0.0, N, ss, zs, A, C)
+    Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0)
 end
-
 
 length(p::Plate) = p.N
 Vortex.circulation(p::Plate) = p.Γ
 
 # For now, the velocity of the plate is explicitly set
-Vortex.allocate_velocity(::Plate) = nothing
-Vortex.self_induce_velocity!(::Void, ::Plate) = nothing
+Vortex.allocate_velocity(::Plate) = PlateMotion(0.0, 0.0)
+Vortex.self_induce_velocity!(_, ::Plate) = nothing
 
 function Vortex.impulse(p::Plate)
     @get p (c, ċ, α, Γ, L, A)
@@ -72,15 +71,12 @@ normal(z, α) = imag(exp(-im*α)*z)
 tangent(z, α) = real(exp(-im*α)*z)
 
 function Vortex.induce_velocity(z::Complex128, p::Plate)
-    @get p (α, L, c, ċ, α̇, Γ, A)
+    @get p (α, L, c, B₀, B₁, Γ, A)
 
     z̃ = conj(2*(z - c)*exp(-im*α)/L)
 
     ρ = √(z̃ - 1)*√(z̃ + 1)
     J = z̃ - ρ
-
-    B₀ = normal(ċ, α)
-    B₁ = 0.5α̇*L
 
     w = (A[1] + 2Γ/(π*L))
     w += 2(A[0] - B₀)*J
@@ -124,24 +120,33 @@ function Vortex.induce_velocity!(ws::Vector, p::Plate, s::Vortex.Sheet)
     Vortex.induce_velocity!(ws, p, s.blobs)
 end
 
-function Vortex.advect!(plate₊::Plate, plate₋::Plate, ws, Δt)
+mutable struct PlateMotion
+    ċ::Complex128
+    α̇::Float64
+end
+
+Vortex.induce_velocity!(::PlateMotion, target::Plate, source) = nothing
+
+function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
 
     if plate₊ != plate₋
         plate₊.L  = plate₋.L 
-        plate₊.ċ  = plate₋.ċ 
-        plate₊.α̇  = plate₋.α̇ 
         plate₊.Γ  = plate₋.Γ 
         plate₊.N  = plate₋.N 
         plate₊.ss = plate₋.ss 
         plate₊.zs = plate₋.zs
         plate₊.A  = plate₋.A 
         plate₊.C  = plate₋.C 
+        plate₊.B₀ = plate₋.B₀
+        plate₊.B₁ = plate₋.B₁ 
     end
-    plate₊.c = plate₋.c + plate₋.ċ*Δt
-    plate₊.α = plate₋.α + plate₋.α̇*Δt
-    plate₊.zs .+= plate₊.ċ*Δt
+    plate₊.c = plate₋.c + ṗ.ċ*Δt
+    plate₊.α = plate₋.α + ṗ.α̇*Δt
+    plate₊.zs .+= ṗ.ċ*Δt
     nothing
 end
+
+
 
 include("plates/chebyshev.jl")
 include("plates/boundary_conditions.jl")

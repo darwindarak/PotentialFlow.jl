@@ -3,8 +3,9 @@
 
 Update the plate, `p`, to enforce the no-flow-through condition given a collection of ambient vortex elements, `elements`.
 """
-function enforce_no_flow_through!(p::Plate, elements)
-    @get p (C, α)
+function enforce_no_flow_through!(p::Plate, ṗ, elements)
+    @get p (L, C, α)
+    @get ṗ (ċ, α̇)
     
     fill!(C, zero(Complex128))
     Vortex.induce_velocity!(C, p, elements)
@@ -15,6 +16,9 @@ function enforce_no_flow_through!(p::Plate, elements)
     chebyshev_transform!(C)
 
     p.Γ = -Vortex.circulation(elements)
+    p.B₀ = normal(ċ, α)
+    p.B₁ = 0.5α̇*L
+
     nothing
 end
 
@@ -63,10 +67,7 @@ function vorticity_flux(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
                         ∂A₁ = Vector{Complex128}(plate.N),
                         ∂A₂ = Vector{Complex128}(plate.N))
 
-    @get plate (N, α, ċ, α̇, L, A, Γ)
-
-    B₀ = imag(exp(-im*α)*ċ)
-    B₁ = 0.5α̇*L
+    @get plate (N, α, B₀, B₁, L, A, Γ)
 
     b₊ = +2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
     b₋ = -2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
@@ -108,10 +109,7 @@ function vorticity_flux(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
 end
 
 function suction_parameters(plate)
-    @get plate (N, α, ċ, α̇, L, A, Γ)
-
-    B₀ = normal(ċ, α)
-    B₁ = 0.5α̇*L
+    @get plate (N, α, B₀, B₁, L, A, Γ)
 
     b₊ = +2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
     b₋ = -2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 

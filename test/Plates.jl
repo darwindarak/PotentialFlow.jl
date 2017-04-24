@@ -90,8 +90,9 @@
         @test norm(imag.(Δż_circle[2:end-1])) ≤ 1e-10
 
         points = Vortex.Point.(zs, Γs)
-        plate = Vortex.Plate(Np, 2.0, c, α, ċ, α̇)
-        Vortex.Plates.enforce_no_flow_through!(plate, points)
+        plate = Vortex.Plate(Np, 2.0, c, α)
+        plate_vel = Vortex.Plates.PlateMotion(ċ, α̇)
+        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, points)
         γs = zeros(Float64, Np)
         Vortex.Plates.bound_circulation!(γs, plate)
         @test maximum(abs2.(γs[2:end-1] .- real.(Δż_circle[2:end-1]))) ≤ 256eps()
@@ -99,42 +100,47 @@
     end
 
     @testset "Induced Velocities" begin
-    c = rand(Complex128)
-    ċ = rand(Complex128)
-    α = 0.5π*rand()
-    α̇ = rand()
-    
-    J = JoukowskyMap(c, α)
-    N = 100
-    ζs = (2 .+ rand(N)).*exp.(2π.*rand(N))
-    zs = J.(ζs)
-    Γs = 1 .- 2.*rand(N)
+        c = rand(Complex128)
+        ċ = rand(Complex128)
+        α = 0.5π*rand()
+        α̇ = rand()
+        
+        J = JoukowskyMap(c, α)
+        N = 100
+        ζs = (2 .+ rand(N)).*exp.(2π.*rand(N))
+        zs = J.(ζs)
+        Γs = 1 .- 2.*rand(N)
 
-    Np = 128
-    Nt = 256
+        Np = 128
+        Nt = 256
 
-    ζt = 10.0.*exp.(im.*linspace(0, 2π, Nt))
-    zt = J.(ζt)
+        ζt = 10.0.*exp.(im.*linspace(0, 2π, Nt))
+        zt = J.(ζt)
 
-    ż_circle = map(ζt) do ζ
-    ż = W_vortex(ζ, ζs, Γs) + W_motion(ζ, ċ, α, α̇)
-    conj(ż/J(ζ, 1))
-    end
+        ż_circle = map(ζt) do ζ
+            ż = W_vortex(ζ, ζs, Γs) + W_motion(ζ, ċ, α, α̇)
+            conj(ż/J(ζ, 1))
+        end
 
-    points = Vortex.Point.(zs, Γs)
-    plate = Vortex.Plate(Np, 2.0, c, α, ċ, α̇)
-    Vortex.Plates.enforce_no_flow_through!(plate, points)
+        points = Vortex.Point.(zs, Γs)
+        plate = Vortex.Plate(Np, 2.0, c, α)
+        plate_vel = Vortex.Plates.PlateMotion(ċ, α̇)
+        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, points)
 
-    sys = (plate, points)
-    żs = Vortex.induce_velocity(zt, sys)
-    @test ż_circle ≈ żs
+        sys = (plate, points)
+        żs = Vortex.induce_velocity(zt, sys)
+        @test ż_circle ≈ żs
     end
 
     @testset "Suction Parameters" begin
         U = rand()
         α = rand()*0.5π
         L = 2rand()
-        plate = Vortex.Plate(128, L, 0.0, α, U)
+
+        plate = Vortex.Plate(128, L, 0.0, α)
+        plate_vel = Vortex.Plates.PlateMotion(U, 0.0)
+        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
+
         point = Vortex.Point(-Inf, 1.0);
         _, Γ, _, _ = Vortex.Plates.vorticity_flux(plate, point, point, Inf, 0)
 

@@ -1,8 +1,5 @@
 function bound_circulation(s::Float64, plate)
-    @get plate (A, ċ, α, α̇, L, Γ, N)
-
-    B₀ = normal(ċ, α)
-    B₁ = 0.5α̇*L
+    @get plate (A, α, B₀, B₁, L, Γ, N)
 
     γ = 0.0
     
