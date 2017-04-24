@@ -4,6 +4,14 @@ export Blob
 
 import ..Vortex
 
+"""
+An immutable structure representing a vortex blob
+
+## Fields
+- `z`: position
+- `Γ`: circulation
+- `δ`: blob radius
+"""
 struct Blob <: Vortex.PointSource
     z::Complex128
     Γ::Float64

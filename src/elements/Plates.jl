@@ -1,4 +1,5 @@
 module Plates
+using DocStringExtensions
 
 export Plate, bound_circulation, bound_circulation!,
     enforce_no_flow_through!, vorticity_flux, suction_parameters
@@ -7,23 +8,43 @@ import ..Vortex
 import ..Vortex.@get
 import Base: length
 
+"""
+An infinitely thin, flat plate, represented as a bound vortex sheet
+
+# Fields
+$(FIELDS)
+
+# Constructors
+- `Plate(N, L, c, α[, ċ, α̇])`: the velocities are zero by default
+"""
 mutable struct Plate <: Vortex.CompositeSource
+    "chord length"
     L::Float64
+    "centroid"
     c::Complex128
+    "centroid velocity"
     ċ::Complex128
+    "angle of attack"
     α::Float64
+    "angular velocity"
     α̇::Float64
 
+    "total circulation"
     Γ::Float64
 
+    "number of control points"
     N::Int
+    "normalized positions (within [-1, 1]) of the control points"
     ss::Vector{Float64}
+    "control point coordinates"
     zs::Vector{Complex128}
+    "Chebyshev coefficients of the normal component of velocity induced along the plate by ambient vorticity"
     A::Vector{Float64}
+    "Chebyshev coefficients of the velocity induced along the plate by ambient vorticity"
     C::Vector{Complex128}
 end
 
-function Plate(N, L, c, α, ċ = zero(Complex128), α̇ = 0.0, c̈ = zero(Complex128), α̈ = 0.0)
+function Plate(N, L, c, α, ċ = zero(Complex128), α̇ = 0.0)
     ss = Float64[cos(θ) for θ in linspace(π, 0, N)]
     zs = c + 0.5L*ss*exp(im*α)
 

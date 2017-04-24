@@ -4,6 +4,18 @@ export Sheet
 import ..Vortex
 import Base: length
 
+"""
+A vortex sheet represented by vortex blob control points
+
+## Fields
+- `blobs`: the underlying array of vortex blobs
+- `Γs`: the cumulated sum of circulation starting from the first control point
+- `δ`: the blob radius of all the vortex blobs
+
+## Constructors:
+
+- `Sheet(zs, Γs, δ)` where `zs` is an array of positions for the control points
+"""
 mutable struct Sheet <: Vortex.CompositeSource
     blobs::Vector{Vortex.Blob}
     Γs::Vector{Float64}

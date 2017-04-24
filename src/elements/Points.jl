@@ -3,6 +3,14 @@ module Points
 export Point
 import ..Vortex
 
+"""
+An immutable structure representing a point vortex 
+
+## Fields
+
+- `z`: position
+- `Γ`: circulation
+"""
 struct Point <: Vortex.PointSource
     z::Complex128
     Γ::Float64

@@ -1,7 +1,7 @@
 """
     enforce_no_flow_through!(p::Plate, elements)
 
-Update the plate to enforce the no-flow-through condition given a collection of ambient vortex elements.
+Update the plate, `p`, to enforce the no-flow-through condition given a collection of ambient vortex elements, `elements`.
 """
 function enforce_no_flow_through!(p::Plate, elements)
     @get p (C, α)
