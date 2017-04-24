@@ -14,7 +14,6 @@ function enforce_no_flow_through!(p::Plate, elements)
 
     chebyshev_transform!(C)
 
-    p.A = imag(C)
     p.Γ = -Vortex.circulation(elements)
     nothing
 end
@@ -69,8 +68,8 @@ function vorticity_flux(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
     B₀ = imag(exp(-im*α)*ċ)
     B₁ = 0.5α̇*L
 
-    b₊ = +2(A[1] - B₀) + (A[2] - B₁) + 2Γ/(π*L) 
-    b₋ = -2(A[1] - B₀) + (A[2] - B₁) + 2Γ/(π*L) 
+    b₊ = +2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
+    b₋ = -2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
 
     influence_on_plate!(∂A₁, plate, v₁)
     influence_on_plate!(∂A₂, plate, v₂)
@@ -114,7 +113,7 @@ function suction_parameters(plate)
     B₀ = normal(ċ, α)
     B₁ = 0.5α̇*L
 
-    b₊ = +2(A[1] - B₀) + (A[2] - B₁) + 2Γ/(π*L) 
-    b₋ = -2(A[1] - B₀) + (A[2] - B₁) + 2Γ/(π*L) 
+    b₊ = +2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
+    b₋ = -2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
     return b₊, b₋
 end                                  

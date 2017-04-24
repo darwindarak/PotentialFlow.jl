@@ -1,6 +1,6 @@
 module Utils
 
-export @submodule, @get
+export @submodule, @get, MappedVector, MappedArray
 
 macro submodule(mod)
     path = mod * ".jl"
@@ -64,4 +64,45 @@ macro get(object, fields...)
     end
 end
 
+export MappedVector, MappedArray, @get
+
+# Based on Tim Holy's JuliaCon 2016 Keynote 
+"""
+A wrapper around an array that applies a function to any index element
+
+# Fields
+- `f`: the function to apply
+- `data`: the underlying array
+- `offset`: an optional offset (0 by default)
+
+# Examples:
+
+```julia
+julia> x = [-π, 0.0, π];
+
+julia> y = MappedVector(cos, x, 1) # apply `cos` on demand and start indexing from 0
+Array{Float64,1} → Base.#cos
+
+julia> y[0]
+-1.0
+```
+"""
+struct MappedVector{T,A <: AbstractVector,F} <: AbstractVector{T}
+    f::F
+    data::A
+    offset::Int
 end
+
+Base.size(A::MappedVector) = size(A.data)
+Base.@propagate_inbounds Base.getindex(A::MappedVector, i::Int) = A.f(A.data[i + A.offset])
+
+function MappedVector{T}(f, data::AbstractVector{T}, T₀ = typeof(f(one(T))), offset = 0)
+    MappedVector{T₀, typeof(data), typeof(f)}(f, data, offset)
+end
+
+function Base.show(io::IO, M::MIME"text/plain", m::MappedVector{T, A, F}) where {T, A, F}
+    print(io, "$A → $F")
+end
+
+end
+

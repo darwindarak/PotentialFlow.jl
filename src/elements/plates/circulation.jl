@@ -9,13 +9,13 @@ function bound_circulation(s::Float64, plate)
     U₋ = 0.0
     U  = 1.0
     for n in 1:N-1
-        γ += 2A[n+1]*U
+        γ += 2A[n]*U
         U₋, U = U, 2s*U - U₋
     end
     γ *= (s^2 - 1)
 
-    γ += A[2] + 2Γ/(L*π)
-    γ +=    2(A[1] - B₀)*s
+    γ += A[1] + 2Γ/(L*π)
+    γ +=    2(A[0] - B₀)*s
     γ +=             -B₁*(2s^2 - 1)
 
     if abs2(γ) < 256eps()

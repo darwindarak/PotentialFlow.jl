@@ -5,7 +5,7 @@ export Plate, bound_circulation, bound_circulation!,
     enforce_no_flow_through!, vorticity_flux, suction_parameters
 
 import ..Vortex
-import ..Vortex.@get
+import ..Vortex:@get, MappedVector
 import Base: length
 
 """
@@ -39,7 +39,7 @@ mutable struct Plate <: Vortex.CompositeSource
     "control point coordinates"
     zs::Vector{Complex128}
     "Chebyshev coefficients of the normal component of velocity induced along the plate by ambient vorticity"
-    A::Vector{Float64}
+    A::MappedVector{Float64, Vector{Complex128}, typeof(imag)}
     "Chebyshev coefficients of the velocity induced along the plate by ambient vorticity"
     C::Vector{Complex128}
 end
@@ -48,8 +48,8 @@ function Plate(N, L, c, α, ċ = zero(Complex128), α̇ = 0.0)
     ss = Float64[cos(θ) for θ in linspace(π, 0, N)]
     zs = c + 0.5L*ss*exp(im*α)
 
-    A  = zeros(Float64, N)
     C  = zeros(Complex128, N)
+    A = MappedVector(imag, C, Float64, 1)
 
     Plate(L, c, ċ, α, α̇, 0.0, N, ss, zs, A, C)
 end
@@ -65,7 +65,7 @@ Vortex.self_induce_velocity!(::Void, ::Plate) = nothing
 function Vortex.impulse(p::Plate)
     @get p (c, ċ, α, Γ, L, A)
     B₀ = normal(ċ, α)
-    -im*c*Γ - exp(im*α)*π*0.5L*im*(A[1] - 0.5A[2] - B₀)
+    -im*c*Γ - exp(im*α)*π*0.5L*im*(A[0] - 0.5A[1] - B₀)
 end
 
 normal(z, α) = imag(exp(-im*α)*z)
@@ -82,14 +82,14 @@ function Vortex.induce_velocity(z::Complex128, p::Plate)
     B₀ = normal(ċ, α)
     B₁ = 0.5α̇*L
 
-    w = (A[2] + 2Γ/(π*L))
-    w += 2(A[1] - B₀)*J
+    w = (A[1] + 2Γ/(π*L))
+    w += 2(A[0] - B₀)*J
     w -= B₁*J^2
 
     w /= ρ
 
     Jⁿ = J
-    for n in 2:length(A)
+    for n in 1:length(A)-1
         w -= 2A[n]*Jⁿ
         Jⁿ *= J
     end
