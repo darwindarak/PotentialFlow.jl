@@ -9,6 +9,9 @@ julia:
 notifications:
   email: false
 
+env:
+  - PYTHON=""
+
 addons:
   apt:
     packages:
