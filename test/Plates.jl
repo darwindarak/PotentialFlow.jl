@@ -150,7 +150,7 @@
 
         Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, Vortex.Point(-Inf, Γ))
         _, b₋ = Vortex.Plates.suction_parameters(plate)
-        @test abs2(b₋) ≈ 0
+        @test abs(b₋) < eps()
         @test Vortex.Plates.bound_circulation(-1.0, plate) == 0
     end
 end

@@ -43,6 +43,11 @@ Vortex.induce_velocity(t::Sheet, s::Sheet) = Vortex.induce_velocity(s.blobs, s.b
 
 Vortex.induce_velocity!(ws::Vector, s::Sheet, source) = Vortex.induce_velocity!(ws, s.blobs, source)
 
+function Vortex.mutually_induce_velocity!(ws₁, ws₂, sheet₁::Sheet, sheet₂::Sheet)
+    Vortex.mutually_induce_velocity!(ws₁, ws₂, sheet₁.blobs, sheet₂.blobs)
+    nothing
+end
+
 function Vortex.self_induce_velocity!(ws, sheet::Sheet)
     Vortex.self_induce_velocity!(ws, sheet.blobs)
 end
