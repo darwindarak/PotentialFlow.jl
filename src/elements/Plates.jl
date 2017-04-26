@@ -126,6 +126,7 @@ mutable struct PlateMotion
 end
 
 Vortex.induce_velocity!(::PlateMotion, target::Plate, source) = nothing
+Vortex.reset_velocity!(::PlateMotion, src) = nothing
 
 function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
 
