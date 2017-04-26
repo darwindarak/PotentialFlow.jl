@@ -97,6 +97,8 @@
         Vortex.Plates.bound_circulation!(γs, plate)
         @test maximum(abs2.(γs[2:end-1] .- real.(Δż_circle[2:end-1]))) ≤ 256eps()
 
+        @test γs == Vortex.Plates.bound_circulation(plate)
+
     end
 
     @testset "Induced Velocities" begin
@@ -145,5 +147,10 @@
         _, Γ, _, _ = Vortex.Plates.vorticity_flux(plate, point, point, Inf, 0)
 
         @test Γ ≈ -π*U*L*sin(α)
+
+        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, Vortex.Point(-Inf, Γ))
+        _, b₋ = Vortex.Plates.suction_parameters(plate)
+        @test abs2(b₋) ≈ 0
+        @test Vortex.Plates.bound_circulation(-1.0, plate) == 0
     end
 end
