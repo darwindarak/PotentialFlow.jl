@@ -20,7 +20,7 @@ Vortex.position(p::Point) = p.z
 Vortex.circulation(p::Point) = p.Γ
 Vortex.impulse(p::Point) = -im*p.z*p.Γ
 
-cauchy_kernel(z) = 0.5im/(π*conj(z))
+cauchy_kernel(z) = z != zero(z) ? 0.5im/(π*conj(z)) : zero(z)
 
 function Vortex.induce_velocity(z::Complex128, p::Point)
     p.Γ*cauchy_kernel(z - p.z)

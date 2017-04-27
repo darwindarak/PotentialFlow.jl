@@ -66,4 +66,15 @@
     Vortex.reset_velocity!(ws, (points, blobs))
     @test length.(ws) == (2N, N)
 
+    Vortex.reset_velocity!(ws, (points, points))
+    Vortex.reset_velocity!(wb, points)
+    Vortex.self_induce_velocity!(wb, points)
+    Vortex.mutually_induce_velocity!(ws[1], ws[2], points, points)
+    @test ws[1] ≈ ws[2]
+    @test ws[1] ≈ wb
+
+    Vortex.reset_velocity!(wb, points)
+    Vortex.induce_velocity!(wb, points, points)
+    @test ws[1] ≈ wb
+
 end
