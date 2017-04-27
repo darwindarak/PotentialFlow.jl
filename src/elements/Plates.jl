@@ -2,7 +2,7 @@ module Plates
 using DocStringExtensions
 
 export Plate, bound_circulation, bound_circulation!,
-    enforce_no_flow_through!, vorticity_flux, suction_parameters
+    enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse
 
 import ..Vortex
 import ..Vortex:@get, MappedVector
@@ -62,9 +62,8 @@ Vortex.allocate_velocity(::Plate) = PlateMotion(0.0, 0.0)
 Vortex.self_induce_velocity!(_, ::Plate) = nothing
 
 function Vortex.impulse(p::Plate)
-    @get p (c, ċ, α, Γ, L, A)
-    B₀ = normal(ċ, α)
-    -im*c*Γ - exp(im*α)*π*0.5L*im*(A[0] - 0.5A[1] - B₀)
+    @get p (c, B₀, α, Γ, L, A)
+    -im*c*Γ - exp(im*α)*π*(0.5L)^2*im*(A[0] - 0.5A[2] - B₀)
 end
 
 normal(z, α) = imag(exp(-im*α)*z)
@@ -147,7 +146,18 @@ function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
     nothing
 end
 
+"""
+    unit_impulse(src::Vortex.PointSource, plate::Plate)
 
+Compute the impulse per unit circulation of `src` and its associated bound vortex sheet on `plate` (its image vortex)
+"""
+function unit_impulse(src::Vortex.PointSource, plate::Plate)
+    z = Vortex.position(src)
+
+    z̃ = 2(z - plate.c)*exp(-im*plate.α)/plate.L
+    unit_impulse(z̃)
+end
+unit_impulse(z̃) = -im*(z̃ + real(√(z̃ - 1)*√(z̃ + 1) - z̃))
 
 include("plates/chebyshev.jl")
 include("plates/boundary_conditions.jl")

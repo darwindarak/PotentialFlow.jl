@@ -150,7 +150,33 @@
 
         Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, Vortex.Point(-Inf, Γ))
         _, b₋ = Vortex.Plates.suction_parameters(plate)
-        @test abs(b₋) < eps()
+        @test abs(b₋) ≤ eps()
         @test Vortex.Plates.bound_circulation(-1.0, plate) == 0
+    end
+
+    @testset "Impulse" begin
+        ċ = rand(Complex128)
+        α = rand()*0.5π
+        L = 2rand()
+        plate = Vortex.Plate(128, L, 0.0, α)
+        motion = Vortex.Plates.PlateMotion(ċ, 0.0)
+
+        points = Vortex.Point.(rand(Complex128, 10), rand(10))
+        sheet  = Vortex.Sheet(rand(Complex128, 10), cumsum(rand(10)), rand())
+
+        impulse  = sum(points) do p
+            p.Γ*Vortex.unit_impulse(p, plate)
+        end
+
+        impulse += sum(sheet.blobs) do b
+            b.Γ*Vortex.unit_impulse(b, plate)
+        end
+
+        impulse += im*π*0.5L*imag(ċ*exp(-im*α))
+        impulse *= 0.5L*exp(im*α)
+
+        Vortex.Plates.enforce_no_flow_through!(plate, motion, (points, sheet))
+
+        @test norm(impulse .- Vortex.impulse((plate, points, sheet))) ≤ 1e-5
     end
 end

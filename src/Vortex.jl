@@ -24,6 +24,7 @@ and functions that act on collections vortex element types.
 - [`Vortex.position`](@ref)
 - [`Vortex.circulation`](@ref)
 - [`Vortex.impulse`](@ref)
+- [`Vortex.unit_impulse`](@ref)
 
 """
 module Vortex
