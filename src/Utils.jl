@@ -1,6 +1,6 @@
 module Utils
 
-export @submodule, @get, MappedVector, MappedArray
+export @submodule, @get, MappedVector
 
 macro submodule(mod)
     path = mod * ".jl"
@@ -64,8 +64,6 @@ macro get(object, fields...)
     end
 end
 
-export MappedVector, MappedArray, @get
-
 # Based on Tim Holy's JuliaCon 2016 Keynote 
 """
 A wrapper around an array that applies a function to any index element
@@ -75,12 +73,18 @@ A wrapper around an array that applies a function to any index element
 - `data`: the underlying array
 - `offset`: an optional offset (0 by default)
 
+# Constructor
+
+    MappedVector(f, data::AbstractVector{T}, T₀ = typeof(f(one(T))), offset = 0) where {T}
+
+where `T₀` should be the type of the mapped values.
+
 # Examples:
 
 ```julia
 julia> x = [-π, 0.0, π];
 
-julia> y = MappedVector(cos, x, 1) # apply `cos` on demand and start indexing from 0
+julia> y = MappedVector(cos, x, Float64, 1) # apply `cos` on demand and start indexing from 0
 Array{Float64,1} → Base.#cos
 
 julia> y[0]
@@ -96,13 +100,14 @@ end
 Base.size(A::MappedVector) = size(A.data)
 Base.@propagate_inbounds Base.getindex(A::MappedVector, i::Int) = A.f(A.data[i + A.offset])
 
-function MappedVector{T}(f, data::AbstractVector{T}, T₀ = typeof(f(one(T))), offset = 0)
+function MappedVector(f, data::AbstractVector{T}, T₀ = typeof(f(one(T))), offset = 0) where {T}
     MappedVector{T₀, typeof(data), typeof(f)}(f, data, offset)
 end
 
 function Base.show(io::IO, M::MIME"text/plain", m::MappedVector{T, A, F}) where {T, A, F}
-    print(io, "$A → $F")
+    print(io, "$A → $F ($(1-m.offset):$(length(m.data)-m.offset))")
 end
+Base.show(io::IO, m::MappedVector) = Base.show(io, MIME("text/plain"), m)
 
 end
 
