@@ -13,6 +13,12 @@
         @get z (re, im) (r, i)
         @test i == imag(z)
         @test r == real(z)
+
+        @test_throws ErrorException (@eval @get z z)
+        @test_throws ErrorException (@eval @get z (re, im) nothing)
+        @test_throws ErrorException (@eval @get z (re, im) (r, i) nothing)
+        @test_throws AssertionError (@eval @get z (re, im) (im,))
+        @test_throws ErrorException (@eval @get z (re, im) (im,) (im,))
     end
 
     @testset "MappedVector" begin
@@ -24,6 +30,6 @@
 
         buff = IOBuffer()
         show(buff, y)
-        @test takebuf_string(buff) == "Array{Float64,1} → Base.#cos (0:2)"
+        @test String(take!(buff)) == "Array{Float64,1} → Base.#cos (0:2)"
     end
 end
