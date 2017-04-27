@@ -1,9 +1,6 @@
 julia 0.6-
 Documenter
-TestSetExtensions
 DocStringExtensions
 Dierckx
 Reexport
-PyPlot
 IJulia
-NBInclude
