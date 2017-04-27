@@ -1,4 +1,30 @@
 @testset "Plate" begin
+    @testset "Chebyshev transform" begin
+        N = 128
+        w = Vortex.Plates.clenshaw_curtis_weights(N)
+        @test sum(w) ≈ 2
+
+        α = linspace(π, 0, N)
+        x = cos.(α)
+        @test w ⋅ x ≤ eps()
+        @test w ⋅ x.^2 ≈ 2/3
+        @test w ⋅ exp.(x) ≈ (exp(1) - exp(-1))
+
+        C = Vortex.Plates.chebyshev_transform(ones(N))
+        @test C[1] ≈ 1
+        @test norm(C[2:end]) ≤ 128eps()
+
+        C = Vortex.Plates.chebyshev_transform(x)
+        @test norm(C[1]) ≤ 128eps()
+        @test C[2] ≈ 1
+        @test norm(C[3:end]) ≤ 128eps()
+
+        C = Vortex.Plates.chebyshev_transform(16x.^5 .- 20x.^3 .+ 5x)
+        @test norm(C[1:5]) ≤ 128eps()
+        @test C[6] ≈ 1
+        @test norm(C[7:end]) ≤ 128eps()
+    end
+
     @testset "Singular Interactions" begin
         N = 100
         zs = rand(Complex128, N)
@@ -180,4 +206,5 @@
         @test Vortex.circulation((plate, points, sheet)) ≤ 128eps()
         @test norm(impulse .- Vortex.impulse((plate, points, sheet))) ≤ 1e-5
     end
+
 end
