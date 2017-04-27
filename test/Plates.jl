@@ -161,8 +161,8 @@
         plate = Vortex.Plate(128, L, 0.0, α)
         motion = Vortex.Plates.PlateMotion(ċ, 0.0)
 
-        points = Vortex.Point.(rand(Complex128, 10), rand(10))
-        sheet  = Vortex.Sheet(rand(Complex128, 10), cumsum(rand(10)), rand())
+        points = Vortex.Point.(2.0im + rand(Complex128, 20), rand(20))
+        sheet  = Vortex.Sheet(2.0im + rand(Complex128, 20), cumsum(rand(20)), rand())
 
         impulse  = sum(points) do p
             p.Γ*Vortex.unit_impulse(p, plate)
@@ -177,6 +177,7 @@
 
         Vortex.Plates.enforce_no_flow_through!(plate, motion, (points, sheet))
 
+        @test Vortex.circulation((plate, points, sheet)) ≤ 128eps()
         @test norm(impulse .- Vortex.impulse((plate, points, sheet))) ≤ 1e-5
     end
 end
