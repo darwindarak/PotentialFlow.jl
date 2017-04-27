@@ -45,12 +45,19 @@ const Collection = Union{AbstractArray, Tuple}
 const PointArray = AbstractArray{T} where {T <: PointSource}
 const TargetTypes = (Complex128, PointSource, CompositeSource, Collection)
 
-position(s::PointSource) = error("`Vortex.position` must be defined for $(typeof(s))")
+"""
+    Vortex.position(src::PointSource)
+
+Returns the complex position of a `PointSource` type vortex element
+This is a required method for all subtypes of `PointSource`.
+"""
+function position end
 
 """
     Vortex.circulation(src)
 
 Returns the total circulation contained in `src`
+This is a required method for all vortex types.
 """
 circulation(vs::Collection) = mapreduce(circulation, +, 0.0, vs)
 
@@ -58,6 +65,7 @@ circulation(vs::Collection) = mapreduce(circulation, +, 0.0, vs)
     Vortex.impulse(src)
 
 Returns the aerodynamic impulse of `src` relative to (0, 0)
+This is a required method for all vortex types.
 """
 impulse(vs::Collection) = mapreduce(impulse, +, 0.0, vs)
 
@@ -191,8 +199,6 @@ Compute the self induced velocity of one or more vortex elements
 
 This involves a recursive call to `self_induce_velocity!` and pairwise calls to [`mutually_induce_velocity!`](@ref).
 """
-self_induce_velocity!(ws, v) = error("`Vortex.self_induce_velocity!` not defined for $(typeof(v))")
-
 function self_induce_velocity!(ws, group::Tuple)
     N = length(group)
     for s in 1:N
@@ -224,7 +230,15 @@ function self_induce_velocity!(ws, array::PointArray)
     nothing
 end
 
-advect(t::PointSource, w, Δt) = error("`advect` not defined for $(typeof(v))")
+"""
+    advect(src::PointSource, velocity, Δt)
+
+Return a new vortex element that represents `src` advected by `velocity` over `Δt`
+If this method is implemented by any type `T <: PointSource`, 
+then an array of type `AbstractArray{T}` can be passed in the first two arguments of [`advect!`](@ref).
+"""
+function advect end
+
 function advect!{T <: Collection}(vs₊::T, vs₋::T, w, Δt)
     for (i, v) in enumerate(vs₋)
         vs₊[i] = advect(v, w[i], Δt)
