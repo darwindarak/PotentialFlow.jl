@@ -207,4 +207,31 @@
         @test norm(impulse .- Vortex.impulse((plate, points, sheet))) ≤ 1e-5
     end
 
+@testset "Advection" begin
+    motion = Vortex.Plates.PlateMotion(rand(Complex128), rand())
+    c = rand(Complex128)
+    α = 0.5π*rand()
+    L = 2rand()
+
+    points = Vortex.Point.(rand(Complex128, 10), rand(10))
+
+    plate  = Vortex.Plate(128, L, c, α)
+    Vortex.Plates.enforce_no_flow_through!(plate, motion, points)
+
+    plate₊ = Vortex.Plate(128, L, c, α)
+
+    Δt = 1e-2
+    advect!(plate₊, plate, motion, Δt)
+    advect!(plate,  plate, motion, Δt)
+
+    @test plate₊.C  == plate.C
+    @test plate₊.zs == plate.zs
+    @test plate₊.c  == plate.c
+    @test plate₊.α  == plate.α
+    @test plate₊.Γ  == plate.Γ
+    @test plate₊.B₀ == plate.B₀
+    @test plate₊.B₁ == plate.B₁
+
+end
+
 end

@@ -166,7 +166,6 @@ include("plates/circulation.jl")
 function Base.show(io::IO, p::Plate)
     println(io, "Plate: N = $(p.N), L = $(p.L)")
     println(io, "       c = $(p.c), α = $(round(rad2deg(p.α),2))ᵒ")
-    print(io, "       ċ = $(p.ċ), α̇ = $(round(rad2deg(p.α̇),2))ᵒ/T")
 end
 
 end
