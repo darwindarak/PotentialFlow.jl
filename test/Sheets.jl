@@ -26,4 +26,17 @@
         wb[i] += induce_velocity(t, s)
     end
     @test wb ≈ ws
+
+    sheet₊ = Vortex.Sheet([], [], 0.0)
+    Δt = 1e-2
+    Vortex.advect!(sheet₊, sheet, ws, Δt)
+    Vortex.advect!(sheet, sheet, ws, Δt)
+
+    @test sheet₊.Γs ==  sheet.Γs
+    @test !(sheet₊.Γs === sheet.Γs)
+
+    @test sheet₊.blobs == sheet.blobs
+    @test !(sheet₊.blobs === sheet.blobs)
+
+    @test sheet₊.δ  ==  sheet.δ
 end

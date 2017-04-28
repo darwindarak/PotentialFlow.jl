@@ -66,12 +66,13 @@ function compute_trapezoidal_weights(Γs)
 end
 
 function Vortex.advect!(sheet₊::Sheet, sheet₋::Sheet, ws, Δt)
-    Vortex.advect!(sheet₊.blobs, sheet₋.blobs, ws, Δt)
-
     if sheet₊ != sheet₋
+        resize!(sheet₊.blobs, length(sheet₋))
         sheet₊.Γs = copy(sheet₋.Γs)
         sheet₊.δ = sheet₋.δ
     end
+
+    Vortex.advect!(sheet₊.blobs, sheet₋.blobs, ws, Δt)
     nothing
 end
 
