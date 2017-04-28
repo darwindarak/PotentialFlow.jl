@@ -43,10 +43,17 @@
         vel_b = zeros(Complex128, plate.N)
 
         Vortex.induce_velocity!(vel_s, plate, sheet)
+
         Vortex.induce_velocity!(vel_p, plate, points)
         Vortex.induce_velocity!(vel_b, plate, blobs)
 
         @test vel_s == vel_b
+        @test vel_p == vel_b
+
+        reset_velocity!(vel_p)
+        for (i, b) in enumerate(blobs)
+            induce_velocity!(vel_p, plate, b)
+        end
         @test vel_p == vel_b
     end
     @testset "Chebyshev Transform" begin
@@ -132,7 +139,9 @@
         ċ = rand(Complex128)
         α = 0.5π*rand()
         α̇ = rand()
-        
+
+        @test c*exp(-im*α) == Vortex.Plates.tangent(c, α) + im*Vortex.Plates.normal(c, α)
+
         J = JoukowskyMap(c, α)
         N = 100
         ζs = (2 .+ rand(N)).*exp.(2π.*rand(N))
@@ -185,7 +194,10 @@
         α = rand()*0.5π
         L = 2rand()
         plate = Vortex.Plate(128, L, 0.0, α)
-        motion = Vortex.Plates.PlateMotion(ċ, 0.0)
+        motion = allocate_velocity(plate)
+
+        motion.ċ = ċ
+        motion.α̇ = 0.0
 
         points = Vortex.Point.(2.0im + rand(Complex128, 20), rand(20))
         sheet  = Vortex.Sheet(2.0im + rand(Complex128, 20), cumsum(rand(20)), rand())
@@ -207,31 +219,31 @@
         @test norm(impulse .- Vortex.impulse((plate, points, sheet))) ≤ 1e-5
     end
 
-@testset "Advection" begin
-    motion = Vortex.Plates.PlateMotion(rand(Complex128), rand())
-    c = rand(Complex128)
-    α = 0.5π*rand()
-    L = 2rand()
-
-    points = Vortex.Point.(rand(Complex128, 10), rand(10))
-
-    plate  = Vortex.Plate(128, L, c, α)
-    Vortex.Plates.enforce_no_flow_through!(plate, motion, points)
-
-    plate₊ = Vortex.Plate(128, L, c, α)
-
-    Δt = 1e-2
-    advect!(plate₊, plate, motion, Δt)
-    advect!(plate,  plate, motion, Δt)
-
-    @test plate₊.C  == plate.C
-    @test plate₊.zs == plate.zs
-    @test plate₊.c  == plate.c
-    @test plate₊.α  == plate.α
-    @test plate₊.Γ  == plate.Γ
-    @test plate₊.B₀ == plate.B₀
-    @test plate₊.B₁ == plate.B₁
-
-end
+    @testset "Advection" begin
+        motion = Vortex.Plates.PlateMotion(rand(Complex128), rand())
+        c = rand(Complex128)
+        α = 0.5π*rand()
+        L = 2rand()
+    
+        points = Vortex.Point.(rand(Complex128, 10), rand(10))
+    
+        plate  = Vortex.Plate(128, L, c, α)
+        Vortex.Plates.enforce_no_flow_through!(plate, motion, points)
+    
+        plate₊ = Vortex.Plate(128, L, c, α)
+    
+        Δt = 1e-2
+        advect!(plate₊, plate, motion, Δt)
+        advect!(plate,  plate, motion, Δt)
+    
+        @test length(plate₊) == length(plate)
+        @test plate₊.C  == plate.C
+        @test plate₊.zs == plate.zs
+        @test plate₊.c  == plate.c
+        @test plate₊.α  == plate.α
+        @test plate₊.Γ  == plate.Γ
+        @test plate₊.B₀ == plate.B₀
+        @test plate₊.B₁ == plate.B₁
+    end
 
 end
