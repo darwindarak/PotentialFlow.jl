@@ -147,17 +147,17 @@ function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
 end
 
 """
-    unit_impulse(src::Vortex.PointSource, plate::Plate)
+    unit_impulse(src, plate::Plate)
 
 Compute the impulse per unit circulation of `src` and its associated bound vortex sheet on `plate` (its image vortex)
+`src` can be either a `Complex128` or a subtype of `Vortex.PointSource`.
 """
-function unit_impulse(src::Vortex.PointSource, plate::Plate)
-    z = Vortex.position(src)
-
+function unit_impulse(z::Complex128, plate::Plate)
     z̃ = 2(z - plate.c)*exp(-im*plate.α)/plate.L
     unit_impulse(z̃)
 end
 unit_impulse(z̃) = -im*(z̃ + real(√(z̃ - 1)*√(z̃ + 1) - z̃))
+unit_impulse(src::Vortex.PointSource, plate::Plate) = unit_impulse(Vortex.position(src), plate)
 
 include("plates/chebyshev.jl")
 include("plates/boundary_conditions.jl")
