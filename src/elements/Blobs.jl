@@ -30,7 +30,7 @@ end
 
 function Vortex.induce_velocity(target::Blob, source::Blob)
     δ = √(0.5(target.δ^2 + source.δ^2))
-    b.Γ*blob_kernel(target.z - source.z, δ)
+    source.Γ*blob_kernel(target.z - source.z, δ)
 end
 
 function Vortex.mutually_induce_velocity!(ws₁, ws₂,

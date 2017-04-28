@@ -17,4 +17,13 @@
 
     @test Vortex.Sheets.compute_trapezoidal_weights(sheet.Γs) ≈ getfield.(sheet.blobs, :Γ)
     @test ΔΓ + Vortex.circulation(sheet) ≈ ΣΓ
+
+    ws = allocate_velocity(sheet)
+    wb = allocate_velocity(sheet.blobs)
+
+    self_induce_velocity!(ws, sheet)
+    for (i, t) in enumerate(sheet.blobs), s in sheet.blobs
+        wb[i] += induce_velocity(t, s)
+    end
+    @test wb ≈ ws
 end
