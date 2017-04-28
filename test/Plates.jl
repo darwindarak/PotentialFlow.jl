@@ -178,8 +178,13 @@
         plate_vel = Vortex.Plates.PlateMotion(U, 0.0)
         Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
 
+        C = deepcopy(plate.C)
+
         point = Vortex.Point(-Inf, 1.0);
         _, Γ, _, _ = Vortex.Plates.vorticity_flux(plate, point, point, Inf, 0)
+
+        ∂A = Vortex.Plates.influence_on_plate(plate, point)
+        C .+= Γ.*∂A
 
         @test Γ ≈ -π*U*L*sin(α)
 
@@ -187,6 +192,21 @@
         _, b₋ = Vortex.Plates.suction_parameters(plate)
         @test abs(b₋) ≤ eps()
         @test Vortex.Plates.bound_circulation(-1.0, plate) == 0
+        @test C ≈ plate.C
+
+        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
+        @test_throws AssertionError Vortex.Plates.vorticity_flux(plate, point, point, 0, 0)
+
+        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
+        Γ, _, _, _ = Vortex.Plates.vorticity_flux(plate, point, point, 0, Inf)
+        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, Vortex.Point(-Inf, Γ))
+        b₊, _ = Vortex.Plates.suction_parameters(plate)
+        @test abs(b₊) ≤ eps()
+        @test Vortex.Plates.bound_circulation(1.0, plate) == 0
+
+        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
+        Γ₊, Γ₋, _, _ = Vortex.Plates.vorticity_flux(plate, point, point, Inf, Inf)
+        @test Γ₊ == Γ₋ == 0
     end
 
     @testset "Impulse" begin

@@ -95,11 +95,7 @@ function vorticity_flux(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
 
         detA = A₁₊*A₂₋ - A₂₊*A₁₋
 
-        if detA == 0
-            @show b₊, b₋
-            @show A₁₊, A₁₋, A₂₊, A₂₋
-            error("Cannot enforce suction parameters")
-        end
+        @assert (detA != 0) "Cannot enforce suction parameters"
 
         K₁ = (A₂₋*b₊ - A₂₊*b₋)/detA
         K₂ = (A₁₊*b₋ - A₁₋*b₊)/detA
