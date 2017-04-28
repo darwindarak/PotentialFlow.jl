@@ -26,6 +26,7 @@
         wb[i] += induce_velocity(t, s)
     end
     @test wb ≈ ws
+    @test wb ≈ induce_velocity(sheet, sheet)
 
     sheet₊ = Vortex.Sheet([], [], 0.0)
     Δt = 1e-2

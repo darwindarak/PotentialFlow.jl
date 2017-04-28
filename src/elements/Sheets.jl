@@ -39,7 +39,7 @@ for T in Vortex.TargetTypes
     @eval Vortex.induce_velocity(t::$T, s::Sheet) = Vortex.induce_velocity(t, s.blobs)
 end
 Vortex.induce_velocity(t::Sheet, source) = Vortex.induce_velocity(t.blobs, source)
-Vortex.induce_velocity(t::Sheet, s::Sheet) = Vortex.induce_velocity(s.blobs, s.blob)
+Vortex.induce_velocity(t::Sheet, s::Sheet) = Vortex.induce_velocity(t.blobs, s.blobs)
 
 Vortex.induce_velocity!(ws::Vector, s::Sheet, source) = Vortex.induce_velocity!(ws, s.blobs, source)
 
