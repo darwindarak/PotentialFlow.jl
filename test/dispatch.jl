@@ -37,7 +37,7 @@
     Vortex.reset_velocity!(wps)
     Vortex.induce_velocity!(wps, points, (blobs, sheet))
     @test wps == wss .+ wbs
-    
+
     # Distribute to a group of sources
     sys = (sheet, blobs)
     ws = Vortex.allocate_velocity(sys)
@@ -76,5 +76,35 @@
     Vortex.reset_velocity!(wb, points)
     Vortex.induce_velocity!(wb, points, points)
     @test ws[1] ≈ wb
+
+    @testset "defaults" begin
+        # Minimum implementation of a vortex point source
+        @eval struct NewPoint <: Vortex.PointSource
+            z::Complex128
+            Γ::Float64
+        end
+
+        Vortex.position(p::NewPoint) = p.z
+        Vortex.circulation(p::NewPoint) = p.Γ
+        Vortex.impulse(p::NewPoint) = -im*p.z*p.Γ
+
+        function Vortex.induce_velocity(z::Complex128, p::NewPoint)
+            p.Γ*Vortex.Points.cauchy_kernel(z - p.z)
+        end
+
+        zs = rand(Complex128, 100)
+        Γs = rand(100)
+
+        new_points = NewPoint.(zs, Γs)
+        points = Vortex.Point.(zs, Γs)
+
+        wn = allocate_velocity(new_points)
+        wp = allocate_velocity(points)
+
+        self_induce_velocity!(wn, new_points)
+        self_induce_velocity!(wp, points)
+
+        @test wn ≈ wp
+    end
 
 end
