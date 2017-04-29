@@ -13,7 +13,7 @@ function enforce_no_flow_through!(p::Plate, ṗ, elements)
     n̂ = exp(-im*α)
     scale!(C, n̂)
 
-    chebyshev_transform!(C)
+    chebyshev_transform!(C, p.dct!)
 
     p.Γ = -Vortex.circulation(elements)
     p.B₀ = normal(ċ, α)
@@ -32,7 +32,7 @@ function influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v)
     fill!(∂A, zero(Complex128))
     Vortex.induce_velocity!(∂A, plate, v)
     scale!(∂A, exp(-im*plate.α))
-    chebyshev_transform!(∂A)
+    chebyshev_transform!(∂A, plate.dct!)
     nothing
 end
 

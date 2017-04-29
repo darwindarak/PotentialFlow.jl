@@ -42,6 +42,9 @@ mutable struct Plate <: Vortex.CompositeSource
     B₀::Float64
     "first Chebyshev coefficient associated with body motion"
     B₁::Float64
+
+    "Preplanned DCT used to perform the discrete Chebyshev transform"
+    dct!::FFTW.r2rFFTWPlan
 end
 
 function Plate(N, L, c, α)
@@ -49,9 +52,11 @@ function Plate(N, L, c, α)
     zs = c + 0.5L*ss*exp(im*α)
 
     C  = zeros(Complex128, N)
-    A = MappedVector(imag, C, Float64, 1)
+    A = MappedVector(imag, C, 1)
 
-    Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0)
+    dct! = FFTW.plan_r2r!(C, FFTW.REDFT00);
+
+    Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0, dct!)
 end
 
 length(p::Plate) = p.N
@@ -130,15 +135,16 @@ Vortex.reset_velocity!(::PlateMotion, src) = nothing
 function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
 
     if plate₊ != plate₋
-        plate₊.L  = plate₋.L 
-        plate₊.Γ  = plate₋.Γ 
-        plate₊.N  = plate₋.N 
-        plate₊.ss = plate₋.ss 
-        plate₊.zs = plate₋.zs
-        plate₊.A  = plate₋.A 
-        plate₊.C  = plate₋.C 
-        plate₊.B₀ = plate₋.B₀
-        plate₊.B₁ = plate₋.B₁ 
+        plate₊.L    = plate₋.L
+        plate₊.Γ    = plate₋.Γ
+        plate₊.N    = plate₋.N
+        plate₊.ss   = plate₋.ss
+        plate₊.zs   = plate₋.zs
+        plate₊.A    = plate₋.A
+        plate₊.C    = plate₋.C
+        plate₊.B₀   = plate₋.B₀
+        plate₊.B₁   = plate₋.B₁
+        plate₊.dct! = plate₋.dct!
     end
     plate₊.c = plate₋.c + ṗ.ċ*Δt
     plate₊.α = plate₋.α + ṗ.α̇*Δt
