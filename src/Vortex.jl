@@ -97,7 +97,7 @@ Set all velocities in `vels` to zero
 If `srcs` is provided, then the arrays in `vels` are resized their source counterpart, if necessary.
 """
 reset_velocity!(array::AbstractArray{Complex128}) = fill!(array, zero(Complex128))
-reset_velocity!(::Void, src) = nothing
+reset_velocity!(::Void, ::Any) = nothing
 
 function reset_velocity!(group::Tuple)
     foreach(reset_velocity!, group)
@@ -165,7 +165,7 @@ function induce_velocity!(ws::AbstractArray, targets::AbstractArray, source)
     ws
 end
 
-induce_velocity!(::Void, targets, source) = nothing
+induce_velocity!(::Void, ::Any, ::Any) = nothing
 
 function induce_velocity!(ws::Tuple, targets::Tuple, source)
     for i in 1:length(targets)

@@ -100,8 +100,12 @@ end
 Base.size(A::MappedVector) = size(A.data)
 Base.@propagate_inbounds Base.getindex(A::MappedVector, i::Int) = A.f(A.data[i + A.offset])
 
-function MappedVector(f, data::AbstractVector{T}, T₀ = typeof(f(one(T))), offset = 0) where {T}
-    MappedVector{T₀, typeof(data), typeof(f)}(f, data, offset)
+function MappedVector(f, data::AbstractVector{T}, offset = 0) where {T}
+    T₀ = typeof(f(one(T)))
+    A  = typeof(data)
+    F  = typeof(f)
+
+    MappedVector{T₀, A, F}(f, data, offset)
 end
 
 function Base.show(io::IO, M::MIME"text/plain", m::MappedVector{T, A, F}) where {T, A, F}
