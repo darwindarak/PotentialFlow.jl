@@ -23,7 +23,7 @@
 
     @testset "MappedVector" begin
         x = [π, 0.0, π]
-        y = Vortex.Utils.MappedVector(cos, x, Float64, 1)
+        y = Vortex.Utils.MappedVector(cos, x, 1)
         @test y[0] == -1.0
         @test y[1] == 1.0
         @test y[2] == -1.0
