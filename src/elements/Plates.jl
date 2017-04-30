@@ -132,14 +132,15 @@ end
 Vortex.induce_velocity!(::PlateMotion, target::Plate, source) = nothing
 Vortex.reset_velocity!(::PlateMotion, src) = nothing
 
+
 function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
 
     if plate₊ != plate₋
         plate₊.L    = plate₋.L
         plate₊.Γ    = plate₋.Γ
         plate₊.N    = plate₋.N
-        plate₊.ss   = plate₋.ss
-        plate₊.zs   = plate₋.zs
+        plate₊.ss   .= plate₋.ss
+        plate₊.zs   .= plate₋.zs
         plate₊.A    = plate₋.A
         plate₊.C    = plate₋.C
         plate₊.B₀   = plate₋.B₀

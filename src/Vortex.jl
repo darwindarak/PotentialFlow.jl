@@ -96,21 +96,27 @@ Set all velocities in `vels` to zero
 
 If `srcs` is provided, then the arrays in `vels` are resized their source counterpart, if necessary.
 """
-reset_velocity!(array::AbstractArray{Complex128}) = fill!(array, zero(Complex128))
+reset_velocity!(array::Vector{Complex128}) = fill!(array, zero(Complex128))
 reset_velocity!(::Void, ::Any) = nothing
 
 function reset_velocity!(group::Tuple)
-    foreach(reset_velocity!, group)
+    for ẋ in group
+        reset_velocity!(ẋ)
+    end
     group
 end
 
-function reset_velocity!(array::AbstractArray{Complex128}, v)
-    resize!(array, length(v))
+function reset_velocity!(array::Vector{Complex128}, v)
+    if length(array) != length(v)
+        resize!(array, length(v))
+    end
     fill!(array, zero(Complex128))
 end
 
-function reset_velocity!(group::Tuple, src)
-    foreach(reset_velocity!, group, src)
+function reset_velocity!(group::T, src) where {T <: Tuple}
+    for i in 1:length(group)
+        reset_velocity!(group[i], src[i])
+    end
     group
 end
 
@@ -177,7 +183,7 @@ end
 """
     mutually_induce_velocity!(vs₁, vs₂, e₁, e₂)
 
-Compute the mutually induced velocities between `e₁` and `e₂` and 
+Compute the mutually induced velocities between `e₁` and `e₂` and
 store the results in `vs₁` and `vs₂`
 
 The default implementation simply calls [`induce_velocity!`](@ref) twice.
@@ -234,7 +240,7 @@ end
     advect(src::PointSource, velocity, Δt)
 
 Return a new vortex element that represents `src` advected by `velocity` over `Δt`
-If this method is implemented by any type `T <: PointSource`, 
+If this method is implemented by any type `T <: PointSource`,
 then an array of type `AbstractArray{T}` can be passed in the first two arguments of [`advect!`](@ref).
 """
 function advect end
