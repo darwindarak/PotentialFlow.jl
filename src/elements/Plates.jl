@@ -6,7 +6,7 @@ export Plate, bound_circulation, bound_circulation!,
 
 import ..Vortex
 import ..Vortex:@get, MappedVector
-import Base: length
+import Base: length, +, *, /
 
 """
 An infinitely thin, flat plate, represented as a bound vortex sheet
@@ -132,6 +132,7 @@ end
 Vortex.induce_velocity!(::PlateMotion, target::Plate, source) = nothing
 Vortex.reset_velocity!(::PlateMotion, src) = nothing
 
+
 function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
 
     if plate₊ != plate₋
@@ -164,6 +165,10 @@ function unit_impulse(z::Complex128, plate::Plate)
 end
 unit_impulse(z̃) = -im*(z̃ + real(√(z̃ - 1)*√(z̃ + 1) - z̃))
 unit_impulse(src::Vortex.PointSource, plate::Plate) = unit_impulse(Vortex.position(src), plate)
+p₁::PlateMotion + p₂::PlateMotion = PlateMotion(p₁.ċ + p₂.ċ, p₁.α̇ + p₂.α̇)
+n::Number * p::PlateMotion = PlateMotion(n*p.ċ, n*p.α̇)
+p::PlateMotion * n::Number = PlateMotion(n*p.ċ, n*p.α̇)
+p::PlateMotion / n::Number = PlateMotion(p.ċ/n, p.α̇/n)
 
 include("plates/chebyshev.jl")
 include("plates/boundary_conditions.jl")
