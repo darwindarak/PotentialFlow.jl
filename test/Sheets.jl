@@ -40,4 +40,13 @@
     @test !(sheet₊.blobs === sheet.blobs)
 
     @test sheet₊.δ  ==  sheet.δ
+
+    zs₀ = deepcopy(zs)
+    Γs₀ = deepcopy(Γs)
+    L = sum(abs, diff(zs))
+    @test_warn "Sampling interval too large for arc length" (
+                Vortex.Sheets.filter_by_arclength(zs, 1.1L, 2L, sheet.Γs))
+
+    @test zs₀ == zs
+    @test Γs₀ == Γs
 end
