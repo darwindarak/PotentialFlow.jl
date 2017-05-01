@@ -6,13 +6,12 @@ using NBInclude
 
     for (root, dirs, files) in walkdir("$notebook_dir/../examples")
         if !contains(root, ".ipynb_checkpoints")
-            for file in files
-                if splitext(file)[2] == ".ipynb"
-                    nbinclude(joinpath(root, file))
-                    @test true
-                end
+            notebooks = filter(f -> splitext(f)[2] == ".ipynb", files)
+            @testset "$notebook" for notebook in notebooks
+                nbinclude(joinpath(root, notebook))
+                @test true
             end
         end
-    end
 
+    end
 end
