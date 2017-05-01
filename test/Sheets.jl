@@ -49,4 +49,11 @@
 
     @test zs₀ == zs
     @test Γs₀ == Γs
+
+    Γ = Vortex.circulation(sheet)
+    sheet₊ = Vortex.Sheets.split!(sheet, rand(2:length(sheet)-2))
+    @test Γ ≈ sum(Vortex.circulation, (sheet, sheet₊))
+
+    @test Vortex.Sheets.compute_trapezoidal_weights(sheet.Γs) ≈ getfield.(sheet.blobs, :Γ)
+    @test Vortex.Sheets.compute_trapezoidal_weights(sheet₊.Γs) ≈ getfield.(sheet₊.blobs, :Γ)
 end

@@ -1,5 +1,18 @@
 using Dierckx
 
+function split!(sheet, n::Int)
+    @assert 2 < n < length(sheet) - 2
+
+    blobs = splice!(sheet.blobs, 1:n-1)
+    Γs = splice!(sheet.Γs, 1:n-1)
+    push!(Γs, sheet.Γs[1])
+    push!(blobs, Vortex.Blob(sheet.blobs[1].z, 0.5(Γs[end] - Γs[end-1]), sheet.δ))
+
+    sheet.blobs[1] = Vortex.Blob(sheet.blobs[1].z, 0.5(sheet.Γs[2] - sheet.Γs[1]), sheet.δ)
+
+    Vortex.Sheet(blobs, Γs, sheet.δ)
+end
+
 function truncate!(sheet, n::Int)
     @assert 2 ≤ n < length(sheet)-1
     ΔΓ = sheet.Γs[n] - sheet.Γs[1]
@@ -33,7 +46,7 @@ function filter_by_arclength(z, Δs, Δf, properties...)
         warn("Sampling interval too large for arc length")
         return z, properties
     end
-    
+
     x = Spline1D(l, real.(z); k=1, bc="nearest", s=0.0)
     y = Spline1D(l, imag.(z); k=1, bc="nearest", s=0.0)
 
