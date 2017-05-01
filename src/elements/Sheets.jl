@@ -71,7 +71,7 @@ function Vortex.advect!(sheet₊::Sheet, sheet₋::Sheet, ws, Δt)
         N₋ = length(sheet₋)
         if N₊ != N₋
             resize!(sheet₊.blobs, N₋)
-            resize!(sheet₊.blobs, N₋)
+            resize!(sheet₊.Γs, N₋)
         end
         copy!(sheet₊.Γs, sheet₋.Γs)
         sheet₊.δ = sheet₋.δ
