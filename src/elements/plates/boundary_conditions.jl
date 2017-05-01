@@ -6,7 +6,7 @@ Update the plate, `p`, to enforce the no-flow-through condition given a collecti
 function enforce_no_flow_through!(p::Plate, ṗ, elements)
     @get p (L, C, α)
     @get ṗ (ċ, α̇)
-    
+
     fill!(C, zero(Complex128))
     Vortex.induce_velocity!(C, p, elements)
 
@@ -43,7 +43,7 @@ function influence_on_plate(plate::Plate, v)
 end
 
 """
-    vorticity_flux(p::Plate, v₁, v₂, 
+    vorticity_flux(p::Plate, v₁, v₂,
                    lesp = 0.0, tesp = 0.0,
                    ∂A₁ = Vector{Complex128}(plate.N),
                    ∂A₂ = Vector{Complex128}(plate.N))
@@ -60,28 +60,28 @@ For a given edge, if the current suction parameter is less than the criticial su
 # Returns:
 
 - `Γ₁, Γ₂`: the strengths that the vortex element should have in order to satisfy the edge suction parameters
-- `∂A₁, ∂A₂`: Chebyshev coefficients of the normal velocity induced by the vortex elements 
+- `∂A₁, ∂A₂`: Chebyshev coefficients of the normal velocity induced by the vortex elements
   Instead of running `enforce_bc!` with the new vortex elements, we can use this matrix to directly update the Chebyshev coefficients associated with the bound vortex sheet without recomputing all the velocities.
 """
 function vorticity_flux(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
-                        ∂A₁ = Vector{Complex128}(plate.N),
-                        ∂A₂ = Vector{Complex128}(plate.N))
+                        ∂C₁ = Vector{Complex128}(plate.N),
+                        ∂C₂ = Vector{Complex128}(plate.N))
 
     @get plate (N, α, B₀, B₁, L, A, Γ)
 
-    b₊ = +2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
-    b₋ = -2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
+    b₊ = +2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L)
+    b₋ = -2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L)
 
-    influence_on_plate!(∂A₁, plate, v₁)
-    influence_on_plate!(∂A₂, plate, v₂)
+    influence_on_plate!(∂C₁, plate, v₁)
+    influence_on_plate!(∂C₂, plate, v₂)
 
     Γ₁ = Vortex.circulation(v₁)
     Γ₂ = Vortex.circulation(v₂)
 
-    A₁₊ =  2imag(∂A₁[1]) + imag(∂A₁[2]) - 2Γ₁/(π*L) 
-    A₂₊ =  2imag(∂A₂[1]) + imag(∂A₂[2]) - 2Γ₂/(π*L) 
-    A₁₋ = -2imag(∂A₁[1]) + imag(∂A₁[2]) - 2Γ₁/(π*L) 
-    A₂₋ = -2imag(∂A₂[1]) + imag(∂A₂[2]) - 2Γ₂/(π*L) 
+    A₁₊ =  2imag(∂C₁[1]) + imag(∂C₁[2]) - 2Γ₁/(π*L)
+    A₂₊ =  2imag(∂C₂[1]) + imag(∂C₂[2]) - 2Γ₂/(π*L)
+    A₁₋ = -2imag(∂C₁[1]) + imag(∂C₁[2]) - 2Γ₁/(π*L)
+    A₂₋ = -2imag(∂C₂[1]) + imag(∂C₂[2]) - 2Γ₂/(π*L)
 
     if (abs2(lesp) > abs2(b₊)) && (abs2(tesp) ≤ abs2(b₋))
         K₁, K₂ = 0.0, (tesp - b₋)/A₂₋
@@ -101,13 +101,34 @@ function vorticity_flux(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
         K₂ = (A₁₊*b₋ - A₁₋*b₊)/detA
     end
 
-    return K₁*Γ₁, K₂*Γ₂, scale!(∂A₁, K₁), scale!(∂A₂, K₂)
+    return K₁*Γ₁, K₂*Γ₂, scale!(∂C₁, K₁), scale!(∂C₂, K₂)
+end
+
+"""
+    vorticity_flux!(p::Plate, v₁, v₂,
+                    lesp = 0.0, tesp = 0.0,
+                    ∂A₁ = Vector{Complex128}(plate.N),
+                    ∂A₂ = Vector{Complex128}(plate.N))
+
+In-place version of [`vorticity_flux`](@ref), except instead of just
+returning the possible changes in plate Chebyshev coefficients, we
+modify `plate.C` with those changes so that no-flow-through is
+enforced in the presence of `v₁` and `v₂` with strengths that satisfy
+the suction parameters.
+"""
+function vorticity_flux!(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
+                        ∂C₁ = Vector{Complex128}(plate.N),
+                        ∂C₂ = Vector{Complex128}(plate.N))
+    Γ₁, Γ₂, _, _ = vorticity_flux(plate, v₁, v₂, lesp, tesp, ∂C₁, ∂C₂)
+    @. plate.C += ∂C₁ + ∂C₂
+
+    return Γ₁, Γ₂, ∂C₁, ∂C₂
 end
 
 function suction_parameters(plate)
     @get plate (N, α, B₀, B₁, L, A, Γ)
 
-    b₊ = +2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
-    b₋ = -2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L) 
+    b₊ = +2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L)
+    b₋ = -2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L)
     return b₊, b₋
-end                                  
+end
