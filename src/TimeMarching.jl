@@ -33,7 +33,7 @@ Expects only a single `k`, representing the velocity at time `t`.
 """
 function forward_euler!(x₊, x, t, Δt, compute_ẋ!, update_x!, k)
     compute_ẋ!(k, x, t)
-    update_x!(x₊, x, Δt, k)
+    update_x!(x₊, x, k, Δt)
     return x₊, Δt
 end
 
@@ -47,18 +47,20 @@ Expects `k` to be indexable from 1 to 4, representing velocities at the Runge-Ku
 function rk4!(x₊, x, t, Δt, compute_ẋ!, update_x!, k)
     compute_ẋ!(k[1], x, t)
 
-    update_x!(x₊, x, 0.5Δt, k[1])
+    update_x!(x₊, x, k[1], 0.5Δt)
     compute_ẋ!(k[2], x₊, t + 0.5Δt)
 
-    update_x!(x₊, x, 0.5Δt, k[2])
+    update_x!(x₊, x, k[2], 0.5Δt)
     compute_ẋ!(k[3], x₊, t + 0.5Δt)
 
-    update_x!(x₊, x, Δt, k[3])
+    update_x!(x₊, x, k[3], Δt)
     compute_ẋ!(k[4], x₊, t + Δt)
 
-    ẋ = @. (k[1] + 2k[2] + 2k[3] + k[4])/6
+    update_x!(x₊, x,  k[1], Δt/6)
+    update_x!(x₊, x₊, k[2], Δt/3)
+    update_x!(x₊, x₊, k[3], Δt/3)
+    update_x!(x₊, x₊, k[4], Δt/6)
 
-    update_x!(x₊, x,  Δt, ẋ)
     return x₊, Δt
 end
 

@@ -2,7 +2,7 @@
     T = [1e-1, 1e-2, 1e-3]
 
     f! = (ẋ, x, t) -> ẋ .= [-x[2], x[1]]
-    update = (x₊, x₋, Δt, ẋ) -> @. x₊ = x₋ + Δt*ẋ
+    update = (x₊, x₋, ẋ, Δt) -> @. x₊ = x₋ + Δt*ẋ
 
     @testset "Forward Euler" begin
         err = map(T) do Δt
@@ -11,7 +11,7 @@
             ẋ  = similar(x₋)
 
             for t in 0:Δt:5.0-Δt
-                VortexModel.forward_euler!(x₊, x₋, t, Δt, f!, update, ẋ)
+                forward_euler!(x₊, x₋, t, Δt, f!, update, ẋ)
                 x₊, x₋ = x₋, x₊
             end
             norm(x₋ - [cos(5)-2sin(5),2cos(5)+sin(5)])
@@ -27,7 +27,7 @@
             ẋ  = [similar(x₋) for k in 1:4]
 
             for t in 0:Δt:5.0-Δt
-                VortexModel.rk4!(x₊, x₋, t, Δt, f!, update, ẋ)
+                rk4!(x₊, x₋, t, Δt, f!, update, ẋ)
                 x₊, x₋ = x₋, x₊
             end
             norm(x₋ - [cos(5)-2sin(5),2cos(5)+sin(5)])
