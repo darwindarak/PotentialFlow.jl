@@ -13,15 +13,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "VortexModel",
     "category": "section",
-    "text": ""
-},
-
-{
-    "location": "index.html#a-scaffolding-for-building-vortex-models-1",
-    "page": "Home",
-    "title": "a scaffolding for building vortex models",
-    "category": "section",
-    "text": "The main goal of this library is to remove as much boilerplate code as possible from vortex modeling codes. The core operation in vortex models is simulating the dynamics of various interacting vortex elements. In general, the simulation comes down to computing the velocities of the vortex elements then applying some time-marching scheme to evolve the system forward in time. With this in mind, we want to construct a library that makes iteasy to define new vortex types and behaviors\nstraightforward for users to set up a system the vortex elements\nintuitive to probe the state of any vortex element in the system\neasy to define new time-marching schemes to fit the users needs"
+    "text": "a scaffolding for building vortex modelsThe main goal of this library is to remove as much boilerplate code as possible from vortex modeling codes. The core operation in vortex models is simulating the dynamics of various interacting vortex elements. In general, the simulation comes down to computing the velocities of the vortex elements then applying some time-marching scheme to evolve the system forward in time. With this in mind, we want to construct a library that makes iteasy to define new vortex types and behaviors\nstraightforward for users to set up a system the vortex elements\nintuitive to probe the state of any vortex element in the system\neasy to define new time-marching schemes to fit the users needs"
 },
 
 {
