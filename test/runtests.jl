@@ -8,3 +8,5 @@ using VortexModel
 @testset DottedTestSet "All tests" begin
     @includetests ARGS
 end
+
+include("../docs/make.jl")
