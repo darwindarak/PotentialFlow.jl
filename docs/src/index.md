@@ -1,7 +1,6 @@
 # VortexModel
 
-a scaffolding for building vortex models
-----------------------------------------
+*a scaffolding for building vortex models*
 
 The main goal of this library is to remove as much boilerplate code as possible from vortex modeling codes.
 The core operation in vortex models is simulating the dynamics of various interacting vortex elements.
