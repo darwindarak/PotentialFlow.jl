@@ -12,20 +12,11 @@ notifications:
 env:
   - PYTHON=""
 
-addons:
-  apt:
-    packages:
-    - gfortran
-
 # uncomment the following lines to override the default test script
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("VortexModel"); Pkg.test("VortexModel"; coverage=true)'
 #
-before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc; fi
-
 after_success:
   # push coverage results to Coveralls
   - julia -e 'cd(Pkg.dir("VortexModel")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'

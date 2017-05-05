@@ -1,4 +1,4 @@
-using Dierckx
+using Interpolations
 
 function split!(sheet, n::Int)
     @assert 2 < n < length(sheet) - 2
@@ -47,19 +47,18 @@ function filter_by_arclength(z, Δs, Δf, properties...)
         return z, properties
     end
 
-    x = Spline1D(l, real.(z); k=1, bc="nearest", s=0.0)
-    y = Spline1D(l, imag.(z); k=1, bc="nearest", s=0.0)
+    z_spline = interpolate((l,), z, Gridded(Linear()))
 
     splines = map(properties) do p
-        Spline1D(l, p; k=1, bc="nearest", s=0.0)
+        interpolate((l,), p, Gridded(Linear()))
     end
 
     L = linspace(0, l[end], n)
     ΔL = step(L)
 
-    z₌ = @. evaluate(x, L) + im*evaluate(y, L)
+    z₌ = z_spline[L]
     splines₌ = map(splines) do spline
-        evaluate.(spline, L)
+        spline[L]
     end
 
     ẑ = dct(z₌)
