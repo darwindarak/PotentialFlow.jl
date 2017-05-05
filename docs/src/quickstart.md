@@ -1,4 +1,4 @@
-# Getting Started
+# [Getting Started](@id getting-started)
 
 This getting started guide will introduce the main components of **VortexModel.jl**.
 The code examples here should be directly copy-paste-able into the Julia REPL (even with the `julia>` prompt and sample results).
@@ -30,9 +30,9 @@ For example, here we create five point vortices and five vortex blobs:
 ```jldoctest quickstart
 julia> N = 5;
 
-julia> zs₀ = Complex.(randn(N), randn(N));
+julia> zs = Complex.(randn(N), randn(N));
 
-julia> points = Vortex.Point.(zs₀ + 1.5, rand(N))
+julia> points = Vortex.Point.(zs + 1.5, rand(N))
 5-element Array{VortexModel.Vortex.Points.Point,1}:
  Point Vortex: z = 1.797 + 0.311im, Γ = 0.425
  Point Vortex: z = 1.882 + 2.295im, Γ = 0.773
@@ -40,7 +40,7 @@ julia> points = Vortex.Point.(zs₀ + 1.5, rand(N))
  Point Vortex: z = 1.49 + 0.53im, Γ = 0.209
  Point Vortex: z = 0.661 + 0.431im, Γ = 0.251
 
-julia> blobs = Vortex.Blob.(zs₀ - 1.5, rand(N), 0.1)
+julia> blobs = Vortex.Blob.(zs - 1.5, rand(N), 0.1)
 5-element Array{VortexModel.Vortex.Blobs.Blob,1}:
  Vortex Blob: z = -1.203 + 0.311im, Γ = 0.02, δ = 0.1
  Vortex Blob: z = -1.118 + 2.295im, Γ = 0.288, δ = 0.1
@@ -189,10 +189,83 @@ induce_velocity!(vels[1], points, src)
 induce_velocity!(vels[2], blobs, src)
 induce_velocity!(vels[2], blobs, blobs)
 ```
-This becomes difficult to keep track of when `sys` gets larger or more complicated (e.g. nexted collection of elements).
+This becomes difficult to keep track of when `sys` gets larger or more complicated (e.g. nested collection of elements).
 Instead, we can use the `self_induce_velocity!` function, which takes care of applying all the pairwise interactions (recursively if need be):
 ```jldoctest quickstart
 julia> reset_velocity!(vels, sys);
 
 julia> self_induce_velocity!(vels, sys);
 ```
+
+## Time Marching
+
+```@setup timemarching
+using VortexModel
+using PyPlot
+srand(1)
+
+function plot_system(sys, filename)
+    clf()
+    for cluster in sys
+        scatter(real.(Vortex.position.(cluster)),
+                imag.(Vortex.position.(cluster)),
+                c = Vortex.circulation.(cluster),
+                vmin = 0, vmax = 1, alpha = 0.7,
+                cmap = PyPlot.get_cmap("Reds"))
+    end
+    colorbar(label="\$\\Gamma\$")
+    axis(:scaled)
+    axis([-3,3,-3,3])
+    savefig(filename)
+    nothing
+end
+```
+Now that we compute the velocities of a system of vortex elements, we can march the system forward in time to simulate its behavior.
+As an example, we will simulate of two clusters of vortex blobs merging.
+```@example timemarching
+N = 200
+zs = Complex.(0.5randn(N), 0.5randn(N))
+Γs  = @. exp(-4abs2(zs))
+cluster₁ = Vortex.Blob.(zs + 1, Γs, 0.01)
+cluster₂ = Vortex.Blob.(zs - 1, Γs, 0.01)
+
+sys = (cluster₁, cluster₂)
+vels = allocate_velocity(sys)
+plot_system(sys, "initial_clusters.svg") # hide
+```
+!!! warning
+    Functions for plotting vortex elements are still waiting for a
+    couple more issues to be fixed on
+    [Plots.jl](github.com/JuliaPlots/Plots.jl).  For now, we can use
+    [PyPlot](github.com/JuliaPy/PyPlot.jl) directly as follows:
+    ```julia
+    using PyPlot
+    for cluster in sys
+        scatter(real.(Vortex.position.(cluster)),
+                imag.(Vortex.position.(cluster)),
+                c = Vortex.circulation.(cluster),
+                vmin = 0, vmax = 1, alpha = 0.7,
+                cmap = PyPlot.get_cmap("Reds"))
+    end
+    colorbar()
+    axis(:scaled)
+    axis([-3,3,-3,3])
+    ```
+![](initial_clusters.svg)
+
+Given an array or tuple of vortex elements and their velocities, we can compute their positions after some time interval with the `advect!(x₊, x, ẋ, Δt)` function, where
+- `x₊` is where the new states are stored
+- `x` is the current state
+- `Δt` is the time interval
+- `ẋ` is the velocity.
+In our case, we will let `x₊` and `x` both be set to `sys`:
+```@example timemarching
+Δt = 0.01
+for t in 0:Δt:1.0
+    reset_velocity!(vels, sys)
+    self_induce_velocity!(vels, sys)
+    advect!(sys, sys, vels, Δt)
+end
+plot_system(sys, "final_clusters.svg") # hide
+```
+![](final_clusters.svg)
