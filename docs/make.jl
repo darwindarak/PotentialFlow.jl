@@ -9,7 +9,8 @@ makedocs(
         "Vortex Elements" => "elements.md",
         "Computing Velocities" => "velocities.md",
         "Time Marching" => "timemarching.md"
-    ]
+    ],
+    strict = true
 )
 
 if "DOCUMENTER_KEY" in keys(ENV)

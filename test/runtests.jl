@@ -9,4 +9,6 @@ using VortexModel
     @includetests ARGS
 end
 
-include("../docs/make.jl")
+if isempty(ARGS)
+    include("../docs/make.jl")
+end
