@@ -77,7 +77,175 @@ var documenterSearchIndex = {"docs": [
     "page": "Vortex Elements",
     "title": "Vortex Elements",
     "category": "section",
-    "text": "Coming soon..."
+    "text": "DocTestSetup = quote\nusing VortexModel\nsrand(1)\nendThe library currently has four built-in vortex types:Vortex.Point\nVortex.Blob\nVortex.Sheet\nVortex.Plate (at the moment, there can only be one plate in the fluid at at time)Most functions in the library that act on vortex elements can take either a single vortex element, or a collection of elements. These collections can be represented as an array or a tuple. Arrays should be used when the elements are the same type, for example:julia> points = Vortex.Point.(rand(Complex128, 5), rand(5))\n5-element Array{VortexModel.Vortex.Points.Point,1}:\n Point Vortex: z = 0.236 + 0.347im, Γ = 0.556\n Point Vortex: z = 0.313 + 0.008im, Γ = 0.437\n Point Vortex: z = 0.489 + 0.211im, Γ = 0.425\n Point Vortex: z = 0.952 + 1.0im, Γ = 0.773\n Point Vortex: z = 0.252 + 0.987im, Γ = 0.281\n\njulia> Vortex.impulse(points)\n1.3362266530178137 - 1.2821936908564113im\n\njulia> blobs = [Vortex.Blob(rand(Complex128), rand(), 0.1) for i in 1:5]\n5-element Array{VortexModel.Vortex.Blobs.Blob,1}:\n Vortex Blob: z = 0.209 + 0.251im, Γ = 0.02, δ = 0.1\n Vortex Blob: z = 0.288 + 0.86im, Γ = 0.077, δ = 0.1\n Vortex Blob: z = 0.64 + 0.874im, Γ = 0.279, δ = 0.1\n Vortex Blob: z = 0.751 + 0.645im, Γ = 0.078, δ = 0.1\n Vortex Blob: z = 0.848 + 0.086im, Γ = 0.553, δ = 0.1\n\njulia> Vortex.impulse(blobs)\n0.41217890550975256 - 0.7325028967929701imKnowing that every element has the same type allows the compiler to perform more aggressive optimizations. Tuples are used when we want to mix and match different vortex types. For example:julia> sys = (points, blobs);\n\njulia> Vortex.impulse(sys)\n1.7484055585275664 - 2.0146965876493814imThis rest of this page documents the data types that represent these elements and some key functions that act on them. For more detailed examples, please refer to the Jupyter notebooks."
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Points.Point",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Points.Point",
+    "category": "Type",
+    "text": "Vortex.Point <: Vortex.PointSource\n\nAn immutable structure representing a point vortex\n\nFields\n\nz: position\nΓ: circulation\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Blobs.Blob",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Blobs.Blob",
+    "category": "Type",
+    "text": "Vortex.Blob <: Vortex.PointSource\n\nAn immutable structure representing a vortex blob\n\nFields\n\nz: position\nΓ: circulation\nδ: blob radius\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Sheets.Sheet",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.Sheet",
+    "category": "Type",
+    "text": "Vortex.Sheet <: Vortex.CompositeSource\n\nA vortex sheet represented by vortex blob control points\n\nFields\n\nblobs: the underlying array of vortex blobs\nΓs: the cumulated sum of circulation starting from the first control point\nδ: the blob radius of all the vortex blobs\n\nConstructors:\n\nSheet(zs, Γs, δ) where zs is an array of positions for the control points\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Plates.Plate",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Plates.Plate",
+    "category": "Type",
+    "text": "Vortex.Plate <: VortexCompositeSource\n\nAn infinitely thin, flat plate, represented as a bound vortex sheet\n\nFields\n\nL\nchord length\nc\ncentroid\nα\ncentroid velocity\nΓ\ntotal circulation\nN\nnumber of control points\nss\nnormalized positions (within [-1, 1]) of the control points\nzs\ncontrol point coordinates\nA\nChebyshev coefficients of the normal component of velocity induced along the plate by ambient vorticity\nC\nChebyshev coefficients of the velocity induced along the plate by ambient vorticity\nB₀\nzeroth Chebyshev coefficient associated with body motion\nB₁\nfirst Chebyshev coefficient associated with body motion\ndct!\nPreplanned DCT used to perform the discrete Chebyshev transform\n\nConstructors\n\nPlate(N, L, c, α)\n\n\n\n"
+},
+
+{
+    "location": "elements.html#Built-in-Vortex-Types-1",
+    "page": "Vortex Elements",
+    "title": "Built-in Vortex Types",
+    "category": "section",
+    "text": "Vortex.Point\nVortex.Blob\nVortex.Sheet\nVortex.Plate"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.position",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.position",
+    "category": "Function",
+    "text": "Vortex.position(src::PointSource)\n\nReturns the complex position of a PointSource type vortex element This is a required method for all subtypes of PointSource.\n\nExample\n\njulia> point = Vortex.Point(1.0 + 0.0im, 1.0);\n\njulia> Vortex.position(point)\n1.0 + 0.0im\n\njulia> points = Vortex.Point.([1.0im, 2.0im], 1.0);\n\njulia> Vortex.position.(points)\n2-element Array{Complex{Float64},1}:\n 0.0+1.0im\n 0.0+2.0im\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.circulation",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.circulation",
+    "category": "Function",
+    "text": "Vortex.circulation(src)\n\nReturns the total circulation contained in src This is a required method for all vortex types.\n\nExample\n\njulia> points = Vortex.Point.([1.0im, 2.0im], [1.0, 2.0]);\n\njulia> Vortex.circulation(points[1])\n1.0\n\njulia> Vortex.circulation(points)\n3.0\n\njulia> Vortex.circulation.(points)\n2-element Array{Float64,1}:\n 1.0\n 2.0\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.impulse",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.impulse",
+    "category": "Function",
+    "text": "Vortex.impulse(src)\n\nReturn the aerodynamic impulse of src about (0,0):\n\nP = int boldsymbolx times boldsymbolomegamathrmdA\n\nThis is a required method for all vortex types.\n\nExample\n\njulia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(1.0im, -π, 0.1));\n\njulia> Vortex.impulse(sys[1])\n3.141592653589793 + 0.0im\n\njulia> Vortex.impulse(sys)\n0.0 + 0.0im\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.advect",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.advect",
+    "category": "Function",
+    "text": "advect(src::PointSource, velocity::Complex128, Δt)\n\nReturn a new vortex element that represents src advected by velocity over Δt If this method is implemented by any type T <: PointSource, then an array of type AbstractArray{T} can be passed in the first two arguments of advect!.\n\nExample\n\njulia> point = Vortex.Point(1.0 + 0.0, 1.0);\n\njulia> advect(point, 1.0im, 1e-2)\nPoint Vortex: z = 1.0 + 0.01im, Γ = 1.0\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.advect!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.advect!",
+    "category": "Function",
+    "text": "advect!(srcs₊, srcs₋, vels, Δt)\n\nMoves the elements in srcs₋ by their corresponding velocity in vels over the interval Δt and store the results in src₊ srcs₋ and srcs₊ can be either a array of vortex elements or a tuple.\n\nExample\n\njulia> points₋ = [Vortex.Point(x + 0im, 1.0) for x in 1:5];\n\njulia> points₊ = Vector{Vortex.Point}(5);\n\njulia> vels = [ y*im for y in 1.0:5 ];\n\njulia> advect!(points₊, points₋, vels, 1e-2)\n\njulia> points₊\n5-element Array{VortexModel.Vortex.Points.Point,1}:\n Point Vortex: z = 1.0 + 0.01im, Γ = 1.0\n Point Vortex: z = 2.0 + 0.02im, Γ = 1.0\n Point Vortex: z = 3.0 + 0.03im, Γ = 1.0\n Point Vortex: z = 4.0 + 0.04im, Γ = 1.0\n Point Vortex: z = 5.0 + 0.05im, Γ = 1.0\n\n\n\n"
+},
+
+{
+    "location": "elements.html#Vortex-Properties-1",
+    "page": "Vortex Elements",
+    "title": "Vortex Properties",
+    "category": "section",
+    "text": "Vortex.position\nVortex.circulation\nVortex.impulse\nadvect\nadvect!"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Sheets.truncate!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.truncate!",
+    "category": "Function",
+    "text": "Vortex.Sheets.truncate!(sheet, n::Int)\n\nRemove segments 0:n from sheet, and return the circulation in those segments.\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> Vortex.Sheets.truncate!(sheet, 5)\n4.0\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Sheets.remesh!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.remesh!",
+    "category": "Function",
+    "text": "Vortex.Sheets.remesh!(sheet, zs, Γs)\n\nRedistribute the control points of the sheet to lie on zs with circulation Γs.\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> Vortex.Sheets.remesh!(sheet, 0:0.2:2, 2sheet.Γs)\nVortex Sheet: L ≈ 2.0, Γ = 20.0, δ = 0.2\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Sheets.split!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.split!",
+    "category": "Function",
+    "text": "Vortex.Sheets.split!(sheet, n::Int)\n\nRemove segments 0:n from sheet, and return those segments as a new sheet.\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> sheet₋ = Vortex.Sheets.split!(sheet, 5)\nVortex Sheet: L ≈ 0.4, Γ = 4.0, δ = 0.2\n\njulia> sheet\nVortex Sheet: L ≈ 0.6, Γ = 6.0, δ = 0.2\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Sheets.filter!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.filter!",
+    "category": "Function",
+    "text": "Vortex.Sheets.filter!(sheet, Δs, Δf)\n\nApply Fourier filtering to the sheet position and strengths.  The control points are redistributed to maintain a nominal point spacing of of Δs, and the filtering removes any length scales smaller than Δf.\n\n\n\n"
+},
+
+{
+    "location": "elements.html#Methods-on-Vortex-Sheets-1",
+    "page": "Vortex Elements",
+    "title": "Methods on Vortex Sheets",
+    "category": "section",
+    "text": "Vortex.Sheets.truncate!\nVortex.Sheets.remesh!\nVortex.Sheets.split!\nVortex.Sheets.filter!"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Plates.enforce_no_flow_through!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Plates.enforce_no_flow_through!",
+    "category": "Function",
+    "text": "enforce_no_flow_through!(p::Plate, motion, elements)\n\nUpdate the plate, p, to enforce the no-flow-through condition given ambient vortex elements, elements, and while moving with kinematics specified by motion.\n\nExample\n\njulia> plate = Vortex.Plate(128, 2.0, 0.0, π/3)\nPlate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 60.0ᵒ\n       LESP = 0.0, TESP = 0.0\n\njulia> motion = allocate_velocity(plate); motion.ċ = 1.0;\n\njulia> point = Vortex.Point(0.0 + 2im, 1.0);\n\njulia> Vortex.enforce_no_flow_through!(plate, motion, point)\n\njulia> plate\nPlate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 60.0ᵒ\n       LESP = 1.27, TESP = -1.93\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Plates.vorticity_flux",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Plates.vorticity_flux",
+    "category": "Function",
+    "text": "vorticity_flux(p::Plate, v₁, v₂,\n               lesp = 0.0, tesp = 0.0,\n               ∂C₁ = Vector{Complex128}(plate.N),\n               ∂C₂ = Vector{Complex128}(plate.N))\n\nReturn strengths of new vortex elements that satisfies edge suction parameters. For a given edge, if the current suction parameter is less than the criticial suction parameter, then no vorticity is released.  If it is higher, however, vorticity will be released so that the suction parameter equals the critical value.\n\nArguments\n\np: the plate\nv₁, v₂: the vortex elements (with unit circulation) that the vorticity flux is going into\nlesp, tesp: the critical leading and trailing edge suction parameters we want to enforce.  By default, both parameters are set to 0.0 to enforce the Kutta condition on both edges.  We can disable vortex shedding from an edge by setting the its critical suction parameter to Inf\n\nReturns\n\nΓ₁, Γ₂: the strengths that the vortex element should have in order to satisfy the edge suction parameters\n∂C₁, ∂C₂: Chebyshev coefficients of the normal velocity induced by the vortex elements Instead of running enforce_bc! with the new vortex elements, we can use this matrix to directly update the Chebyshev coefficients associated with the bound vortex sheet without recomputing all the velocities.\n\nExample\n\nEnforcing the trailing edge Kutta condition with an point vortex at negative infinity:\n\njulia> plate = Vortex.Plate(128, 2.0, 0.0, π/6)\nPlate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 30.0ᵒ\n       LESP = 0.0, TESP = 0.0\n\njulia> motion = allocate_velocity(plate);\n\njulia> motion.ċ = 1.0;\n\njulia> Vortex.enforce_no_flow_through!(plate, motion, ())\n\njulia> point = Vortex.Point(-Inf, 1.0);\n\njulia> _, Γ, _, _ = Vortex.vorticity_flux(plate, (), point,  Inf);\n\njulia> Γ # should equal -πULsin(α) = -π\n-3.1415926535897927\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Plates.vorticity_flux!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Plates.vorticity_flux!",
+    "category": "Function",
+    "text": "vorticity_flux!(p::Plate, v₁, v₂,\n                lesp = 0.0, tesp = 0.0,\n                ∂C₁ = Vector{Complex128}(plate.N),\n                ∂C₂ = Vector{Complex128}(plate.N))\n\nIn-place version of vorticity_flux, except instead of just returning the possible changes in plate Chebyshev coefficients, we modify plate.C with those changes so that no-flow-through is enforced in the presence of v₁ and v₂ with strengths that satisfy the suction parameters.\n\n\n\n"
+},
+
+{
+    "location": "elements.html#Methods-on-Plates-1",
+    "page": "Vortex Elements",
+    "title": "Methods on Plates",
+    "category": "section",
+    "text": "Vortex.Plates.enforce_no_flow_through!\nVortex.Plates.vorticity_flux\nVortex.Plates.vorticity_flux!"
+},
+
+{
+    "location": "elements.html#Index-1",
+    "page": "Vortex Elements",
+    "title": "Index",
+    "category": "section",
+    "text": "Pages = [\"elements.md\"]"
 },
 
 {
