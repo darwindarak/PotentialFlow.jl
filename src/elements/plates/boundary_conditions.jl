@@ -1,7 +1,25 @@
 """
-    enforce_no_flow_through!(p::Plate, elements)
+    enforce_no_flow_through!(p::Plate, motion, elements)
 
-Update the plate, `p`, to enforce the no-flow-through condition given a collection of ambient vortex elements, `elements`.
+Update the plate, `p`, to enforce the no-flow-through condition given ambient vortex elements, `elements`, and while moving with kinematics specified by `motion`.
+
+# Example
+
+```jldoctest
+julia> plate = Vortex.Plate(128, 2.0, 0.0, π/3)
+Plate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 60.0ᵒ
+       LESP = 0.0, TESP = 0.0
+
+julia> motion = allocate_velocity(plate); motion.ċ = 1.0;
+
+julia> point = Vortex.Point(0.0 + 2im, 1.0);
+
+julia> Vortex.enforce_no_flow_through!(plate, motion, point)
+
+julia> plate
+Plate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 60.0ᵒ
+       LESP = 1.27, TESP = -1.93
+```
 """
 function enforce_no_flow_through!(p::Plate, ṗ, elements)
     @get p (L, C, α)
@@ -45,23 +63,46 @@ end
 """
     vorticity_flux(p::Plate, v₁, v₂,
                    lesp = 0.0, tesp = 0.0,
-                   ∂A₁ = Vector{Complex128}(plate.N),
-                   ∂A₂ = Vector{Complex128}(plate.N))
+                   ∂C₁ = Vector{Complex128}(plate.N),
+                   ∂C₂ = Vector{Complex128}(plate.N))
 
 Return strengths of new vortex elements that satisfies edge suction parameters.
 For a given edge, if the current suction parameter is less than the criticial suction parameter, then no vorticity is released.  If it is higher, however, vorticity will be released so that the suction parameter equals the critical value.
 
-# Arguments:
+# Arguments
 
 - `p`: the plate
 - `v₁, v₂`: the vortex elements (with unit circulation) that the vorticity flux is going into
 - `lesp`, `tesp`: the critical leading and trailing edge suction parameters we want to enforce.  By default, both parameters are set to 0.0 to enforce the Kutta condition on both edges.  We can disable vortex shedding from an edge by setting the its critical suction parameter to `Inf`
 
-# Returns:
+# Returns
 
 - `Γ₁, Γ₂`: the strengths that the vortex element should have in order to satisfy the edge suction parameters
-- `∂A₁, ∂A₂`: Chebyshev coefficients of the normal velocity induced by the vortex elements
+- `∂C₁, ∂C₂`: Chebyshev coefficients of the normal velocity induced by the vortex elements
   Instead of running `enforce_bc!` with the new vortex elements, we can use this matrix to directly update the Chebyshev coefficients associated with the bound vortex sheet without recomputing all the velocities.
+
+# Example
+
+Enforcing the trailing edge Kutta condition with an point vortex at negative infinity:
+
+```jldoctest
+julia> plate = Vortex.Plate(128, 2.0, 0.0, π/6)
+Plate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 30.0ᵒ
+       LESP = 0.0, TESP = 0.0
+
+julia> motion = allocate_velocity(plate);
+
+julia> motion.ċ = 1.0;
+
+julia> Vortex.enforce_no_flow_through!(plate, motion, ())
+
+julia> point = Vortex.Point(-Inf, 1.0);
+
+julia> _, Γ, _, _ = Vortex.vorticity_flux(plate, (), point,  Inf);
+
+julia> Γ # should equal -πULsin(α) = -π
+-3.1415926535897927
+```
 """
 function vorticity_flux(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
                         ∂C₁ = Vector{Complex128}(plate.N),
@@ -107,8 +148,8 @@ end
 """
     vorticity_flux!(p::Plate, v₁, v₂,
                     lesp = 0.0, tesp = 0.0,
-                    ∂A₁ = Vector{Complex128}(plate.N),
-                    ∂A₂ = Vector{Complex128}(plate.N))
+                    ∂C₁ = Vector{Complex128}(plate.N),
+                    ∂C₂ = Vector{Complex128}(plate.N))
 
 In-place version of [`vorticity_flux`](@ref), except instead of just
 returning the possible changes in plate Chebyshev coefficients, we

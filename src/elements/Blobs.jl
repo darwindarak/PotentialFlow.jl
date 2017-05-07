@@ -5,6 +5,8 @@ export Blob
 import ..Vortex
 
 """
+    Vortex.Blob <: Vortex.PointSource
+
 An immutable structure representing a vortex blob
 
 ## Fields

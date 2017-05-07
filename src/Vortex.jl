@@ -32,7 +32,7 @@ module Vortex
 export allocate_velocity, reset_velocity!,
     induce_velocity, induce_velocity!,
     mutually_induce_velocity!, self_induce_velocity!,
-    advect!, @get
+    advect, advect!, @get
 
 include("Utils.jl")
 using .Utils
@@ -50,6 +50,22 @@ const TargetTypes = (Complex128, PointSource, CompositeSource, Collection)
 
 Returns the complex position of a `PointSource` type vortex element
 This is a required method for all subtypes of `PointSource`.
+
+# Example
+
+```jldoctest
+julia> point = Vortex.Point(1.0 + 0.0im, 1.0);
+
+julia> Vortex.position(point)
+1.0 + 0.0im
+
+julia> points = Vortex.Point.([1.0im, 2.0im], 1.0);
+
+julia> Vortex.position.(points)
+2-element Array{Complex{Float64},1}:
+ 0.0+1.0im
+ 0.0+2.0im
+```
 """
 function position end
 
@@ -58,14 +74,46 @@ function position end
 
 Returns the total circulation contained in `src`
 This is a required method for all vortex types.
+
+# Example
+
+```jldoctest
+julia> points = Vortex.Point.([1.0im, 2.0im], [1.0, 2.0]);
+
+julia> Vortex.circulation(points[1])
+1.0
+
+julia> Vortex.circulation(points)
+3.0
+
+julia> Vortex.circulation.(points)
+2-element Array{Float64,1}:
+ 1.0
+ 2.0
+```
 """
 circulation(vs::Collection) = mapreduce(circulation, +, 0.0, vs)
 
-"""
+doc"""
     Vortex.impulse(src)
 
-Returns the aerodynamic impulse of `src` relative to (0, 0)
+Return the aerodynamic impulse of `src` about (0,0):
+```math
+P := \int \boldsymbol{x} \times \boldsymbol{\omega}\,\mathrm{d}A.
+```
 This is a required method for all vortex types.
+
+# Example
+
+```jldoctest
+julia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(1.0im, -π, 0.1));
+
+julia> Vortex.impulse(sys[1])
+3.141592653589793 + 0.0im
+
+julia> Vortex.impulse(sys)
+0.0 + 0.0im
+```
 """
 impulse(vs::Collection) = mapreduce(impulse, +, 0.0, vs)
 
@@ -234,11 +282,20 @@ function self_induce_velocity!(ws, array::PointArray)
 end
 
 """
-    advect(src::PointSource, velocity, Δt)
+    advect(src::PointSource, velocity::Complex128, Δt)
 
 Return a new vortex element that represents `src` advected by `velocity` over `Δt`
 If this method is implemented by any type `T <: PointSource`,
 then an array of type `AbstractArray{T}` can be passed in the first two arguments of [`advect!`](@ref).
+
+# Example
+
+```jldoctest
+julia> point = Vortex.Point(1.0 + 0.0, 1.0);
+
+julia> advect(point, 1.0im, 1e-2)
+Point Vortex: z = 1.0 + 0.01im, Γ = 1.0
+```
 """
 function advect end
 
@@ -254,6 +311,26 @@ end
 
 Moves the elements in `srcs₋` by their corresponding velocity in `vels` over the interval `Δt` and store the results in `src₊`
 `srcs₋` and `srcs₊` can be either a array of vortex elements or a tuple.
+
+# Example
+
+```jldoctest
+julia> points₋ = [Vortex.Point(x + 0im, 1.0) for x in 1:5];
+
+julia> points₊ = Vector{Vortex.Point}(5);
+
+julia> vels = [ y*im for y in 1.0:5 ];
+
+julia> advect!(points₊, points₋, vels, 1e-2)
+
+julia> points₊
+5-element Array{VortexModel.Vortex.Points.Point,1}:
+ Point Vortex: z = 1.0 + 0.01im, Γ = 1.0
+ Point Vortex: z = 2.0 + 0.02im, Γ = 1.0
+ Point Vortex: z = 3.0 + 0.03im, Γ = 1.0
+ Point Vortex: z = 4.0 + 0.04im, Γ = 1.0
+ Point Vortex: z = 5.0 + 0.05im, Γ = 1.0
+```
 """
 function advect!(group₊::T, group₋::T, ws, Δt) where {T <: Tuple}
     for i in 1:length(group₋)

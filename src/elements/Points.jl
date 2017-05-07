@@ -4,7 +4,9 @@ export Point
 import ..Vortex
 
 """
-An immutable structure representing a point vortex 
+    Vortex.Point <: Vortex.PointSource
+
+An immutable structure representing a point vortex
 
 ## Fields
 

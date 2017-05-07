@@ -9,13 +9,15 @@ import ..Vortex:@get, MappedVector
 import Base: length
 
 """
+    Vortex.Plate <: VortexCompositeSource
+
 An infinitely thin, flat plate, represented as a bound vortex sheet
 
 # Fields
 $(FIELDS)
 
 # Constructors
-- `Plate(N, L, c, α)
+- `Plate(N, L, c, α)`
 """
 mutable struct Plate <: Vortex.CompositeSource
     "chord length"
@@ -171,7 +173,9 @@ include("plates/boundary_conditions.jl")
 include("plates/circulation.jl")
 
 function Base.show(io::IO, p::Plate)
-    print(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(round(rad2deg(p.α),2))ᵒ")
+    lesp, tesp = suction_parameters(p)
+    println(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(round(rad2deg(p.α),2))ᵒ")
+    print(io, "       LESP = $(round(lesp,2)), TESP = $(round(tesp,2))")
 end
 
 end

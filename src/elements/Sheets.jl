@@ -5,6 +5,8 @@ import ..Vortex
 import Base: length
 
 """
+    Vortex.Sheet <: Vortex.CompositeSource
+
 A vortex sheet represented by vortex blob control points
 
 ## Fields
