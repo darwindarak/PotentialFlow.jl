@@ -21,7 +21,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Installation",
     "category": "section",
-    "text": "This package requires Julia 0.6- and above. It is not a registered package, so it should be installed with:julia> Pkg.clone(\"git@github.com:darwindarak/VortexModel.jl.git\")Since it is still under heavy development, you should runjulia> Pkg.test(\"VortexModel\")to make sure things are working as intended.The plots in this documentation are generated using PyPlot.jl. You might want to install that too to follow the examples in the getting started guide or the Jupyter notebooks."
+    "text": "This package requires Julia 0.6- and above. It is not a registered package, so it should be installed with:julia> Pkg.clone(\"git@github.com:darwindarak/VortexModel.jl.git\")Since it is still under heavy development, you should runjulia> Pkg.test(\"VortexModel\") # might take some timeto make sure things are working as intended andjulia> Pkg.update()to get the most recent version of the library and its dependencies.The plots in this documentation are generated using PyPlot.jl. You might want to install that too to follow the examples in the getting started guide or the Jupyter notebooks."
 },
 
 {
@@ -261,7 +261,79 @@ var documenterSearchIndex = {"docs": [
     "page": "Computing Velocities",
     "title": "Computing Velocities",
     "category": "section",
-    "text": "Coming soon..."
+    "text": "DocTestSetup = quote\nusing VortexModel\nsrand(1)\nend"
+},
+
+{
+    "location": "velocities.html#Sources-and-Targets-1",
+    "page": "Computing Velocities",
+    "title": "Sources and Targets",
+    "category": "section",
+    "text": "Velocity computations in vortex models essentially boils down to pairwise interactions between sources and targets. We may be interested in how a system of vortex elements induces velocity on at point, at multiple points, on other vortex elements, or on itself.The three key functions for computing velocities areinduce_velocity(target, source)\ninduce_velocity!(velocity, target, source)\nself_induce_velocity!(velocity, source)The ! suffix in the last two function signatures indicate that the velocity argument will be overwritten by the results of the computation.Sources of velocity can be any one of:a single vortex element, e.g.\njulia> src = Vortex.Point(im, 1.0);\n\njulia> induce_velocity(0.0 + 0.0im, src)\n0.15915494309189535 - 0.0im\nan array of homogenous vortex types, e.g.\njulia> srcs = Vortex.Point.([im, 1.0], 1.0);\n\njulia> induce_velocity(0.0 + 0.0im, srcs)\n0.15915494309189535 - 0.15915494309189535im\na tuple of different vortex types, e.g.\njulia> srcs₂ = Vortex.Point.([2im, 2.0], -2.0);\n\njulia> sys = (srcs, srcs₂);\n\njulia> induce_velocity(0.0 + 0.0im, sys)\n0.0 + 0.0imIn the examples above, the target was just complex number 0.0 + 0.0im. However we can also havean array of complex numbers, e.g.\njulia> targets = Complex128.(1:3);\n\njulia> induce_velocity(targets, src)\n3-element Array{Complex{Float64},1}:\n 0.0795775+0.0795775im\n  0.031831+0.063662im\n 0.0159155+0.0477465im\nan array of vortex elements, e.g.\njulia> targets₂ = Vortex.Point.(im*(1.0:3), 1.0);\n\njulia> induce_velocity(targets₂, src)\n3-element Array{Complex{Float64},1}:\n        0.0+0.0im\n  -0.159155+0.0im\n -0.0795775+0.0im\na tuple with any of the above, e.g.\njulia> targets₃ = Vortex.Point.(-3.0:-1, -1.0);\n\njulia> sys = (targets, (targets₂, targets₃));\n\njulia> induce_velocity(sys, src)\n(Complex{Float64}[0.0795775+0.0795775im, 0.031831+0.063662im, 0.0159155+0.0477465im], (Complex{Float64}[0.0+0.0im, -0.159155+0.0im, -0.0795775+0.0im], Complex{Float64}[0.0159155-0.0477465im, 0.031831-0.063662im, 0.0795775-0.0795775im]))Since the structure of these targets can get complicated, e.g. nested tuples), the library also provides a set of functions for creating and resizing the velocity variable for in-place computations. For example:julia> vels = allocate_velocity(sys)\n(Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im], (Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im]))\n\njulia> induce_velocity!(vels, sys, src)\n(Complex{Float64}[0.0795775+0.0795775im, 0.031831+0.063662im, 0.0159155+0.0477465im], (Complex{Float64}[0.0+0.0im, -0.159155+0.0im, -0.0795775+0.0im], Complex{Float64}[0.0159155-0.0477465im, 0.031831-0.063662im, 0.0795775-0.0795775im]))The remaining sections of this page list the documentation for all the relevant methods for computing velocities. More detailed examples that show these methods working together can be found in the getting started guide and the Jupyter notebooks."
+},
+
+{
+    "location": "velocities.html#VortexModel.Vortex.allocate_velocity",
+    "page": "Computing Velocities",
+    "title": "VortexModel.Vortex.allocate_velocity",
+    "category": "Function",
+    "text": "allocate_velocity(srcs)\n\nAllocate arrays of Complex128 to match the structure of srcs\n\nExample\n\njulia> points = Vortex.Point.(rand(Complex128, 2), rand(2));\n\njulia> blobs  = Vortex.Blob.(rand(Complex128, 3), rand(3), rand(3));\n\njulia> allocate_velocity(points)\n2-element Array{Complex{Float64},1}:\n 0.0+0.0im\n 0.0+0.0im\n\njulia> allocate_velocity((points, blobs))\n(Complex{Float64}[0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im])\n\n\n\n"
+},
+
+{
+    "location": "velocities.html#VortexModel.Vortex.reset_velocity!",
+    "page": "Computing Velocities",
+    "title": "VortexModel.Vortex.reset_velocity!",
+    "category": "Function",
+    "text": "reset_velocity!(vels[, srcs])\n\nSet all velocities in vels to zero\n\nIf srcs is provided, then the arrays in vels are resized their source counterpart, if necessary.\n\nExample\n\njulia> ẋs = (rand(Complex128, 1), rand(Complex128, 1))\n(Complex{Float64}[0.236033+0.346517im], Complex{Float64}[0.312707+0.00790928im])\n\njulia> points = Vortex.Point.(rand(Complex128, 2), rand(2));\n\njulia> blobs  = Vortex.Blob.(rand(Complex128, 3), rand(3), rand(3));\n\njulia> reset_velocity!(ẋs, (points, blobs));\n\njulia> ẋs\n(Complex{Float64}[0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im])\n\n\n\n"
+},
+
+{
+    "location": "velocities.html#VortexModel.Vortex.induce_velocity",
+    "page": "Computing Velocities",
+    "title": "VortexModel.Vortex.induce_velocity",
+    "category": "Function",
+    "text": "induce_velocity(target, element)\n\nCompute the velocity induced by element on target\n\ntarget can be:\n\na Complex128\na subtype of Vortex.PointSource\nan array or tuple of vortex elements\n\nwhile the element can be:\n\nany subtype of Vortex.Element\nan array or tuple of vortex elements\n\nExample\n\njulia> z = rand(Complex128)\n0.23603334566204692 + 0.34651701419196046im\n\njulia> point = Vortex.Point(z, rand());\n\njulia> srcs = Vortex.Point.(rand(Complex128, 10), rand(10));\n\njulia> induce_velocity(z, srcs[1])\n0.08722212007570912 + 0.14002850279102955im\n\njulia> induce_velocity(point, srcs[1])\n0.08722212007570912 + 0.14002850279102955im\n\njulia> induce_velocity(z, srcs)\n-0.4453372874427177 - 0.10592646656959151im\n\njulia> induce_velocity(point, srcs)\n-0.4453372874427177 - 0.10592646656959151im\n\n\n\n"
+},
+
+{
+    "location": "velocities.html#VortexModel.Vortex.induce_velocity!",
+    "page": "Computing Velocities",
+    "title": "VortexModel.Vortex.induce_velocity!",
+    "category": "Function",
+    "text": "induce_velocity!(vels, target, element)\n\nCompute the velocity induced by element on target and store the result in vels\n\nvels should be the output of a call to allocate_velocity, target can be an array or tuple of vortex elements, while the element can be:\n\nany subtype of Vortex.Element\nan array or tuple of vortex elements\n\nExample\n\njulia> cluster₁ = Vortex.Point.(rand(Complex128, 5), rand(5));\n\njulia> cluster₂ = Vortex.Point.(rand(Complex128, 5), rand(5));\n\njulia> targets = (cluster₁, cluster₂);\n\njulia> sources = Vortex.Blob.(rand(Complex128), rand(10), 0.1);\n\njulia> ẋs = allocate_velocity(targets);\n\njulia> induce_velocity!(ẋs, targets, sources);\n\njulia> ẋs\n(Complex{Float64}[-1.28772-1.82158im, 1.9386-1.64147im, -1.56438+1.57158im, -0.626254+0.375842im, -0.806568-0.213201im], Complex{Float64}[-0.583672-2.26031im, -0.329778-1.43388im, 0.426927+1.55352im, -0.93755+0.241361im, -1.08949-0.35598im])\n\n\n\n"
+},
+
+{
+    "location": "velocities.html#VortexModel.Vortex.self_induce_velocity!",
+    "page": "Computing Velocities",
+    "title": "VortexModel.Vortex.self_induce_velocity!",
+    "category": "Function",
+    "text": "self_induce_velocity!(vels, elements)\n\nCompute the self induced velocity of one or more vortex elements\n\nThis involves a recursive call to self_induce_velocity! and pairwise calls to mutually_induce_velocity!.\n\nExample\n\njulia> points = Vortex.Point.([-1, 1], 1.0)\n2-element Array{VortexModel.Vortex.Points.Point,1}:\n Point Vortex: z = -1.0 + 0.0im, Γ = 1.0\n Point Vortex: z = 1.0 + 0.0im, Γ = 1.0\n\njulia> vels = allocate_velocity(points)\n2-element Array{Complex{Float64},1}:\n 0.0+0.0im\n 0.0+0.0im\n\njulia> self_induce_velocity!(vels, points)\n\njulia> vels # should be ±0.25im/π\n2-element Array{Complex{Float64},1}:\n 0.0-0.0795775im\n 0.0+0.0795775im\n\n\n\n"
+},
+
+{
+    "location": "velocities.html#VortexModel.Vortex.mutually_induce_velocity!",
+    "page": "Computing Velocities",
+    "title": "VortexModel.Vortex.mutually_induce_velocity!",
+    "category": "Function",
+    "text": "mutually_induce_velocity!(vs₁, vs₂, e₁, e₂)\n\nCompute the mutually induced velocities between e₁ and e₂ and store the results in vs₁ and vs₂\n\nThe default implementation simply calls induce_velocity! twice. This method is meant to be overwritten to take advantage of symmetries in certain pairwise vortex interations. For example, the velocity kernel for a point vortex is antisymmetric, so in computing the mutually induced velocities of two arrays of point vortices, we can half the number of calls to the velocity kernel.\n\n\n\n"
+},
+
+{
+    "location": "velocities.html#Methods-1",
+    "page": "Computing Velocities",
+    "title": "Methods",
+    "category": "section",
+    "text": "allocate_velocity\nreset_velocity!\ninduce_velocity\ninduce_velocity!\nself_induce_velocity!\nmutually_induce_velocity!"
+},
+
+{
+    "location": "velocities.html#Index-1",
+    "page": "Computing Velocities",
+    "title": "Index",
+    "category": "section",
+    "text": "Pages = [\"velocities.md\"]"
 },
 
 {
