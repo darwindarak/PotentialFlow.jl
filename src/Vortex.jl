@@ -122,13 +122,20 @@ impulse(vs::Collection) = mapreduce(impulse, +, 0.0, vs)
 
 Allocate arrays of `Complex128` to match the structure of `srcs`
 
-For example:
+# Example
 
-```julia
+```jldoctest
 julia> points = Vortex.Point.(rand(Complex128, 2), rand(2));
+
 julia> blobs  = Vortex.Blob.(rand(Complex128, 3), rand(3), rand(3));
+
 julia> allocate_velocity(points)
-(Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im])
+2-element Array{Complex{Float64},1}:
+ 0.0+0.0im
+ 0.0+0.0im
+
+julia> allocate_velocity((points, blobs))
+(Complex{Float64}[0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im])
 ```
 """
 function allocate_velocity(array::AbstractArray{T}) where {T <: Union{PointSource, Complex128}}
@@ -143,6 +150,22 @@ allocate_velocity(group::Tuple) = map(allocate_velocity, group)
 Set all velocities in `vels` to zero
 
 If `srcs` is provided, then the arrays in `vels` are resized their source counterpart, if necessary.
+
+# Example
+
+```jldoctest
+julia> ẋs = (rand(Complex128, 1), rand(Complex128, 1))
+(Complex{Float64}[0.236033+0.346517im], Complex{Float64}[0.312707+0.00790928im])
+
+julia> points = Vortex.Point.(rand(Complex128, 2), rand(2));
+
+julia> blobs  = Vortex.Blob.(rand(Complex128, 3), rand(3), rand(3));
+
+julia> reset_velocity!(ẋs, (points, blobs));
+
+julia> ẋs
+(Complex{Float64}[0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im])
+```
 """
 reset_velocity!(array::Vector{Complex128}) = fill!(array, zero(Complex128))
 
@@ -182,6 +205,28 @@ while the `element` can be:
 
 - any subtype of `Vortex.Element`
 - an array or tuple of vortex elements
+
+# Example
+```jldoctest
+julia> z = rand(Complex128)
+0.23603334566204692 + 0.34651701419196046im
+
+julia> point = Vortex.Point(z, rand());
+
+julia> srcs = Vortex.Point.(rand(Complex128, 10), rand(10));
+
+julia> induce_velocity(z, srcs[1])
+0.08722212007570912 + 0.14002850279102955im
+
+julia> induce_velocity(point, srcs[1])
+0.08722212007570912 + 0.14002850279102955im
+
+julia> induce_velocity(z, srcs)
+-0.4453372874427177 - 0.10592646656959151im
+
+julia> induce_velocity(point, srcs)
+-0.4453372874427177 - 0.10592646656959151im
+```
 """
 function induce_velocity(target::PointSource, source)
     induce_velocity(Vortex.position(target), source)
@@ -210,6 +255,25 @@ Compute the velocity induced by `element` on `target` and store the result in `v
 while the `element` can be:
 - any subtype of `Vortex.Element`
 - an array or tuple of vortex elements
+
+# Example
+
+```jldoctest
+julia> cluster₁ = Vortex.Point.(rand(Complex128, 5), rand(5));
+
+julia> cluster₂ = Vortex.Point.(rand(Complex128, 5), rand(5));
+
+julia> targets = (cluster₁, cluster₂);
+
+julia> sources = Vortex.Blob.(rand(Complex128), rand(10), 0.1);
+
+julia> ẋs = allocate_velocity(targets);
+
+julia> induce_velocity!(ẋs, targets, sources);
+
+julia> ẋs
+(Complex{Float64}[-1.28772-1.82158im, 1.9386-1.64147im, -1.56438+1.57158im, -0.626254+0.375842im, -0.806568-0.213201im], Complex{Float64}[-0.583672-2.26031im, -0.329778-1.43388im, 0.426927+1.55352im, -0.93755+0.241361im, -1.08949-0.35598im])
+```
 """
 function induce_velocity!(ws::AbstractArray, targets::AbstractArray, source)
     for i in 1:length(targets)
@@ -249,6 +313,27 @@ end
 Compute the self induced velocity of one or more vortex elements
 
 This involves a recursive call to `self_induce_velocity!` and pairwise calls to [`mutually_induce_velocity!`](@ref).
+
+# Example
+
+```jldoctest
+julia> points = Vortex.Point.([-1, 1], 1.0)
+2-element Array{VortexModel.Vortex.Points.Point,1}:
+ Point Vortex: z = -1.0 + 0.0im, Γ = 1.0
+ Point Vortex: z = 1.0 + 0.0im, Γ = 1.0
+
+julia> vels = allocate_velocity(points)
+2-element Array{Complex{Float64},1}:
+ 0.0+0.0im
+ 0.0+0.0im
+
+julia> self_induce_velocity!(vels, points)
+
+julia> vels # should be ±0.25im/π
+2-element Array{Complex{Float64},1}:
+ 0.0-0.0795775im
+ 0.0+0.0795775im
+```
 """
 function self_induce_velocity!(ws, group::Tuple)
     N = length(group)
