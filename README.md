@@ -23,4 +23,4 @@ julia> Pkg.update()
 ```
 to get the most recent version of the library and its dependencies.
 
-Examples can be found in the [documentation](darwindarak.github.io/VortexModel.jl) and the [Jupyter notebooks](https://github.com/darwindarak/VortexModel.jl/tree/master/examples).
+Examples can be found in the [documentation](https://darwindarak.github.io/VortexModel.jl) and the [Jupyter notebooks](https://github.com/darwindarak/VortexModel.jl/tree/master/examples).
