@@ -16,15 +16,15 @@ With this in mind, we want to construct a library that makes it
 
 This package requires Julia `0.6-` and above.
 It is not a registered package, so it should be installed with:
-```julia
+```julia-repl
 julia> Pkg.clone("git@github.com:darwindarak/VortexModel.jl.git")
 ```
 Since it is still under heavy development, you should run
-```julia
+```julia-repl
 julia> Pkg.test("VortexModel") # might take some time
 ```
 to make sure things are working as intended and
-```julia
+```julia-repl
 julia> Pkg.update()
 ```
 to get the most recent version of the library and its dependencies.
