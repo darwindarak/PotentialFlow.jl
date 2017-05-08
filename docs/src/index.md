@@ -21,9 +21,13 @@ julia> Pkg.clone("git@github.com:darwindarak/VortexModel.jl.git")
 ```
 Since it is still under heavy development, you should run
 ```julia
-julia> Pkg.test("VortexModel")
+julia> Pkg.test("VortexModel") # might take some time
 ```
-to make sure things are working as intended.
+to make sure things are working as intended and
+```julia
+julia> Pkg.update()
+```
+to get the most recent version of the library and its dependencies.
 
 The plots in this documentation are generated using [PyPlot.jl](github.com/JuliaPy/PyPlot.jl).
 You might want to install that too to follow the examples in the [getting started guide](@ref getting-started) or the [Jupyter notebooks](https://github.com/darwindarak/VortexModel.jl/tree/master/examples).
