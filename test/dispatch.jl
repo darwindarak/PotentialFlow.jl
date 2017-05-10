@@ -107,4 +107,34 @@
         @test wn ≈ wp
     end
 
+    @testset "Property Macro" begin
+        @test_throws ErrorException @eval Vortex (@property prop count Int)
+
+        @eval Vortex (@property induced count Int)
+        @eval Vortex.Points begin
+            Vortex.induce_count(::Complex128, ::Point) = 1
+        end
+        @eval Vortex.Blobs begin
+            Vortex.induce_count(::Complex128, ::Blob) = 1
+        end
+
+        N = rand(1:100)
+        points = Vortex.Point.(rand(Complex128, N), rand(N))
+        blobs  = Vortex.Blob.(rand(Complex128, N), rand(N), rand())
+
+        targets = rand(Complex128, rand(1:100))
+
+        @test Vortex.induce_count(targets[1], points) == N
+        @test Vortex.induce_count(targets[1], blobs) == N
+        @test Vortex.induce_count(targets[1], (points, blobs)) == 2N
+
+        out = Vortex.induce_count(targets, (points, blobs))
+        @test length(out) == length(targets)
+
+        out₂ = Vortex.allocate_count(targets)
+        Vortex.induce_count!(out₂, targets, (points, blobs))
+
+        @test out == out₂
+        @test all(out .== 2N)
+    end
 end
