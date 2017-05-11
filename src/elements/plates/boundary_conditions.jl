@@ -162,6 +162,7 @@ function vorticity_flux!(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
                         ∂C₂ = Vector{Complex128}(plate.N))
     Γ₁, Γ₂, _, _ = vorticity_flux(plate, v₁, v₂, lesp, tesp, ∂C₁, ∂C₂)
     @. plate.C += ∂C₁ + ∂C₂
+    plate.Γ -= Γ₁ + Γ₂
 
     return Γ₁, Γ₂, ∂C₁, ∂C₂
 end

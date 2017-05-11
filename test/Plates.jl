@@ -119,7 +119,7 @@
             ż₋ = conj(ż₋/J(η₋, 1))
 
             exp(-im*α).*(ż₋ .- ż₊)
-        end;       
+        end;
         @test norm(imag.(Δż_circle[2:end-1])) ≤ 1e-10
 
         points = Vortex.Point.(zs, Γs)
@@ -181,14 +181,14 @@
         C = deepcopy(plate.C)
 
         point = Vortex.Point(-Inf, 1.0);
-        _, Γ, _, _ = Vortex.Plates.vorticity_flux(plate, point, point, Inf, 0)
+        _, Γ, _, _ = Vortex.Plates.vorticity_flux!(plate, point, point, Inf, 0)
 
         ∂A = Vortex.Plates.influence_on_plate(plate, point)
         C .+= Γ.*∂A
 
         @test Γ ≈ -π*U*L*sin(α)
+        @test Γ == -plate.Γ
 
-        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, Vortex.Point(-Inf, Γ))
         _, b₋ = Vortex.Plates.suction_parameters(plate)
         @test abs(b₋) ≤ eps()
         @test Vortex.Plates.bound_circulation(-1.0, plate) == 0
@@ -244,18 +244,18 @@
         c = rand(Complex128)
         α = 0.5π*rand()
         L = 2rand()
-    
+
         points = Vortex.Point.(rand(Complex128, 10), rand(10))
-    
+
         plate  = Vortex.Plate(128, L, c, α)
         Vortex.Plates.enforce_no_flow_through!(plate, motion, points)
-    
+
         plate₊ = Vortex.Plate(128, L, c, α)
-    
+
         Δt = 1e-2
         advect!(plate₊, plate, motion, Δt)
         advect!(plate,  plate, motion, Δt)
-    
+
         @test length(plate₊) == length(plate)
         @test plate₊.C  == plate.C
         @test plate₊.zs == plate.zs
