@@ -10,14 +10,7 @@ and functions that act on collections vortex element types.
 
 ## Exported functions
 
-- [`induce_velocity`](@ref)
-- [`induce_velocity!`](@ref)
-- [`mutually_induce_velocity!`](@ref)
-- [`self_induce_velocity!`](@ref)
-- [`advect!`](@ref)
-- [`allocate_velocity`](@ref)
-- [`reset_velocity!`](@ref)
-- [`@get`](@ref)
+$(EXPORTS)
 
 ## Useful unexported functions
 
@@ -29,13 +22,21 @@ and functions that act on collections vortex element types.
 """
 module Vortex
 
+#== Imports/Exports ==#
+
+include("Utils.jl")
+using .Utils
+
+include("property.jl")
+
+using DocStringExtensions
+
 export allocate_velocity, reset_velocity!,
     induce_velocity, induce_velocity!,
     mutually_induce_velocity!, self_induce_velocity!,
     advect, advect!, @get
 
-include("Utils.jl")
-using .Utils
+#== Type Definitions ==#
 
 abstract type Element end
 abstract type PointSource <: Element end
@@ -44,6 +45,8 @@ abstract type CompositeSource <: Element end
 const Collection = Union{AbstractArray, Tuple}
 const PointArray = AbstractArray{T} where {T <: PointSource}
 const TargetTypes = (Complex128, PointSource, CompositeSource, Collection)
+
+#== Vortex Properties ==#
 
 """
     Vortex.position(src::PointSource)
@@ -67,7 +70,7 @@ julia> Vortex.position.(points)
  0.0+2.0im
 ```
 """
-function position end
+@property point position Complex128
 
 """
     Vortex.circulation(src)
@@ -92,7 +95,7 @@ julia> Vortex.circulation.(points)
  2.0
 ```
 """
-circulation(vs::Collection) = mapreduce(circulation, +, 0.0, vs)
+@property aggregate circulation Float64
 
 doc"""
     Vortex.impulse(src)
@@ -115,34 +118,9 @@ julia> Vortex.impulse(sys)
 0.0 + 0.0im
 ```
 """
-impulse(vs::Collection) = mapreduce(impulse, +, 0.0, vs)
+@property aggregate impulse Complex128
 
-"""
-    allocate_velocity(srcs)
-
-Allocate arrays of `Complex128` to match the structure of `srcs`
-
-# Example
-
-```jldoctest
-julia> points = Vortex.Point.(rand(Complex128, 2), rand(2));
-
-julia> blobs  = Vortex.Blob.(rand(Complex128, 3), rand(3), rand(3));
-
-julia> allocate_velocity(points)
-2-element Array{Complex{Float64},1}:
- 0.0+0.0im
- 0.0+0.0im
-
-julia> allocate_velocity((points, blobs))
-(Complex{Float64}[0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im])
-```
-"""
-function allocate_velocity(array::AbstractArray{T}) where {T <: Union{PointSource, Complex128}}
-    zeros(Complex128, length(array))
-end
-
-allocate_velocity(group::Tuple) = map(allocate_velocity, group)
+#== Velocity ==#
 
 """
     reset_velocity!(vels[, srcs])
@@ -190,7 +168,31 @@ function reset_velocity!(group::T, src) where {T <: Tuple}
     group
 end
 
-"""
+@property induced velocity Complex128
+
+@doc """
+    allocate_velocity(srcs)
+
+Allocate arrays of `Complex128` to match the structure of `srcs`
+
+# Example
+
+```jldoctest
+julia> points = Vortex.Point.(rand(Complex128, 2), rand(2));
+
+julia> blobs  = Vortex.Blob.(rand(Complex128, 3), rand(3), rand(3));
+
+julia> allocate_velocity(points)
+2-element Array{Complex{Float64},1}:
+ 0.0+0.0im
+ 0.0+0.0im
+
+julia> allocate_velocity((points, blobs))
+(Complex{Float64}[0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im])
+```
+""" allocate_velocity
+
+@doc """
     induce_velocity(target, element)
 
 Compute the velocity induced by `element` on `target`
@@ -227,25 +229,9 @@ julia> induce_velocity(z, srcs)
 julia> induce_velocity(point, srcs)
 -0.4453372874427177 - 0.10592646656959151im
 ```
-"""
-function induce_velocity(target::PointSource, source)
-    induce_velocity(Vortex.position(target), source)
-end
+""" induce_velocity
 
-function induce_velocity(z::Complex128, sources::Collection)
-    w = zero(Complex128)
-    for source in sources
-        w += induce_velocity(z, source)
-    end
-    w
-end
-
-function induce_velocity(targets::Collection, source)
-    ws = allocate_velocity(targets)
-    induce_velocity!(ws, targets, source)
-end
-
-"""
+@doc """
     induce_velocity!(vels, target, element)
 
 Compute the velocity induced by `element` on `target` and store the result in `vels`
@@ -274,20 +260,7 @@ julia> induce_velocity!(ẋs, targets, sources);
 julia> ẋs
 (Complex{Float64}[-1.28772-1.82158im, 1.9386-1.64147im, -1.56438+1.57158im, -0.626254+0.375842im, -0.806568-0.213201im], Complex{Float64}[-0.583672-2.26031im, -0.329778-1.43388im, 0.426927+1.55352im, -0.93755+0.241361im, -1.08949-0.35598im])
 ```
-"""
-function induce_velocity!(ws::AbstractArray, targets::AbstractArray, source)
-    for i in 1:length(targets)
-        ws[i] += induce_velocity(targets[i], source)
-    end
-    ws
-end
-
-function induce_velocity!(ws::Tuple, targets::Tuple, source)
-    for i in 1:length(targets)
-        induce_velocity!(ws[i], targets[i], source)
-    end
-    ws
-end
+""" induce_velocity!
 
 """
     mutually_induce_velocity!(vs₁, vs₂, e₁, e₂)
