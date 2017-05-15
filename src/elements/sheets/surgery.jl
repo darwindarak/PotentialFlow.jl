@@ -47,7 +47,7 @@ julia> Vortex.Sheets.truncate!(sheet, 5)
 ```
 """
 function truncate!(sheet, n::Int)
-    @assert 2 ≤ n < length(sheet)-1
+    @assert 2 ≤ n ≤ length(sheet)-1
     ΔΓ = sheet.Γs[n] - sheet.Γs[1]
     splice!(sheet.Γs, 1:n-1)
     splice!(sheet.blobs, 1:n-1)
