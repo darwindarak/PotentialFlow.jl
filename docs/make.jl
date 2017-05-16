@@ -18,6 +18,7 @@ if "DOCUMENTER_KEY" in keys(ENV)
      repo = "github.com/darwindarak/VortexModel.jl.git",
      target = "build",
      deps = nothing,
-     make = nothing
+     make = nothing,
+     julia = "0.6"
     )
 end
