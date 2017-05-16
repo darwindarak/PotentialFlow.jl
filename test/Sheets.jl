@@ -69,6 +69,8 @@
         zs = complex.(cos.(θ))
         Γs = sin.(θ)
         Vortex.Sheets.redistribute_points!(sheet, zs, Γs)
+        fill!(Γs, 0.0)
+        @test sheet.Γs != Γs
         @test Vortex.Sheets.compute_trapezoidal_weights(sheet.Γs) ≈ getfield.(sheet.blobs, :Γ)
         @test Vortex.position.(sheet.blobs) == getfield.(sheet.blobs, :z)
         @test sheet.zs == Vortex.position.(sheet.blobs)
