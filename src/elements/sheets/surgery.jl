@@ -110,7 +110,7 @@ function remesh(sheet::Sheet, Δs::Float64, params::Tuple = ())
     L = arclengths(sheet)
 
     if L[end] < Δs
-        warn("Cannot remesh, sheet length smaller then nominal remesh spacing")
+        warn("Cannot remesh, sheet length smaller than nominal spacing")
         return Vortex.position.(sheet.blobs), sheet.Γs, L[end], params
     end
 
@@ -177,6 +177,9 @@ julia> age
 """
 function remesh!(sheet::Sheet, Δs::Float64, params::Tuple = ())
     z₌, Γ₌, L, p₌ = remesh(sheet, Δs, params)
+    if L < Δs
+        return sheet, L, params
+    end
     redistribute_points!(sheet, z₌, Γ₌)
 
     for i in 1:length(params)
@@ -322,7 +325,7 @@ end
 
 function filter_position!(sheet::Sheet, Δf, L = arclength(sheet))
     zs = Vortex.position.(sheet.blobs)
-    filter_position!(z₌, Δf, L)
+    filter_position!(zs, Δf, L)
 
-    redistribute_points!(sheet, z₌, sheet.Γs)
+    redistribute_points!(sheet, zs, sheet.Γs)
 end

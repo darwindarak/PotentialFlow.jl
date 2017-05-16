@@ -77,5 +77,30 @@
         @test length(sheet) == 400
         @test sheet.zs ≈ linspace(-1, 1, 400)
         @test norm(sheet.Γs .- sqrt.(1 - linspace(-1,1,400).^2)) ≤ 1e-3
+
+        θ = linspace(π, 0, N)
+        zs = complex.(cos.(θ))
+        Γs = sin.(θ)
+        Vortex.Sheets.redistribute_points!(sheet, zs, Γs)
+        sheet₁ = deepcopy(sheet)
+        sheet₂ = deepcopy(sheet)
+
+        @test_warn r"smaller than nominal spacing" Vortex.Sheets.filter!(sheet₁, 3.0, 0.03)
+        @test sheet₁.zs == sheet₂.zs
+        @test sheet₁.Γs == sheet₂.Γs
+        @test sheet₁.blobs == sheet₂.blobs
+
+        @test_warn r"smaller than nominal spacing" Vortex.Sheets.remesh!(sheet₂, 3.0)
+        @test sheet₁.zs == sheet₂.zs
+        @test sheet₁.Γs == sheet₂.Γs
+        @test sheet₁.blobs == sheet₂.blobs
+
+        Vortex.Sheets.remesh!(sheet₂, 0.01)
+        Vortex.Sheets.filter_position!(sheet₂, 0.03)
+
+        Vortex.Sheets.filter!(sheet₁, 0.01, 0.03)
+
+        @test sheet₁.zs == sheet₂.zs
+        @test sheet₁.Γs == sheet₂.Γs
     end
 end
