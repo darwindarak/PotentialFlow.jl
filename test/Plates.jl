@@ -191,7 +191,7 @@
 
         _, b₋ = Vortex.Plates.suction_parameters(plate)
         @test abs(b₋) ≤ eps()
-        @test Vortex.Plates.bound_circulation(-1.0, plate) == 0
+        @test Vortex.Plates.bound_circulation(plate, -1) == 0
         @test C ≈ plate.C
 
         Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
@@ -202,7 +202,7 @@
         Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, Vortex.Point(-Inf, Γ))
         b₊, _ = Vortex.Plates.suction_parameters(plate)
         @test abs(b₊) ≤ eps()
-        @test Vortex.Plates.bound_circulation(1.0, plate) == 0
+        @test Vortex.Plates.bound_circulation(plate, 1) == 0
 
         Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
         Γ₊, Γ₋, _, _ = Vortex.Plates.vorticity_flux(plate, point, point, Inf, Inf)
