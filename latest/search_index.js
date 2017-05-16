@@ -281,11 +281,27 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "elements.html#VortexModel.Vortex.Plates.bound_circulation",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Plates.bound_circulation",
+    "category": "Function",
+    "text": "bound_circulation(plate[, s])\n\nCompute the bound circulation on the plate.\n\ns can be either a single normalized arc length coordinate (between -1 and 1), or a whole array of coordinates.\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Plates.bound_circulation!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Plates.bound_circulation!",
+    "category": "Function",
+    "text": "bound_circulation!(γs, plate[, ss])\n\nCompute the bound circulation of plate and store it in γs.\n\nIf an array, ss, with normalized arc length coordinates is omitted, then the circulation will be computed at the plate's Chebyshev nodes.\n\n\n\n"
+},
+
+{
     "location": "elements.html#Methods-on-Plates-1",
     "page": "Vortex Elements",
     "title": "Methods on Plates",
     "category": "section",
-    "text": "Vortex.Plates.enforce_no_flow_through!\nVortex.Plates.vorticity_flux\nVortex.Plates.vorticity_flux!"
+    "text": "Vortex.Plates.enforce_no_flow_through!\nVortex.Plates.vorticity_flux\nVortex.Plates.vorticity_flux!\nVortex.Plates.bound_circulation\nVortex.Plates.bound_circulation!"
 },
 
 {
