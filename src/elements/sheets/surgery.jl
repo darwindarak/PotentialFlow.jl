@@ -186,19 +186,14 @@ function filter_position!(z₌::AbstractVector, Δf, L = arclength(z₌))
 
     @assert Δs < Δf
 
-    # The in-place dct should be more performant, but it seems
-    # to be giving different results on different trials.
-    # Maybe this has to do with how FFTW plans the transforms?
-    # dct!(z₌)
-    ẑ = dct(z₌)
+    F = plan_dct!(z₌)
+    F * z₌
 
     cutoff = ceil(Int, 2L/Δf) + 1
 
-    #z₌[cutoff:end] = zero(Complex128)
-    ẑ[cutoff:end] = zero(Complex128)
+    z₌[cutoff:end] = zero(Complex128)
 
-    #idct!(z₌)
-    idct(ẑ)
+    F \ z₌
 end
 
 function filter_position!(sheet::Sheet, Δf, L = arclength(sheet))
