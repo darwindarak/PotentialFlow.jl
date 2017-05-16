@@ -93,6 +93,8 @@ Vortex.Sheets.arclengths
 Vortex.Plates.enforce_no_flow_through!
 Vortex.Plates.vorticity_flux
 Vortex.Plates.vorticity_flux!
+Vortex.Plates.bound_circulation
+Vortex.Plates.bound_circulation!
 ```
 
 ## Index
