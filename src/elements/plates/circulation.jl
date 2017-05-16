@@ -1,4 +1,14 @@
-function bound_circulation(s::Float64, plate)
+"""
+    bound_circulation(plate[, s])
+
+Compute the bound circulation on the plate.
+
+`s` can be either a single normalized arc length coordinate (between
+-1 and 1), or a whole array of coordinates.
+"""
+bound_circulation(plate) = bound_circulation(plate, plate.ss)
+
+function bound_circulation(plate, s::Real)
     @get plate (A, α, B₀, B₁, L, Γ, N)
 
     γ = 0.0
@@ -23,23 +33,26 @@ function bound_circulation(s::Float64, plate)
     return γ
 end
 
-function bound_circulation!(γs, ss, plate)
+function bound_circulation(plate, ss::AbstractArray{T}) where {T <: Real}
+    γs = zeros(Float64, length(ss))
+    bound_circulation!(γs, plate, ss)
+    return γs
+end
+
+"""
+    bound_circulation!(γs, plate[, ss])
+
+Compute the bound circulation of `plate` and store it in `γs`.
+
+If an array, `ss`, with normalized arc length coordinates is omitted,
+then the circulation will be computed at the plate's Chebyshev nodes.
+"""
+bound_circulation!(γs, plate) = bound_circulation!(γs, plate, plate.ss)
+
+function bound_circulation!(γs, plate, ss)
     for (i, s) in enumerate(ss)
-        γs[i] = bound_circulation(s, plate)
+        γs[i] = bound_circulation(plate, s)
     end
     nothing
 end
 
-"""
-    bound_circulation!(γs, plate)
-
-Compute the bound circulation of the plate and store it in `γs`
-"""
-bound_circulation!(γs, plate) = bound_circulation!(γs, plate.ss, plate)
-
-function bound_circulation(ss, plate)
-    γs = zeros(Float64, length(ss))
-    bound_circulation!(γs, ss, plate)
-    return γs
-end
-bound_circulation(plate) = bound_circulation(plate.ss, plate)
