@@ -71,11 +71,11 @@
         Vortex.Sheets.redistribute_points!(sheet, zs, Γs)
         @test Vortex.Sheets.compute_trapezoidal_weights(sheet.Γs) ≈ getfield.(sheet.blobs, :Γ)
         @test Vortex.position.(sheet.blobs) == getfield.(sheet.blobs, :z)
-        @test Vortex.Sheets.positions(sheet) == Vortex.position.(sheet.blobs)
+        @test sheet.zs == Vortex.position.(sheet.blobs)
 
         Vortex.Sheets.remesh!(sheet, 0.005)
         @test length(sheet) == 400
-        @test Vortex.Sheets.positions(sheet) ≈ linspace(-1, 1, 400)
+        @test sheet.zs ≈ linspace(-1, 1, 400)
         @test norm(sheet.Γs .- sqrt.(1 - linspace(-1,1,400).^2)) ≤ 1e-3
     end
 end
