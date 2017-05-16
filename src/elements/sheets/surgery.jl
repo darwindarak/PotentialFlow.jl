@@ -288,21 +288,39 @@ function append_segment!(sheet::Sheet, z, Γ)
 end
 
 """
-    Vortex.Sheets.filter!(sheet, Δs, Δf)
+    Vortex.Sheets.filter!(sheet, Δs, Δf[, params])
 
-Redistribute the control points of the sheet to a nominal spacing of `Δs`, then apply Fourier filtering to the sheet positions to remove any length scale smaller than `Δf`.
+Redistribute and filter the control points of a vortex sheet 
 
-This is essentially a wrapper around `remesh!` followed by
-`filter_positions!`.
+# Arguments
+
+- `sheet`: the vortex sheet to be modified
+- `Δs`: the nominal spacing between the uniform points
+- `Δf`: the minimum length scale that the filter should allow to pass
+  through
+- `params`: an optional tuple of vectors containing material properties
+
+# Returns
+
+If `params` is passed in, then its vectors will be overwritten by
+their interpolated values on the new control points, and the function
+returns the tuple (sheet, params).
+Otherwise, it returns (sheet, ())
 """
-function filter!(sheet, Δs, Δf)
-    z₌, Γ₌, l = remesh(sheet, Δs)
-    if l > Δs
-        filter_position!(z₌, Δf, l)
-        redistribute_points!(sheet, z₌, Γ₌)
+function filter!(sheet, Δs, Δf, params::Tuple = ())
+    z₌, Γ₌, L, p₌ = remesh(sheet, Δs, params)
+
+    for i in 1:length(params)
+        resize!(params[i], length(p₌[i]))
+        copy!(params[i], p₌[i])
+    end
+
+    if L > Δs
+        filter_position!(z₌, Δf, L)
+        redistribute_points!(sheet, z₌, Γ₌), params
     else
         warn("Filter not applied, total sheet length smaller than nominal spacing")
-        sheet
+        sheet, params
     end
 end
 
