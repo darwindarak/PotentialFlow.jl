@@ -221,7 +221,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.filter!",
     "category": "Function",
-    "text": "Vortex.Sheets.filter!(sheet, Δs, Δf)\n\nRedistribute the control points of the sheet to a nominal spacing of Δs, then apply Fourier filtering to the sheet positions to remove any length scale smaller than Δf.\n\nThis is essentially a wrapper around remesh! followed by filter_positions!.\n\n\n\n"
+    "text": "Vortex.Sheets.filter!(sheet, Δs, Δf[, params])\n\nRedistribute and filter the control points of a vortex sheet \n\nArguments\n\nsheet: the vortex sheet to be modified\nΔs: the nominal spacing between the uniform points\nΔf: the minimum length scale that the filter should allow to pass through\nparams: an optional tuple of vectors containing material properties\n\nReturns\n\nIf params is passed in, then its vectors will be overwritten by their interpolated values on the new control points, and the function returns the tuple (sheet, params). Otherwise, it returns (sheet, ())\n\n\n\n"
 },
 
 {
