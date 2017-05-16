@@ -101,7 +101,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.Sheet",
     "category": "Type",
-    "text": "Vortex.Sheet <: Vortex.CompositeSource\n\nA vortex sheet represented by vortex blob control points\n\nFields\n\nblobs: the underlying array of vortex blobs\nΓs: the cumulated sum of circulation starting from the first control point\nδ: the blob radius of all the vortex blobs\n\nConstructors:\n\nSheet(zs, Γs, δ) where zs is an array of positions for the control points\n\n\n\n"
+    "text": "Vortex.Sheet <: Vortex.CompositeSource\n\nA vortex sheet represented by vortex blob control points\n\nFields\n\nblobs: the underlying array of vortex blobs\nΓs: the cumulated sum of circulation starting from the first control point\nδ: the blob radius of all the vortex blobs\nzs: a mapped array that accesses the position of each control point\n\nConstructors:\n\nSheet(blobs, Γs, δ)\nSheet(zs, Γs, δ) where zs is an array of positions for the control points\n\n\n\n"
 },
 
 {
@@ -169,6 +169,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "elements.html#VortexModel.Vortex.Sheets.append_segment!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.append_segment!",
+    "category": "Function",
+    "text": "Vortex.Sheets.append_segment!(sheet::Sheet, z, Γ)\n\nAppend a new segment with circulation Γ extending from the end of the sheet to z.\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> sheet.blobs[end]\nVortex Blob: z = 1.0 + 0.0im, Γ = 0.5, δ = 0.2\n\njulia> Vortex.Sheets.append_segment!(sheet, 1.1, 2.0)\n\njulia> sheet\nVortex Sheet: L ≈ 1.1, Γ = 12.0, δ = 0.2\n\njulia> sheet.blobs[end]\nVortex Blob: z = 1.1 + 0.0im, Γ = 1.0, δ = 0.2\n\n\n\n"
+},
+
+{
     "location": "elements.html#VortexModel.Vortex.Sheets.truncate!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.truncate!",
@@ -177,11 +185,27 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "elements.html#VortexModel.Vortex.Sheets.redistribute_points!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.redistribute_points!",
+    "category": "Function",
+    "text": "Vortex.Sheets.redistribute_points!(sheet, zs, Γs)\n\nReturns the modified sheet with replacement control points at positions zs and strength Γs.\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> sys = (sheet,)\n(Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2,)\n\njulia> Vortex.Sheets.redistribute_points!(sheet, 0:0.2:2, 0.0:0.5:5)\nVortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2\n\njulia> sys[1]\nVortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Sheets.remesh",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.remesh",
+    "category": "Function",
+    "text": "Vortex.Sheets.remesh(sheet, Δs::Float64 , params::Tuple = ())\n\nUniformly redistribute the control points of the sheet to have a nominal spacing of Δs. Material quantities that should be redistributed along with the control points can be passed in as elements of params.\n\nReturns the tuple (z₌, Γ₌, L [, p₌]) where\n\nz₌ is an array with the positions of the uniformly distributed points\nΓ₌ is circulation interpolated onto z₌\nL is total length of the sheet\np₌ is a tuple containing the material quantities from params interpolated onto z₌\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> age = collect(10.0:-1:0);\n\njulia> Vortex.Sheets.remesh(sheet, 0.2, (age, ))\n(Complex{Float64}[0.0+0.0im, 0.25+0.0im, 0.5+0.0im, 0.75+0.0im, 1.0+0.0im], [0.0, 2.5, 5.0, 7.5, 10.0], 1.0, ([10.0, 7.5, 5.0, 2.5, 0.0],))\n\n\n\n"
+},
+
+{
     "location": "elements.html#VortexModel.Vortex.Sheets.remesh!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.remesh!",
     "category": "Function",
-    "text": "Vortex.Sheets.remesh!(sheet, zs, Γs)\n\nRedistribute the control points of the sheet to lie on zs with circulation Γs.\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> Vortex.Sheets.remesh!(sheet, 0:0.2:2, 2sheet.Γs)\nVortex Sheet: L ≈ 2.0, Γ = 20.0, δ = 0.2\n\n\n\n"
+    "text": "Vortex.Sheets.remesh!(sheet::Sheet, Δs::Float64, params::Tuple = ())\n\nSame as Vortex.Sheets.remesh, except sheet is replaced internally by a uniformly interpolated control points. Returns the tuple (sheet, L, p₌) where\n\nsheet is the modified sheet\nL is total length of the sheet\np₌ is a tuple containing the material quantities from params interpolated onto the new control points of sheet\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> age = collect(10.0:-1:0);\n\njulia> Vortex.Sheets.remesh!(sheet, 0.2, (age,));\n\njulia> Vortex.position.(sheet.blobs)\n5-element Array{Complex{Float64},1}:\n  0.0+0.0im\n 0.25+0.0im\n  0.5+0.0im\n 0.75+0.0im\n  1.0+0.0im\n\njulia> age\n5-element Array{Float64,1}:\n 10.0\n  7.5\n  5.0\n  2.5\n  0.0\n\n\n\n"
 },
 
 {
@@ -197,7 +221,31 @@ var documenterSearchIndex = {"docs": [
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.filter!",
     "category": "Function",
-    "text": "Vortex.Sheets.filter!(sheet, Δs, Δf)\n\nApply Fourier filtering to the sheet position and strengths.  The control points are redistributed to maintain a nominal point spacing of of Δs, and the filtering removes any length scales smaller than Δf.\n\n\n\n"
+    "text": "Vortex.Sheets.filter!(sheet, Δs, Δf)\n\nRedistribute the control points of the sheet to a nominal spacing of Δs, then apply Fourier filtering to the sheet positions to remove any length scale smaller than Δf.\n\nThis is essentially a wrapper around remesh! followed by filter_positions!.\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Sheets.filter_position!",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.filter_position!",
+    "category": "Function",
+    "text": "filter_position!(s, Δf, L = arclength(z₌))\n\nFilter out any length scales in s that is smaller than Δf, storing the result back in s. s can be either a vector of complex positions, or a Vortex.Sheet.\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Sheets.arclength",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.arclength",
+    "category": "Function",
+    "text": "arclength(s)\n\nCompute the polygonal arc length of s, where s can be either an vector of complex numbers or a Vortex.Sheet.\n\nExample\n\n```jldoctest julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2) Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> Vortex.Sheets.arclength(sheet) 1.0\n\n\n\n"
+},
+
+{
+    "location": "elements.html#VortexModel.Vortex.Sheets.arclengths",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Sheets.arclengths",
+    "category": "Function",
+    "text": "arclengths(s)\n\nCumulative sum of the polygonal arc length of s, where s can be either an vector of complex numbers or a Vortex.Sheet.\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> Vortex.Sheets.arclengths(sheet)\n11-element Array{Float64,1}:\n 0.0\n 0.1\n 0.2\n 0.3\n 0.4\n 0.5\n 0.6\n 0.7\n 0.8\n 0.9\n 1.0\n\n\n\n"
 },
 
 {
@@ -205,7 +253,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Vortex Elements",
     "title": "Methods on Vortex Sheets",
     "category": "section",
-    "text": "Vortex.Sheets.truncate!\nVortex.Sheets.remesh!\nVortex.Sheets.split!\nVortex.Sheets.filter!"
+    "text": "Vortex.Sheets.append_segment!\nVortex.Sheets.truncate!\nVortex.Sheets.redistribute_points!\nVortex.Sheets.remesh\nVortex.Sheets.remesh!\nVortex.Sheets.split!\nVortex.Sheets.filter!\nVortex.Sheets.filter_position!\nVortex.Sheets.arclength\nVortex.Sheets.arclengths"
 },
 
 {
