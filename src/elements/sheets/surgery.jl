@@ -1,5 +1,24 @@
 using Interpolations
 
+"""
+    Vortex.Sheets.redistribute_points!(sheet, zs, Γs)
+
+Returns the modified sheet with replacement control points at positions `zs` and strength `Γs`.
+
+```jldoctest
+julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia> sys = (sheet,)
+(Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2,)
+
+julia> Vortex.Sheets.redistribute_points!(sheet, 0:0.2:2, 0.0:0.5:5)
+Vortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2
+
+julia> sys[1]
+Vortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2
+```
+"""
 function redistribute_points!(sheet, zs, Γs)
     sheet.Γs = Γs
     sheet.blobs = Vortex.Blob.(zs, compute_trapezoidal_weights(Γs), sheet.δ)
@@ -63,9 +82,17 @@ function truncate!(sheet, n::Int)
 end
 
 """
-    Vortex.Sheets.remesh!(sheet, zs, Γs)
+    Vortex.Sheets.remesh(sheet, Δs::Float64 , params::Tuple = ())
 
-Redistribute the control points of the sheet to lie on `zs` with circulation `Γs`.
+Uniformly redistribute the control points of the sheet to have a nominal spacing of `Δs`.
+Material quantities that should be redistributed along with the control points can be passed in as elements of `params`.
+
+Returns the tuple `(z₌, Γ₌, L [, p₌])` where
+
+- `z₌` is an array with the positions of the uniformly distributed points
+- `Γ₌` is circulation interpolated onto `z₌`
+- `L` is total length of the sheet
+- `p₌` is a tuple containing the material quantities from `params` interpolated onto `z₌`
 
 # Example
 
@@ -73,11 +100,13 @@ Redistribute the control points of the sheet to lie on `zs` with circulation `Γ
 julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
 Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
 
-julia> Vortex.Sheets.remesh!(sheet, 0:0.2:2, 2sheet.Γs)
-Vortex Sheet: L ≈ 2.0, Γ = 20.0, δ = 0.2
+julia> age = collect(10.0:-1:0);
+
+julia> Vortex.Sheets.remesh(sheet, 0.2, (age, ))
+(Complex{Float64}[0.0+0.0im, 0.25+0.0im, 0.5+0.0im, 0.75+0.0im, 1.0+0.0im], [0.0, 2.5, 5.0, 7.5, 10.0], 1.0, ([10.0, 7.5, 5.0, 2.5, 0.0],))
 ```
 """
-function remesh(sheet::Sheet, params::Tuple, Δs::Float64)
+function remesh(sheet::Sheet, Δs::Float64, params::Tuple = ())
     L = arclengths(sheet)
 
     if L[end] < Δs
@@ -109,16 +138,70 @@ function remesh(sheet::Sheet, params::Tuple, Δs::Float64)
     z₌, Γ₌, L[end], p₌
 
 end
-remesh(sheet::Sheet, Δs::Float64) = remesh(sheet, (), Δs)
 
-function remesh!(sheet::Sheet, params::Tuple, Δs::Float64)
-    z₌, Γ₌, L, p₌ = remesh(sheet, params, Δs)
+"""
+    Vortex.Sheets.remesh!(sheet::Sheet, Δs::Float64, params::Tuple = ())
+
+Same as [`Vortex.Sheets.remesh`](@ref), except `sheet` is replaced
+internally by a uniformly interpolated control points.
+Returns the tuple (sheet, L, p₌) where
+
+- `sheet` is the modified sheet
+- `L` is total length of the sheet
+- `p₌` is a tuple containing the material quantities from `params` interpolated onto the new control points of `sheet`
+
+```jldoctest
+julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia> age = collect(10.0:-1:0);
+
+julia> Vortex.Sheets.remesh!(sheet, 0.2, (age,));
+
+julia> Vortex.position.(sheet.blobs)
+5-element Array{Complex{Float64},1}:
+  0.0+0.0im
+ 0.25+0.0im
+  0.5+0.0im
+ 0.75+0.0im
+  1.0+0.0im
+
+julia> age
+5-element Array{Float64,1}:
+ 10.0
+  7.5
+  5.0
+  2.5
+  0.0
+```
+"""
+function remesh!(sheet::Sheet, Δs::Float64, params::Tuple = ())
+    z₌, Γ₌, L, p₌ = remesh(sheet, Δs, params)
     redistribute_points!(sheet, z₌, Γ₌)
 
-    sheet, L, p₌
-end
-remesh!(sheet::Sheet, Δs::Float64) = remesh!(sheet, (), Δs)
+    for i in 1:length(params)
+        resize!(params[i], length(p₌[i]))
+        copy!(params[i], p₌[i])
+    end
 
+    sheet, L, params
+end
+
+"""
+    arclength(s)
+
+Compute the polygonal arc length of `s`, where `s` can be either an
+vector of complex numbers or a `Vortex.Sheet`.
+
+# Example
+
+```jldoctest
+julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia> Vortex.Sheets.arclength(sheet)
+1.0
+"""
 function arclength(zs::AbstractVector)
     L = 0.0
     for i in 2:length(zs)
@@ -128,6 +211,33 @@ function arclength(zs::AbstractVector)
 end
 arclength(sheet::Sheet) = arclength(sheet.zs)
 
+"""
+    arclengths(s)
+
+Cumulative sum of the polygonal arc length of `s`, where `s` can be
+either an vector of complex numbers or a `Vortex.Sheet`.
+
+# Example
+
+```jldoctest
+julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia> Vortex.Sheets.arclengths(sheet)
+11-element Array{Float64,1}:
+ 0.0
+ 0.1
+ 0.2
+ 0.3
+ 0.4
+ 0.5
+ 0.6
+ 0.7
+ 0.8
+ 0.9
+ 1.0
+```
+"""
 function arclengths(zs::AbstractVector)
     N = length(zs)
 
@@ -150,8 +260,16 @@ Append a new segment with circulation `Γ` extending from the end of the sheet t
 julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
 Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
 
-julia> Vortex.append_segment!(sheet, 1.1, 2.0)
+julia> sheet.blobs[end]
+Vortex Blob: z = 1.0 + 0.0im, Γ = 0.5, δ = 0.2
+
+julia> Vortex.Sheets.append_segment!(sheet, 1.1, 2.0)
+
+julia> sheet
 Vortex Sheet: L ≈ 1.1, Γ = 12.0, δ = 0.2
+
+julia> sheet.blobs[end]
+Vortex Blob: z = 1.1 + 0.0im, Γ = 1.0, δ = 0.2
 ```
 """
 function append_segment!(sheet::Sheet, z, Γ)
@@ -163,12 +281,12 @@ function append_segment!(sheet::Sheet, z, Γ)
 end
 
 """
-    Vortex.Sheets.filter!(sheet, Δf)
+    Vortex.Sheets.filter!(sheet, Δs, Δf)
 
-Apply Fourier filtering to the sheet position and strengths.  The
-control points are redistributed to maintain a nominal point spacing
-of of `Δs`, and the filtering removes any length scales smaller than
-`Δf`.
+Redistribute the control points of the sheet to a nominal spacing of `Δs`, then apply Fourier filtering to the sheet positions to remove any length scale smaller than `Δf`.
+
+This is essentially a wrapper around `remesh!` followed by
+`filter_positions!`.
 """
 function filter!(sheet, Δs, Δf)
     z₌, Γ₌, l = remesh(sheet, Δs)
@@ -181,6 +299,12 @@ function filter!(sheet, Δs, Δf)
     end
 end
 
+"""
+    filter_position!(s, Δf, L = arclength(z₌))
+
+Filter out any length scales in `s` that is smaller than `Δf`, storing the result back in `s`.
+`s` can be either a vector of complex positions, or a `Vortex.Sheet`.
+"""
 function filter_position!(z₌::AbstractVector, Δf, L = arclength(z₌))
     Δs = abs(z₌[2] - z₌[1])
 

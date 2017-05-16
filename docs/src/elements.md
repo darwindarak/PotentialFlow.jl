@@ -75,10 +75,16 @@ advect!
 ## Methods on Vortex Sheets
 
 ```@docs
+Vortex.Sheets.append_segment!
 Vortex.Sheets.truncate!
+Vortex.Sheets.redistribute_points!
+Vortex.Sheets.remesh
 Vortex.Sheets.remesh!
 Vortex.Sheets.split!
 Vortex.Sheets.filter!
+Vortex.Sheets.filter_position!
+Vortex.Sheets.arclength
+Vortex.Sheets.arclengths
 ```
 
 ## Methods on Plates

@@ -16,9 +16,11 @@ A vortex sheet represented by vortex blob control points
 - `blobs`: the underlying array of vortex blobs
 - `Γs`: the cumulated sum of circulation starting from the first control point
 - `δ`: the blob radius of all the vortex blobs
+- `zs`: a mapped array that accesses the position of each control point
 
 ## Constructors:
 
+- `Sheet(blobs, Γs, δ)`
 - `Sheet(zs, Γs, δ)` where `zs` is an array of positions for the control points
 """
 mutable struct Sheet <: Vortex.CompositeSource
@@ -96,7 +98,7 @@ function Vortex.advect!(sheet₊::Sheet, sheet₋::Sheet, ws, Δt)
 end
 
 function Base.show(io::IO, s::Sheet)
-    L = sum(abs, diff(getfield.(s.blobs, :z)))
+    L = arclength(s)
     print(io, "Vortex Sheet: L ≈ $(round(L, 3)), Γ = $(round(s.Γs[end] - s.Γs[1], 3)), δ = $(round(s.δ, 3))")
 end
 
