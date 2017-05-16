@@ -20,7 +20,11 @@ Vortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2
 ```
 """
 function redistribute_points!(sheet, zs, Γs)
-    sheet.Γs = Γs
+    if !(sheet.Γs === Γs)
+        resize!(sheet.Γs, length(Γs))
+        copy!(sheet.Γs, Γs)
+    end
+
     sheet.blobs = Vortex.Blob.(zs, compute_trapezoidal_weights(Γs), sheet.δ)
     sheet.zs = MappedPositions(Vortex.position, sheet.blobs, 0)
     sheet
