@@ -1,17 +1,9 @@
 using Interpolations
-import ..Vortex: MappedVector
-
-function positions(s::Sheet)
-    T = Complex128
-    A = Vector{Vortex.Blob}
-    F = typeof(Vortex.position)
-
-    MappedVector{T, A, F}(Vortex.position, s.blobs, 0)
-end
 
 function redistribute_points!(sheet, zs, Γs)
     sheet.Γs = Γs
     sheet.blobs = Vortex.Blob.(zs, compute_trapezoidal_weights(Γs), sheet.δ)
+    sheet.zs = MappedPositions(Vortex.position, sheet.blobs, 0)
     sheet
 end
 
@@ -96,7 +88,7 @@ function remesh(sheet::Sheet, params::Tuple, Δs::Float64)
     knots = (L,)
     mode = Gridded(Linear())
 
-    zspline = interpolate(knots, Vortex.position.(sheet.blobs), mode)
+    zspline = interpolate(knots, sheet.zs, mode)
     Γspline = interpolate(knots, sheet.Γs, mode)
 
     psplines = map(params) do p
@@ -134,7 +126,7 @@ function arclength(zs::AbstractVector)
     end
     L
 end
-arclength(sheet::Sheet) = arclength(positions(sheet))
+arclength(sheet::Sheet) = arclength(sheet.zs)
 
 function arclengths(zs::AbstractVector)
     N = length(zs)
@@ -145,7 +137,7 @@ function arclengths(zs::AbstractVector)
     end
     L = accumulate(+, Δs)
 end
-arclengths(sheet::Sheet) = arclengths(positions(sheet))
+arclengths(sheet::Sheet) = arclengths(sheet.zs)
 
 """
     Vortex.Sheets.append_segment!(sheet::Sheet, z, Γ)

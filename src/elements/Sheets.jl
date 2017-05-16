@@ -2,7 +2,10 @@ module Sheets
 
 export Sheet
 import ..Vortex
+import ..Vortex: MappedVector
 import Base: length
+
+const MappedPositions = MappedVector{Complex128, Vector{Vortex.Blob}, typeof(Vortex.position)}
 
 """
     Vortex.Sheet <: Vortex.CompositeSource
@@ -22,6 +25,21 @@ mutable struct Sheet <: Vortex.CompositeSource
     blobs::Vector{Vortex.Blob}
     Γs::Vector{Float64}
     δ::Float64
+    zs::MappedPositions
+end
+
+function Sheet(zs::AbstractVector{T}, Γs::AbstractVector{Float64}, δ::Float64) where {T <: Number}
+    dΓs = compute_trapezoidal_weights(Γs)
+    blobs = Vortex.Blob.(zs, dΓs, δ)
+
+    zs = MappedPositions(Vortex.position, blobs, 0)
+
+    Sheet(blobs, Γs, δ, zs)
+end
+
+function Sheet(blobs::Vector{Vortex.Blob}, Γs::AbstractVector{Float64}, δ::Float64)
+    zs = MappedPositions(Vortex.position, blobs, 0)
+    Sheet(blobs, Γs, δ, zs)
 end
 
 length(s::Sheet) = length(s.blobs)
@@ -30,12 +48,6 @@ Vortex.impulse(s::Sheet) = Vortex.impulse(s.blobs)
 
 Vortex.allocate_velocity(s::Sheet) = zeros(Complex128, length(s.blobs))
 
-function Sheet(zs::AbstractArray{T}, Γs::AbstractArray{Float64}, δ::Float64) where {T <: Number}
-    dΓs = compute_trapezoidal_weights(Γs)
-    blobs = Vortex.Blob.(zs, dΓs, δ)
-
-    return Sheet(blobs, Γs, δ)
-end
 
 for T in Vortex.TargetTypes
     @eval Vortex.induce_velocity(t::$T, s::Sheet) = Vortex.induce_velocity(t, s.blobs)

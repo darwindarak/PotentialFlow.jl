@@ -27,7 +27,7 @@
         @test wb ≈ ws
         @test wb ≈ induce_velocity(sheet, sheet)
 
-        sheet₊ = Vortex.Sheet([], [], 0.0)
+        sheet₊ = Vortex.Sheet(Vortex.Blob[], Float64[], 0.0)
         Δt = 1e-2
         Vortex.advect!(sheet₊, sheet, ws, Δt)
         Vortex.advect!(sheet, sheet, ws, Δt)
@@ -64,6 +64,7 @@
         @test Vortex.Sheets.compute_trapezoidal_weights(sheet.Γs) ≈ getfield.(sheet.blobs, :Γ)
         @test Vortex.Sheets.compute_trapezoidal_weights(sheet₊.Γs) ≈ getfield.(sheet₊.blobs, :Γ)
 
+        N = 200
         θ = linspace(π, 0, N)
         zs = complex.(cos.(θ))
         Γs = sin.(θ)
@@ -72,8 +73,9 @@
         @test Vortex.position.(sheet.blobs) == getfield.(sheet.blobs, :z)
         @test Vortex.Sheets.positions(sheet) == Vortex.position.(sheet.blobs)
 
-        Vortex.Sheets.remesh!(sheet, 0.01)
-        @test length(sheet) == 200
-        @test Vortex.Sheets.positions(sheet) ≈ linspace(-1, 1, 200)
+        Vortex.Sheets.remesh!(sheet, 0.005)
+        @test length(sheet) == 400
+        @test Vortex.Sheets.positions(sheet) ≈ linspace(-1, 1, 400)
+        @test norm(sheet.Γs .- sqrt.(1 - linspace(-1,1,400).^2)) ≤ 1e-3
     end
 end
