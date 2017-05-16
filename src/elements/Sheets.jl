@@ -36,12 +36,13 @@ function Sheet(zs::AbstractVector{T}, Γs::AbstractVector{Float64}, δ::Float64)
 
     zs = MappedPositions(Vortex.position, blobs, 0)
 
-    Sheet(blobs, Γs, δ, zs)
+    Sheet(blobs, copy(Γs), δ, zs)
 end
 
 function Sheet(blobs::Vector{Vortex.Blob}, Γs::AbstractVector{Float64}, δ::Float64)
-    zs = MappedPositions(Vortex.position, blobs, 0)
-    Sheet(blobs, Γs, δ, zs)
+    newblobs = copy(blobs)
+    zs = MappedPositions(Vortex.position, newblobs, 0)
+    Sheet(newblobs, copy(Γs), δ, zs)
 end
 
 length(s::Sheet) = length(s.blobs)
