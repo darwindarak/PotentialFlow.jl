@@ -1,4 +1,19 @@
 using Interpolations
+import ..Vortex: MappedVector
+
+function positions(s::Sheet)
+    T = Complex128
+    A = Vector{Vortex.Blob}
+    F = typeof(Vortex.position)
+
+    MappedVector{T, A, F}(Vortex.position, s.blobs, 0)
+end
+
+function redistribute_points!(sheet, zs, Γs)
+    sheet.Γs = Γs
+    sheet.blobs = Vortex.Blob.(zs, compute_trapezoidal_weights(Γs), sheet.δ)
+    sheet
+end
 
 """
     Vortex.Sheets.split!(sheet, n::Int)
@@ -70,11 +85,67 @@ julia> Vortex.Sheets.remesh!(sheet, 0:0.2:2, 2sheet.Γs)
 Vortex Sheet: L ≈ 2.0, Γ = 20.0, δ = 0.2
 ```
 """
-function remesh!(sheet, zs, Γs)
-    sheet.Γs = Γs
-    sheet.blobs = Vortex.Blob.(zs, compute_trapezoidal_weights(Γs), sheet.δ)
-    sheet
+function remesh(sheet::Sheet, params::Tuple, Δs::Float64)
+    L = arclengths(sheet)
+
+    if L[end] < Δs
+        warn("Cannot remesh, sheet length smaller then nominal remesh spacing")
+        return Vortex.position.(sheet.blobs), sheet.Γs, L[end], params
+    end
+
+    knots = (L,)
+    mode = Gridded(Linear())
+
+    zspline = interpolate(knots, Vortex.position.(sheet.blobs), mode)
+    Γspline = interpolate(knots, sheet.Γs, mode)
+
+    psplines = map(params) do p
+        interpolate(knots, p, mode)
+    end
+
+    N = ceil(Int, L[end]/Δs)
+
+    L₌ = linspace(0, L[end], N)
+
+    z₌ = zspline[L₌]
+    Γ₌ = Γspline[L₌]
+
+    p₌ = map(psplines) do spline
+        spline[L₌]
+    end
+
+    z₌, Γ₌, L[end], p₌
+
 end
+remesh(sheet::Sheet, Δs::Float64) = remesh(sheet, (), Δs)
+
+function remesh!(sheet::Sheet, params::Tuple, Δs::Float64)
+    z₌, Γ₌, L, p₌ = remesh(sheet, params, Δs)
+    redistribute_points!(sheet, z₌, Γ₌)
+
+    sheet, L, p₌
+end
+remesh!(sheet::Sheet, Δs::Float64) = remesh!(sheet, (), Δs)
+
+function arclength(zs::AbstractVector)
+    L = 0.0
+    for i in 2:length(zs)
+        L += abs(zs[i] - zs[i-1])
+    end
+    L
+end
+arclength(sheet::Sheet) = arclength(positions(sheet))
+
+function arclengths(zs::AbstractVector)
+    N = length(zs)
+
+    Δs = zeros(N)
+    for i in 2:N
+        Δs[i] = abs(zs[i] - zs[i-1])
+    end
+    L = accumulate(+, Δs)
+end
+arclengths(sheet::Sheet) = arclengths(positions(sheet))
 
 """
     Vortex.Sheets.append_segment!(sheet::Sheet, z, Γ)
@@ -100,7 +171,7 @@ function append_segment!(sheet::Sheet, z, Γ)
 end
 
 """
-    Vortex.Sheets.filter!(sheet, Δs, Δf)
+    Vortex.Sheets.filter!(sheet, Δf)
 
 Apply Fourier filtering to the sheet position and strengths.  The
 control points are redistributed to maintain a nominal point spacing
@@ -108,44 +179,32 @@ of of `Δs`, and the filtering removes any length scales smaller than
 `Δf`.
 """
 function filter!(sheet, Δs, Δf)
-    zs = Vortex.position.(sheet.blobs)
-    zs, (Γs,) = filter_by_arclength(zs, Δs, Δf, sheet.Γs)
-    remesh!(sheet, zs, Γs)
+    z₌, Γ₌, l = remesh(sheet, Δs)
+    if l > Δs
+        filter_position!(z₌, Δf, l)
+        redistribute_points!(sheet, z₌, Γ₌)
+    else
+        warn("Filter not applied, total sheet length smaller than nominal spacing")
+        sheet
+    end
 end
 
-function filter_by_arclength(z, Δs, Δf, properties...)
+function filter_position!(z₌::AbstractVector, Δf, L = arclength(z₌))
+    Δs = abs(z₌[2] - z₌[1])
+
     @assert Δs < Δf
 
-    l = vcat(0, accumulate(+, abs.(diff(z))))
+    dct!(z₌)
 
-    n = round(Int, l[end]/Δs)
-    if n ≤ 1
-        warn("Sampling interval too large for arc length")
-        return z, properties
-    end
+    cutoff = ceil(Int, 2L/Δf) + 1
+    z₌[cutoff:end] = zero(Complex128)
 
-    z_spline = interpolate((l,), z, Gridded(Linear()))
+    idct!(z₌)
+end
 
-    splines = map(properties) do p
-        interpolate((l,), p, Gridded(Linear()))
-    end
+function filter_position!(sheet::Sheet, Δf, L = arclength(sheet))
+    zs = Vortex.position.(sheet.blobs)
+    filter_position!(z₌, Δf, L)
 
-    L = linspace(0, l[end], n)
-    ΔL = step(L)
-
-    z₌ = z_spline[L]
-    splines₌ = map(splines) do spline
-        spline[L]
-    end
-
-    ẑ = dct(z₌)
-    Ŝ = dct.(splines₌)
-
-    cutoff = ceil(Int, 2L[end]/Δf) + 1
-    ẑ[cutoff:end] = zero(Complex128)
-    foreach(Ŝ) do S
-        S[cutoff:end] = 0.0
-    end
-
-    idct(ẑ), idct.(Ŝ)
+    redistribute_points!(sheet, z₌, sheet.Γs)
 end
