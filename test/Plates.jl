@@ -105,7 +105,7 @@
         zs = c .+ 0.5.*exp(im*α).*(ζs .+ 1./ζs)
         Γs = 1 .- 2.*rand(N)
 
-        Np = 128
+        Np = 129
         J = JoukowskyMap(c, α)
 
         Δż_circle = map(linspace(π, 0, Np)) do θ
@@ -131,6 +131,16 @@
         @test maximum(abs2.(γs[2:end-1] .- real.(Δż_circle[2:end-1]))) ≤ 256eps()
 
         @test γs == Vortex.Plates.strength(plate)
+
+        kutta_points = Vortex.Point.(rand(Complex128, 2), 1.0)
+        Vortex.Plates.vorticity_flux!(plate, kutta_points[1], kutta_points[2])
+
+        ss = linspace(-1, 1, 2001)
+        γs = Vortex.Plates.strength(plate, ss)
+        Γs = Vortex.Plates.bound_circulation(plate, ss)
+        @test Γs[ceil(Int,length(ss)/2)] ≈ Vortex.Plates.bound_circulation(plate)[ceil(Int,length(plate)/2)]
+
+        @test norm(γs - gradient(Γs, step(ss)))/length(ss) < 1e-4
 
     end
 
