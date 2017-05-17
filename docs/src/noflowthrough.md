@@ -206,7 +206,7 @@ So the final expression for the bound circulation is:
 ```math
 \begin{equation}
 \gamma[l(s)] =
-\frac{-\frac{2\Gamma_A}{L\pi} - 2(A_0 - \unormal \cdot \vec{\dot{c}}) T_1(s) + (A_1 - \frac{\dot{\alpha}L}{2})T_2(s)}{\sqrt{1 - s^2}} - 2\sqrt{1 - s^2}\sum_{n = 2}^\infty A_n U_{n-1}(s)
+\frac{-\frac{2\Gamma_A}{L\pi} + 2(A_0 - \unormal \cdot \vec{\dot{c}}) T_1(s) + (A_1 - \frac{\dot{\alpha}L}{2})T_2(s)}{\sqrt{1 - s^2}} - 2\sqrt{1 - s^2}\sum_{n = 2}^\infty A_n U_{n-1}(s)
 \label{eq:gamma}
 \end{equation}
 ```
@@ -214,7 +214,7 @@ So the final expression for the bound circulation is:
     This might look more similar to results from thin-airfoil theory if we rewrite the Chebyshev polynomials using trigonometric functions:
     ```math
     \gamma[l(\theta)] =
-    \frac{-\frac{2\Gamma_A}{L\pi} - 2(A_0 - \unormal \cdot \vec{\dot{c}}) \cos\theta + (A_1 - \frac{\dot{\alpha}L}{2})\cos(2\theta)}{\sin\theta} - 2\sum_{n = 2}^\infty A_n \sin(n\theta).
+    \frac{-\frac{2\Gamma_A}{L\pi} + 2(A_0 - \unormal \cdot \vec{\dot{c}}) \cos\theta + (A_1 - \frac{\dot{\alpha}L}{2})\cos(2\theta)}{\sin\theta} - 2\sum_{n = 2}^\infty A_n \sin(n\theta).
     ```
     The key difference is that we are free to relax the Kutta condition at the trailing edge.
 
@@ -247,7 +247,7 @@ $$
 & = \int_{\cos^{-1} s}^\pi \cos(n\theta) \d{\theta} \\
 & = \begin{cases}
 \pi - \cos^{-1}s &: n = 0 \\
-\frac{1}{n}\sin\left(n\cos^{-1}s\right) &: n > 0
+-\frac{1}{n}\sin\left(n\cos^{-1}s\right) &: n > 0
 \end{cases}.
 \end{align*}
 $$
@@ -256,7 +256,7 @@ We can then multiply the expressions above with their corresponding coefficients
 ```
 ```math
 \Gamma[l(s)]
-=\Gamma_A\left(\cos^{-1}s - \pi\right) - \frac{L\sqrt{1 - s^2}}{2}\left[
+=\Gamma_A\left(\frac{\cos^{-1}s}{\pi} - 1\right) - \frac{L\sqrt{1 - s^2}}{2}\left[
 2\left(A_0 - \unormal \cdot \vec{\dot{c}}\right)
 +\left(A_1 - \frac{\dot{\alpha}L}{2}\right)s
 +\sum_{n=2}^\infty
