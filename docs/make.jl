@@ -8,8 +8,10 @@ makedocs(
         "Getting Started Guide" => "quickstart.md",
         "Vortex Elements" => "elements.md",
         "Computing Velocities" => "velocities.md",
-        "Time Marching" => "timemarching.md"
+        "Time Marching" => "timemarching.md",
+        "Enforcing No-Flow-Through" => "noflowthrough.md"
     ],
+    assets = ["assets/custom.css"],
     strict = true
 )
 
