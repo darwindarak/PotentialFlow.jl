@@ -135,13 +135,12 @@
         kutta_points = Vortex.Point.(rand(Complex128, 2), 1.0)
         Vortex.Plates.vorticity_flux!(plate, kutta_points[1], kutta_points[2])
 
-        ss = linspace(-1, 1, 2001)
+        ss = linspace(-1, 1, 4001)
         γs = Vortex.Plates.strength(plate, ss)
         Γs = Vortex.Plates.bound_circulation(plate, ss)
         @test Γs[ceil(Int,length(ss)/2)] ≈ Vortex.Plates.bound_circulation(plate)[ceil(Int,length(plate)/2)]
 
-        @test norm(γs - gradient(Γs, step(ss)))/length(ss) < 1e-4
-
+        @test norm(γs - gradient(Γs, step(ss)))/length(ss) < 1e-3
     end
 
     @testset "Induced Velocities" begin
