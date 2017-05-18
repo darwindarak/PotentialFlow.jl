@@ -285,7 +285,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Plates.bound_circulation",
     "category": "Function",
-    "text": "bound_circulation(plate[, s])\n\nCompute the bound circulation on the plate.\n\ns can be either a single normalized arc length coordinate (between -1 and 1), or a whole array of coordinates.\n\n\n\n"
+    "text": "bound_circulation(plate[, s])\n\nCompute the bound circulation between the trailing edge of the plate to s.\n\ns can be either a single normalized arc length coordinate (between -1 and 1), or a whole array of coordinates.\n\n\n\n"
 },
 
 {
@@ -293,7 +293,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Plates.bound_circulation!",
     "category": "Function",
-    "text": "bound_circulation!(γs, plate[, ss])\n\nCompute the bound circulation of plate and store it in γs.\n\nIf an array, ss, with normalized arc length coordinates is omitted, then the circulation will be computed at the plate's Chebyshev nodes.\n\n\n\n"
+    "text": "bound_circulation!(Γs, plate[, ss])\n\nCompute the bound circulation between the trailing edge of the plate to ss, then store it in Γs.\n\nIf an array, ss, with normalized arc length coordinates is omitted, then the circulation will be computed at the plate's Chebyshev nodes.\n\n\n\n"
 },
 
 {
@@ -414,6 +414,38 @@ var documenterSearchIndex = {"docs": [
     "title": "Time Marching",
     "category": "section",
     "text": "Coming soon..."
+},
+
+{
+    "location": "noflowthrough.html#",
+    "page": "Enforcing No-Flow-Through",
+    "title": "Enforcing No-Flow-Through",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "noflowthrough.html#Enforcing-No-Flow-Through-1",
+    "page": "Enforcing No-Flow-Through",
+    "title": "Enforcing No-Flow-Through",
+    "category": "section",
+    "text": "warning: Warning\nUnder construction...defddt1fracmathrmd1mathrmdt\n\nrenewcommandvecboldsymbol\nnewcommanduvec1vechat1\nnewcommandutangentuvectau\nnewcommandunormaluvecn\n\nrenewcommanddmathrmd\n\nnewcommandcrosstimes\nnewcommandabs1left1right\nnewcommandimmathrmi\nnewcommandeumathrme\nnewcommandpintint\nnewcommandconj11^star\nnewcommandRes2mathrmResleft(12right)\nnewcommandreal1mathrmReleft1right\nnewcommandimag1mathrmImleft1rightWe are interested in enforcing the no-flow-through condition on an infinitely thin, flat plate undergoing rigid body motion. The plate can be parameterized by its length, L, centroid position, vecc, and its angle of attack, alpha. Its motion is then specified by its centroid velocity, dotvecc, and angular velocity, dotvecalpha."
+},
+
+{
+    "location": "noflowthrough.html#Vortex-Sheet-Strength-1",
+    "page": "Enforcing No-Flow-Through",
+    "title": "Vortex Sheet Strength",
+    "category": "section",
+    "text": "The plate is represented with a bound vortex sheet that constantly adjusts its circulation to enforce no-flow-through on its surface. We can show that the distribution of circulation, gamma, is governed by the following integral equation:<details>\n<summary></summary>\nThe no-flow-through condition requires that the component of fluid velocity normal to the sheet must be equal to the normal velocity of the sheet itself, i.e.\n$$\n\\begin{align*}\n    \\unormal \\cdot \\vec{u}(\\vec{x}_s)\n& = \\unormal \\cdot \\left[ \\dot{\\vec{c}} + \\dot{\\alpha} \\cross (\\vec{x}_s - \\vec{c}) \\right] \\\\\n& = \\left(\\unormal \\cdot \\vec{c}\\right) + \\dot{\\alpha} l\n\\end{align*}\n$$\nwhere\n\n- $\\vec{u}$ is the fluid velocity\n- $\\vec{x}_s$ is a position on the plate\n- $\\unormal$ is a unit vector normal to the plate\n- $l \\in [ -L/2, L/2 ] $ is distance between $\\vec{x}_s$ from the plate centroid\n\nWe can decompose the velocity field at any point in the fluid into contributions from the bound vortex sheet, $\\vec{u}_s$, and the free vorticity in the ambient fluid, $\\vec{u}_A$:\n$$\n\\vec{u}(\\vec{x}) = \\vec{u}_s(\\vec{x}) + \\vec{u}_A(\\vec{x}),\n$$\nso the no-flow-through condition can be written as:\n$$\n\\unormal \\cdot \\vec{u}_s(\\vec{x}) = \\left(\\unormal \\cdot \\vec{c}\\right) + \\dot{\\alpha} l - \\unormal \\cdot \\vec{u}_A(\\vec{x}).\n$$\n\nThe velocity field induced by a vortex sheet, $\\vec{u}_x(\\vec{x})$, is given by\n$$\n\\vec{u}_s(\\vec{x}) = \\frac{1}{2\\pi}\n\\int_\\mathcal{C} \\gamma(l) \\,\\uvec{k} \\cross\n\\frac{\\vec{x} - \\vec{x}_s(l)}{\\abs{\\vec{x} - \\vec{x}_s(l)}^2}\n\\d{l}\n$$\nwhere\n\n- $\\gamma$ is the strength of the sheet\n- $\\mathcal{C}$ is the curve occupied by the sheet\n- $\\uvec{k}$ is the unit vector point out of the plane.\n\nThe position along the vortex sheet can be expressed as\n$$\n\\vec{x}_s(l) = \\vec{c} + l\\utangent\n$$\nwhere $\\utangent$ is the unit tangent along the sheet.\nSimilarly, since we are interested in evaluating the velocity along the sheet, we can write\n$$\n\\vec{x}(l) = \\vec{c} + \\lambda\\utangent.\n$$\nWe can then write self-induced velocity of the bound vortex sheet as\n$$\n\\vec{u}_s(\\lambda) = \\frac{\\unormal}{2\\pi}\n\\int_{-\\frac{L}{2}}^\\frac{L}{2} \\frac{\\gamma(l)}{\\lambda - l}\n\\d{l}.\n$$\nSubstituting this expression back into the no-flow-through condition, we get\n</p>\n</details>beginequation\nfrac12pi\nint_-L2^L2 fracgamma(lambda)l - lambda\ndlambda\n= unormal cdot vecdotc\n+ dotalpha l\n- unormal cdot vecu_A(l)\nlabeleqintegral-equation\nendequationThe solution to this integral equation can be found in [Muskhelishvili]. If the velocity induced by ambient vorticity on the plate can be expanded into a Chebyshev series:unormal cdot vecu_Al(s) = sum_n = 0 A_n T_n(s)and Gamma_A is the total circulation in the ambient fluid, then the solution to eqrefeqintegral-equation can be written as:<details>\n<summary> </summary>\nTo make it easier to work with Chebyshev series, we will apply a change of variables $s := \\frac{2l}{L}$ so that the integral above goes from $-1$ to $1$:\n$$\n\\frac{1}{2\\pi}\n\\int_{-1}^1 \\frac{\\gamma(s)}{\\sigma - s}\n\\d{s}\n= \\unormal \\cdot \\vec{\\dot{c}}\n+ \\frac{\\dot{\\alpha}L}{2} \\sigma\n- \\unormal \\cdot \\vec{u}_A(\\sigma)\n$$\nFrom <a href=\"#footnote-Muskhelishvili\">[Muskhelishvili]</a>, we have that if\n$$\n\\frac{1}{\\pi\\im} \\int \\frac{\\varphi(t)}{t - t_0} \\d{t} = f(t_0)\n$$\nthen\n$$\n\\varphi(t_0) = \\frac{1}{\\pi\\im\\sqrt{t_0 - 1}\\sqrt{t_0 + 1}}\n\\int \\frac{\\sqrt{t - 1}\\sqrt{t + 1}}{t - t_0} f(t) \\d{t}\n+\n\\frac{P(t_0)}{\\sqrt{t_0 - 1}\\sqrt{t_0 + 1}}\n$$\nwhere $P$ is an arbitrary polynomial that must be chosen to satisfy far-field boundary conditions.\n\nIn our case, we have $\\varphi := \\im \\gamma$ and\n$$\nf := 2\\sum_{n = 0}^\\infty A_n T_n(\\sigma) - 2\\unormal \\cdot \\vec{\\dot{c}} - \\dot{\\alpha}L \\sigma\n$$\nso\n$$\n\\gamma(\\sigma)\n=\n\\frac{-2}{\\pi\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}\n\\int_{-1}^1 \\frac{\\sqrt{1 - s}\\sqrt{1 + s}}{s - \\sigma}\n\\left(\n\\sum_{n = 0}^\\infty A_n T_n(s) - \\unormal \\cdot \\vec{\\dot{c}} - \\frac{\\dot{\\alpha}L}{2} s\n\\right) \\d{s}\n+\n\\frac{P(t_0)}{\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}\n$$\n\nThe integral above is made of terms with the form\n$$\n\\pint_{-1}^1\n\\frac{\\sqrt{1 - s}\\sqrt{1 + s}}{s - \\sigma} T_n(s)\n\\d{s}\n$$\nwhich we can simplify using the properties of Chebyshev polynomials into\n$$\n\\pint_{-1}^1\n\\frac{\\sqrt{1 - s}\\sqrt{1 + s}}{s - \\sigma} T_n(s)\n\\d{s}\n=\n\\begin{cases}\n-\\pi T_1(\\sigma) & n = 0 \\\\\n-\\frac{\\pi}{2} T_2(\\sigma) & n = 1 \\\\\n-\\frac{\\pi}{2} \\left[T_{n+1}(\\sigma) - T_{n-1}(\\sigma)\\right] & n \\ge 2\n\\end{cases}.\n$$\nThis gives us\n$$\n\\gamma(\\sigma)\n=\n\\frac{-2}{\\pi\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}\n\\left\\{\n-\\pi A_0 \\sigma\n-\\frac{\\pi}{2} A_1\n+\\sum_{n = 1}^\\infty -\\frac{\\pi}{2}A_n \\left[T_{n+1}(\\sigma) - T_{n-1}(\\sigma)\\right]\n+ \\pi \\left(\\unormal \\cdot \\vec{\\dot{c}}\\right)\\sigma\n+ \\frac{\\pi}{2}T_2(\\sigma)\\frac{\\dot{\\alpha}L}{2}\n\\right\\}\n+\n\\frac{P(t_0)}{\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}.\n$$\n\nWe can find $P$ by satisfying Kelvin's circulation theorem.\nThis means that the amount of circulation contained in the bound vortex sheet should the negative of the circulation contained in the ambient vorticity, i.e.\n$$\n\\Gamma_s := \\int_{-\\frac{L}{2}}^{\\frac{L}{2}} \\gamma \\d{l} = -\\Gamma_A\n$$\n\nAgain, we use properties of Chebyshev polynomials to reduce the integral to\n$$\n\\begin{align*}\n\\frac{L}{2}\\int_{-1}^1 \\frac{P(s)}{\\sqrt{1 - s}\\sqrt{1 + s}} \\d{s} & = -\\Gamma_A,\n\\end{align*}\n$$\nwhich means that\n$$\nP = -\\frac{2\\Gamma_A}{L\\pi}.\n$$\n\nSo the final expression for the bound circulation is:\n</details>beginequation\ngammal(s) =\nfrac-frac2Gamma_ALpi + 2(A_0 - unormal cdot vecdotc) T_1(s) + (A_1 - fracdotalphaL2)T_2(s)sqrt1 - s^2 - 2sqrt1 - s^2sum_n = 2^infty A_n U_n-1(s)\nlabeleqgamma\nendequationnote: Note\nThis might look more similar to results from thin-airfoil theory if we rewrite the Chebyshev polynomials using trigonometric functions:gammal(theta) =\nfrac-frac2Gamma_ALpi + 2(A_0 - unormal cdot vecdotc) costheta + (A_1 - fracdotalphaL2)cos(2theta)sintheta - 2sum_n = 2^infty A_n sin(ntheta)The key difference is that we are free to relax the Kutta condition at the trailing edge."
+},
+
+{
+    "location": "noflowthrough.html#Circulation-1",
+    "page": "Enforcing No-Flow-Through",
+    "title": "Circulation",
+    "category": "section",
+    "text": "In addition to the distribution of circulation along the plate, it will be useful to know the amount circulation contained between one end of the plate to an arbitrary point on its surface. By definition, we havebeginalign*\nGamma(l)  = int_-L2^l gamma(lambda) dlambda \nGammal(s) = fracL2int_-1^s gammal(sigma) dsigma\nendalign*We can integrate gamma term by term to obtain:<details>\n<summary></summary>\nIn equation $\\eqref{eq:gamma}$, the Chebyshev polynomial of the second kind in ther summation can be written in terms of Chebyshev polynomials of the first kind:\n$$\n2\\sqrt{1 - s^2}U_{n-1}(s)  = \\frac{T_{n-1}(s) - T_{n+1}(s)}{\\sqrt{1 - s^2}}.\n$$\nThis means that all the terms in equation $\\eqref{eq:gamma}$ can be expressed in the form:\n$$\n\\frac{T_n(s)}{\\sqrt{1 - s^2}}.\n$$\nThe integral of these terms are:\n$$\n\\begin{align*}\n\\int_{-1}^s \\frac{T_n(s)}{\\sqrt{1 - s^2}} \\d{s}\n& = \\int_{\\cos^{-1} s}^\\pi \\cos(n\\theta) \\d{\\theta} \\\\\n& = \\begin{cases}\n\\pi - \\cos^{-1}s &: n = 0 \\\\\n-\\frac{1}{n}\\sin\\left(n\\cos^{-1}s\\right) &: n > 0\n\\end{cases}.\n\\end{align*}\n$$\nWe can then multiply the expressions above with their corresponding coefficients to obtain:\n</details>Gammal(s)\n=Gamma_Aleft(fraccos^-1spi - 1right) - fracLsqrt1 - s^22left\n2left(A_0 - unormal cdot vecdotcright)\n+left(A_1 - fracdotalphaL2right)s\n+sum_n=2^infty\nA_n left(fracU_n(s)n+1 - fracU_n-2(s)n-1right)right[Muskhelishvili]: Muskhelishvili, Nikolaĭ Ivanovich, and Jens Rainer Maria Radok. Singular integral equations: boundary problems of function theory and their application to mathematical physics. Courier Corporation, 2008."
 },
 
 ]}
