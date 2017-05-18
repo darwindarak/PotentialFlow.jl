@@ -5,7 +5,7 @@ using VortexModel
 
 @test isempty(detect_ambiguities(Vortex))
 
-@testset DottedTestSet "All tests" begin
+@testset ExtendedTestSet "All tests" begin
     @includetests ARGS
 end
 
