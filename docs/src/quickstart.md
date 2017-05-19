@@ -201,23 +201,18 @@ julia> self_induce_velocity!(vels, sys);
 
 ```@setup timemarching
 using VortexModel
-using PyPlot
+using Gadfly
+import Colors: colormap, alphacolor
 srand(1)
 
-function plot_system(sys, filename)
-    clf()
-    for cluster in sys
-        scatter(real.(Vortex.position.(cluster)),
-                imag.(Vortex.position.(cluster)),
-                c = Vortex.circulation.(cluster),
-                vmin = 0, vmax = 1, alpha = 0.7,
-                cmap = PyPlot.get_cmap("Reds"))
-    end
-    colorbar(label="\$\\Gamma\$")
-    axis(:scaled)
-    axis([-3,3,-3,3])
-    savefig(filename)
-    nothing
+function plot_system(sys)
+    plot(x = real.(Vortex.position.(vcat(sys...))),
+         y = imag.(Vortex.position.(vcat(sys...))),
+         color = Vortex.circulation.(vcat(sys...)),
+         Coord.cartesian(fixed=true),
+         Guide.colorkey("Γ"),
+         Scale.color_continuous(colormap=Scale.lab_gradient(colormap("reds")...)),
+         style(grid_line_width=0mm, highlight_width=0mm))
 end
 ```
 Now that we compute the velocities of a system of vortex elements, we can march the system forward in time to simulate its behavior.
@@ -231,13 +226,25 @@ cluster₂ = Vortex.Blob.(zs - 1, Γs, 0.01)
 
 sys = (cluster₁, cluster₂)
 vels = allocate_velocity(sys)
-plot_system(sys, "initial_clusters.svg") # hide
+plot_system(sys)
+draw(SVGJS("initial_clusters.svg", 6inch, 4inch), ans); nothing # hide
 ```
 !!! warning
     Functions for plotting vortex elements are still waiting for a
     couple more issues to be fixed on
-    [Plots.jl](github.com/JuliaPlots/Plots.jl).  For now, we can use
-    [PyPlot](github.com/JuliaPy/PyPlot.jl) directly as follows:
+    [Plots.jl](https://github.com/JuliaPlots/Plots.jl).  For now, we can use
+    [Gadfly.jl](https://github.com/GiovineItalia/Gadfly.jl) directly as follows:
+    ```julia
+    using Gadfly
+    plot(x = real.(Vortex.position.(vcat(sys...))),
+         y = imag.(Vortex.position.(vcat(sys...))),
+         color = Vortex.circulation.(vcat(sys...)),
+         Coord.cartesian(fixed=true),
+         Guide.colorkey("Γ"),
+         Scale.color_continuous(colormap=Scale.lab_gradient(colormap("reds")...)),
+         style(grid_line_width=0mm, highlight_width=0mm))
+    ```
+    Alternatively, we can use [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl) with something like:
     ```julia
     using PyPlot
     for cluster in sys
@@ -251,7 +258,10 @@ plot_system(sys, "initial_clusters.svg") # hide
     axis(:scaled)
     axis([-3,3,-3,3])
     ```
-![](initial_clusters.svg)
+
+```@raw html
+<object data="initial_clusters.svg" type="image/svg+xml"></object>
+```
 
 Given an array or tuple of vortex elements and their velocities, we can compute their positions after some time interval with the `advect!(x₊, x, ẋ, Δt)` function, where
 - `x₊` is where the new states are stored
@@ -266,6 +276,9 @@ for t in 0:Δt:1.0
     self_induce_velocity!(vels, sys)
     advect!(sys, sys, vels, Δt)
 end
-plot_system(sys, "final_clusters.svg") # hide
+plot_system(sys)
+draw(SVGJS("final_clusters.svg", 6inch, 4inch), ans); nothing # hide
 ```
-![](final_clusters.svg)
+```@raw html
+<object data="final_clusters.svg" type="image/svg+xml"></object>
+```
