@@ -48,7 +48,7 @@
         δ = 0.05
         sheet = Vortex.Sheet(zs, Γs, δ)
 
-        truncate_n = rand(1:50)
+        truncate_n = 50
         ΣΓ = Vortex.circulation(sheet)
         ΔΓ₀ = Γs[truncate_n] - Γs[1]
         ΔΓ  = Vortex.Sheets.truncate!(sheet, truncate_n)

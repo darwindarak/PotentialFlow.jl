@@ -95,10 +95,6 @@
         ċ = rand(Complex128)
         α = 0.5π*rand()
         α̇ = rand()
-        c = rand(Complex128)
-        ċ = rand(Complex128)
-        α = 0.5π*rand()
-        α̇ = rand()
 
         N = 10
         ζs = (2 .+ rand(N)).*exp.(2π.*rand(N))
@@ -132,7 +128,7 @@
 
         @test γs == Vortex.Plates.strength(plate)
 
-        kutta_points = Vortex.Point.(rand(Complex128, 2), 1.0)
+        kutta_points = Vortex.Point.(c .+ [-1.1, 1.1].*exp(im*α), 1.0)
         Vortex.Plates.vorticity_flux!(plate, kutta_points[1], kutta_points[2])
 
         ss = linspace(-1, 1, 4001)
