@@ -42,7 +42,7 @@ macro get(object, fields...)
             @assert fields[1].head == :tuple
             @assert all([typeof(arg) == Symbol for arg in fields[1].args])
         catch
-            error("second argument must be a tuple of field names")
+            throw(ArgumentError("second argument must be a tuple of field names"))
         end
         esc(Expr(:block, [:($sym = $object.$sym) for sym in fields[1].args]...))
     elseif length(fields) == 2
@@ -53,14 +53,14 @@ macro get(object, fields...)
             @assert all([typeof(arg) == Symbol for arg in fields[1].args])
             @assert all([typeof(arg) == Symbol for arg in fields[2].args])
         catch
-            error("second and third argument must be tuples of field names")
+            throw(ArgumentError("second and third argument must be tuples of field names"))
         end
 
         nargs = length(fields[1].args)
         @assert nargs == length(fields[2].args) "field name tuples must have the same length"
         esc(Expr(:block, [:($(fields[2].args[i]) = $object.$(fields[1].args[i])) for i in 1:nargs]...))
     else
-        error("Usage: @get <object> (field names...) [(reference names...)]")
+        throw(ArgumentError("Usage: @get <object> (field names...) [(reference names...)]"))
     end
 end
 

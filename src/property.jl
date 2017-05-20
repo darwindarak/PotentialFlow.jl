@@ -93,6 +93,6 @@ macro property(kind, name, prop_type)
             end
             end)
     else
-        error("first argument must be `:induced`, `:point` or `:aggregate`")
+        throw(ArgumentError("first argument must be `:induced`, `:point` or `:aggregate`"))
     end
 end
