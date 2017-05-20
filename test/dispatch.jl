@@ -108,7 +108,7 @@
     end
 
     @testset "Property Macro" begin
-        @test_throws ErrorException @eval Vortex (@property prop count Int)
+        @test_throws ArgumentError @eval Vortex (@property prop count Int)
 
         @eval Vortex (@property induced count Int)
         @eval Vortex.Points begin

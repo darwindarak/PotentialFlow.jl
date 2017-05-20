@@ -14,11 +14,11 @@
         @test i == imag(z)
         @test r == real(z)
 
-        @test_throws ErrorException (@eval @get z z)
-        @test_throws ErrorException (@eval @get z (re, im) nothing)
-        @test_throws ErrorException (@eval @get z (re, im) (r, i) nothing)
+        @test_throws ArgumentError (@eval @get z z)
+        @test_throws ArgumentError (@eval @get z (re, im) nothing)
+        @test_throws ArgumentError (@eval @get z (re, im) (r, i) nothing)
+        @test_throws ArgumentError (@eval @get z (re, im) (im,) (im,))
         @test_throws AssertionError (@eval @get z (re, im) (im,))
-        @test_throws ErrorException (@eval @get z (re, im) (im,) (im,))
     end
 
     @testset "MappedVector" begin

@@ -48,7 +48,7 @@
         δ = 0.05
         sheet = Vortex.Sheet(zs, Γs, δ)
 
-        truncate_n = rand(1:50)
+        truncate_n = 50
         ΣΓ = Vortex.circulation(sheet)
         ΔΓ₀ = Γs[truncate_n] - Γs[1]
         ΔΓ  = Vortex.Sheets.truncate!(sheet, truncate_n)
@@ -100,9 +100,11 @@
         Vortex.Sheets.remesh!(sheet₂, 0.01)
         Vortex.Sheets.filter_position!(sheet₂, 0.03)
 
-        Vortex.Sheets.filter!(sheet₁, 0.01, 0.03)
+        property = copy(sheet₁.Γs)
+        Vortex.Sheets.filter!(sheet₁, 0.01, 0.03, (property,))
 
         @test sheet₁.zs == sheet₂.zs
         @test sheet₁.Γs == sheet₂.Γs
+        @test sheet₁.Γs == property
     end
 end
