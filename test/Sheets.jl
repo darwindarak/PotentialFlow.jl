@@ -100,9 +100,11 @@
         Vortex.Sheets.remesh!(sheet₂, 0.01)
         Vortex.Sheets.filter_position!(sheet₂, 0.03)
 
-        Vortex.Sheets.filter!(sheet₁, 0.01, 0.03)
+        property = copy(sheet₁.Γs)
+        Vortex.Sheets.filter!(sheet₁, 0.01, 0.03, (property,))
 
         @test sheet₁.zs == sheet₂.zs
         @test sheet₁.Γs == sheet₂.Γs
+        @test sheet₁.Γs == property
     end
 end
