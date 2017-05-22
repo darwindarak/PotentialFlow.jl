@@ -19,10 +19,19 @@
         @test C[2] ≈ 1
         @test norm(C[3:end]) ≤ 128eps()
 
-        C = Vortex.Plates.chebyshev_transform(16x.^5 .- 20x.^3 .+ 5x)
+        y = @. 16x^5 - 20x^3 + 5x
+        C = Vortex.Plates.chebyshev_transform(y)
         @test norm(C[1:5]) ≤ 128eps()
         @test C[6] ≈ 1
         @test norm(C[7:end]) ≤ 128eps()
+
+        ỹ = Vortex.Plates.inv_chebyshev_transform(C)
+        @test y ≈ ỹ
+
+        @test Vortex.Plates.eval_cheb(C, Vortex.Plates.chebyshev_nodes(N)) ≈ ỹ
+
+        Vortex.Plates.inv_chebyshev_transform!(C)
+        @test y ≈ C
     end
 
     @testset "Singular Interactions" begin
@@ -54,7 +63,11 @@
         for (i, b) in enumerate(blobs)
             induce_velocity!(vel_p, plate, b)
         end
+
+        motion = Vortex.Plates.PlateMotion(0.0, 0.0)
+        Vortex.Plates.enforce_no_flow_through!(plate, motion, blobs)
         @test vel_p == vel_b
+        @test Vortex.Plates.eval_cheb(plate.C, plate.ss) ≈ exp(-im*plate.α).*vel_p
     end
     @testset "Chebyshev Transform" begin
         const cheb! = Vortex.Plates.chebyshev_transform!

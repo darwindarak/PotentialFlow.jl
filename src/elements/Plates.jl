@@ -50,7 +50,7 @@ mutable struct Plate <: Vortex.CompositeSource
 end
 
 function Plate(N, L, c, α)
-    ss = Float64[cos(θ) for θ in linspace(π, 0, N)]
+    ss = chebyshev_nodes(N)
     zs = c + 0.5L*ss*exp(im*α)
 
     C  = zeros(Complex128, N)
