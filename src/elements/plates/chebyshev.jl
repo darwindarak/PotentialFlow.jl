@@ -29,78 +29,121 @@ function eval_cheb(C::AbstractArray{U}, s::S)::U where {U,S <: Real}
 end
 
 """
-    chebyshev_transform!{T}(C::T, x::T, plan! = FFTW.plan_r2r!(C, FFTW.REDFT00))
+    chebyshev_transform(x[, plan!])
 
-Compute the discrete Chebyshev transform of `x` and store the result in `C` (s = -1 → x[1], s = 1 → x[end]).
-Also takes an optional `plan!` argument for a preplanned discrete cosine transform.
+Compute the discrete Chebyshev transform of `x`.
+
+# Arguments
+
+- `x`: samples of a function distributed along [extrema Chebyshev nodes](@ref chebyshev_nodes)
+- `plan!`: an optional pre-planned in-place DCT-I used to compute the transform
 """
-function chebyshev_transform!{T}(C::T, x::T, plan! = FFTW.plan_r2r!(C, FFTW.REDFT00))
+function chebyshev_transform(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
+    C = copy(x)
+    chebyshev_transform!(C, plan!)
+end
+
+"""
+    chebyshev_transform!(A,[ x, plan!])
+
+Compute the discrete Chebyshev transform of `x` in-place.
+
+# Arguments
+
+- `A`: the output vector (also the input vector if `x` is omitted)
+- `x`: an optional input vector with samples of a function distributed
+  along [extrema Chebyshev nodes](@ref chebyshev_nodes)
+- `plan!`: an optional pre-planned in-place DCT-I used to compute the transform
+"""
+function chebyshev_transform!(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
     N = length(x)
-    for n in 1:N
-        C[n] = x[n]/(N-1)
-    end
-    plan!*C
-
-    for n in 2:2:N
-        C[n] *= -1
-    end
-
-    C[1] /= 2
-    C[N] /= 2
-    nothing
-end
-
-"""
-    chebyshev_transform(x)
-
-Compute the discrete Chebyshev transform of `x` (s = -1 → x[1], s = 1 → x[end])
-"""
-function chebyshev_transform(x)
-    C = zeros(eltype(x), length(x))
-    chebyshev_transform!(C, x)
-    return C
-end
-
-chebyshev_transform!(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) = chebyshev_transform!(x, x, plan!)
-
-"""
-    inv_chebyshev_transform!{T}(x::T, C::T, plan! = FFTW.plan_r2r!(C, FFTW.REDFT00))
-
-Evaluate the Chebyshev series with coefficients `C` on the [extrema
-nodes](@ref chebyshev_nodes) and store the results in `x`.
-
-It is the inverse of [`chebyshev_transform!`](@ref), and similarly
-takes an optional `plan!` argument for a preplanned discrete cosine
-transform.
-"""
-function inv_chebyshev_transform!{T}(x::T, C::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
-    N = length(C)
-    x[1] = C[1]
-    for n in 2:2:N-2
-        x[n]   = -0.5C[n]
-        x[n+1] =  0.5C[n+1]
-    end
-    if iseven(N)
-        x[N] = -C[N]
-    else
-        x[N-1] = -0.5C[N-1]
-        x[N] = C[N]
+    if N != length(plan!)
+        throw(BoundsError("`x` must have the same size as the preplanned DCT"))
     end
 
     plan!*x
+
+    s = 1/(N-1)
+
+    @inbounds begin
+        for n in 2:2:N
+            x[n-1] *= s
+            x[n]   *= -s
+        end
+        if isodd(N)
+            x[N] *= s
+        end
+
+        x[1] /= 2
+        x[N] /= 2
+    end
+
+    x
 end
-inv_chebyshev_transform!(C, plan! = FFTW.plan_r2r!(C, FFTW.REDFT00)) = inv_chebyshev_transform!(C, C, plan!)
+
+function chebyshev_transform!{T}(A::T, x::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
+    copy!(A, x)
+    chebyshev_transform!(A, plan!)
+end
 
 """
-    inv_chebyshev_transform(C)
+    inv_chebyshev_transform(A[, plan!])
 
-Inverts the coefficients `C` from a [discrete Chebyshev transform](@ref chebyshev_transform).
+Perform the inverse Chebyshev transform.
+
+This is the inverse of [`chebyshev_transform`](@ref).
+
+# Fields
+
+- `A`: the coefficients of a Chebyshev series
+- `plan!`: an optional pre-planned in-place DCT-I used to compute the transform
 """
-function inv_chebyshev_transform(C)
-    x = zeros(eltype(C), length(C))
-    inv_chebyshev_transform!(x, C)
-    return x
+function inv_chebyshev_transform(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
+    x = copy(A)
+    inv_chebyshev_transform!(x, plan!)
 end
+
+"""
+    inv_chebyshev_transform!(x, [C, plan!)
+
+Perform the inverse Chebyshev transform in place.
+
+This is the inverse of [`chebyshev_transform!`](@ref)
+
+# Arguments
+
+- `x`: the output vector to store the reconstructed function with
+  points distributed along extrema Chebyshev nodes (also the input
+  vector if `A` is omitted)
+- `A`: an optional input vector with coefficients of a Chebyshev series
+- `plan!`: an optional pre-planned in-place DCT-I used to compute the transform
+"""
+function inv_chebyshev_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
+    N = length(A)
+    if N != length(plan!)
+        throw(BoundsError("`A` must have the same size as the preplanned DCT"))
+    end
+
+    @inbounds begin
+        for n in 2:2:N-2
+            A[n]   *= -0.5
+            A[n+1] *=  0.5
+        end
+        if iseven(N)
+            A[N] *= -1
+        else
+            A[N-1] *= -0.5
+        end
+    end
+
+    plan!*A
+end
+
+function inv_chebyshev_transform!{T}(x::T, A::T, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
+    copy!(x, A)
+    inv_chebyshev_transform!(x, plan!)
+end
+
 
 """
     clenshaw_curtis_weights(N)
