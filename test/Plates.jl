@@ -32,6 +32,14 @@
 
         Vortex.Plates.inv_chebyshev_transform!(C)
         @test y ≈ C
+
+        # Make sure inverse transforms work with odd number of nodes
+        N = 127
+        x = Vortex.Plates.chebyshev_nodes(N)
+        y = @. 16x^5 - 20x^3 + 5x
+        C = Vortex.Plates.chebyshev_transform(y)
+        ỹ = Vortex.Plates.inv_chebyshev_transform(C)
+        @test y ≈ ỹ
     end
 
     @testset "Singular Interactions" begin
