@@ -1,63 +1,4 @@
 @testset "Plate" begin
-    @testset "Chebyshev transform" begin
-        N = 127
-        w = Vortex.Plates.clenshaw_curtis_weights(N)
-        @test sum(w) ≈ 2
-
-        α = linspace(π, 0, N)
-        x = cos.(α)
-        @test w ⋅ x ≤ eps()
-        @test w ⋅ x.^2 ≈ 2/3
-        @test w ⋅ exp.(x) ≈ (exp(1) - exp(-1))
-
-        K  = Vortex.Plates.plan_chebyshev_transform(ones(N))
-        K! = Vortex.Plates.plan_chebyshev_transform!(ones(N))
-        @test_throws BoundsError K*ones(N+1)
-        C = K*ones(N)
-
-        @test C[1] ≈ 1
-        @test norm(C[2:end]) ≤ 128eps()
-
-        C = K*x
-        @test norm(C[1]) ≤ 128eps()
-        @test C[2] ≈ 1
-        @test norm(C[3:end]) ≤ 128eps()
-
-        y = @. 16x^5 - 20x^3 + 5x
-        C = K*y
-        @test norm(C[1:5]) ≤ 128eps()
-        @test C[6] ≈ 1
-        @test norm(C[7:end]) ≤ 128eps()
-
-        ỹ = K \ C
-        @test y ≈ ỹ
-
-        @test Vortex.Plates.chebt(C, Vortex.Plates.chebyshev_nodes(N)) ≈ ỹ
-
-        Vortex.Plates.inv_chebyshev_transform!(C)
-        @test y ≈ C
-
-        # Make sure transforms work with even number of nodes
-        N = 128
-        x = Vortex.Plates.chebyshev_nodes(N)
-        K! = Vortex.Plates.plan_chebyshev_transform!(x)
-        y = @. 16x^5 - 20x^3 + 5x
-        C = copy(y)
-        K! * C
-        ỹ = Vortex.Plates.inv_chebyshev_transform(C)
-        @test y ≈ ỹ
-
-        K! \ C
-        @test y ≈ C
-
-        # Check evaluation off offset Chebyshev series
-        s = rand(2)
-        @test Vortex.Plates.chebt([rand(), 2.0, 1.0], s, 1)    ≈ @. 2s^2 + 2s - 1
-        @test Vortex.Plates.chebt([rand(), rand(), 1.0], s, 2) ≈ @. 2s^2 - 1
-        @test Vortex.Plates.chebu([rand(), 2.0, 1.0], s, 1)    ≈ @. 4s^2 + 4s - 1
-        @test Vortex.Plates.chebu([rand(), rand(), 1.0], s, 2) ≈ @. 4s^2 - 1
-    end
-
     @testset "Singular Interactions" begin
         N = 100
         zs = rand(Complex128, N)
@@ -91,40 +32,8 @@
         motion = Vortex.Plates.PlateMotion(0.0, 0.0)
         Vortex.Plates.enforce_no_flow_through!(plate, motion, blobs)
         @test vel_p == vel_b
-        @test Vortex.Plates.chebt(plate.C, plate.ss) ≈ exp(-im*plate.α).*vel_p
+        @test Vortex.Plates.Chebyshev.firstkind(plate.C, plate.ss) ≈ exp(-im*plate.α).*vel_p
     end
-    @testset "Chebyshev Transform" begin
-        const cheb! = Vortex.Plates.chebyshev_transform!
-
-        N = rand(128:512)
-
-        R = zeros(Float64, N)
-        @test all(rand(0:(N÷2), 10)) do n
-            x = [cos(n*θ) for θ in linspace(π, 0, N)]
-            cheb!(R, x)
-            (R[n+1] ≈ 1.0) && (sum(R) ≈ 1.0)
-        end
-
-        n₁ = rand(0:(N÷2))
-        n₂ = rand(0:(N÷2))
-        x₁ = [cos(n₁*θ) for θ in linspace(π, 0, N)]
-        x₂ = [cos(n₂*θ) for θ in linspace(π, 0, N)]
-
-        C = x₁ .+ im.*x₂
-        I = zeros(Float64, N)
-
-        cheb!(R, x₁)
-        cheb!(I, x₂)
-        cheb!(C)
-
-        @test real.(C) ≈ R
-        @test imag.(C) ≈ I
-
-        plan! = FFTW.plan_r2r!(C, FFTW.REDFT00)
-        @allocated cheb!(C, plan!)
-        @test 0 == (@allocated cheb!(C, plan!))
-    end
-
     @testset "Bound Circulation" begin
         include("utils/circle_plane.jl")
 
@@ -251,61 +160,61 @@
         @test Γ₊ == Γ₋ == 0
     end
 
-    @testset "Impulse" begin
-        ċ = rand(Complex128)
-        α = rand()*0.5π
-        L = 2rand()
-        plate = Vortex.Plate(128, L, 0.0, α)
-        motion = allocate_velocity(plate)
+@testset "Impulse" begin
+    ċ = rand(Complex128)
+    α = rand()*0.5π
+    L = 2rand()
+    plate = Vortex.Plate(128, L, 0.0, α)
+    motion = allocate_velocity(plate)
 
-        motion.ċ = ċ
-        motion.α̇ = 0.0
+    motion.ċ = ċ
+    motion.α̇ = 0.0
 
-        points = Vortex.Point.(2.0im + rand(Complex128, 20), rand(20))
-        sheet  = Vortex.Sheet(2.0im + rand(Complex128, 20), cumsum(rand(20)), rand())
+    points = Vortex.Point.(2.0im + rand(Complex128, 20), rand(20))
+    sheet  = Vortex.Sheet(2.0im + rand(Complex128, 20), cumsum(rand(20)), rand())
 
-        impulse  = sum(points) do p
-            p.Γ*Vortex.unit_impulse(p, plate)
-        end
-
-        impulse += sum(sheet.blobs) do b
-            b.Γ*Vortex.unit_impulse(b, plate)
-        end
-
-        impulse += im*π*0.5L*imag(ċ*exp(-im*α))
-        impulse *= 0.5L*exp(im*α)
-
-        Vortex.Plates.enforce_no_flow_through!(plate, motion, (points, sheet))
-
-        @test Vortex.circulation((plate, points, sheet)) ≤ 128eps()
-        @test norm(impulse .- Vortex.impulse((plate, points, sheet))) ≤ 1e-5
+    impulse  = sum(points) do p
+        p.Γ*Vortex.unit_impulse(p, plate)
     end
 
-    @testset "Advection" begin
-        motion = Vortex.Plates.PlateMotion(rand(Complex128), rand())
-        c = rand(Complex128)
-        α = 0.5π*rand()
-        L = 2rand()
-
-        points = Vortex.Point.(rand(Complex128, 10), rand(10))
-
-        plate  = Vortex.Plate(128, L, c, α)
-        Vortex.Plates.enforce_no_flow_through!(plate, motion, points)
-
-        plate₊ = Vortex.Plate(128, L, c, α)
-
-        Δt = 1e-2
-        advect!(plate₊, plate, motion, Δt)
-        advect!(plate,  plate, motion, Δt)
-
-        @test length(plate₊) == length(plate)
-        @test plate₊.C  == plate.C
-        @test plate₊.zs == plate.zs
-        @test plate₊.c  == plate.c
-        @test plate₊.α  == plate.α
-        @test plate₊.Γ  == plate.Γ
-        @test plate₊.B₀ == plate.B₀
-        @test plate₊.B₁ == plate.B₁
+    impulse += sum(sheet.blobs) do b
+        b.Γ*Vortex.unit_impulse(b, plate)
     end
+
+    impulse += im*π*0.5L*imag(ċ*exp(-im*α))
+    impulse *= 0.5L*exp(im*α)
+
+    Vortex.Plates.enforce_no_flow_through!(plate, motion, (points, sheet))
+
+    @test Vortex.circulation((plate, points, sheet)) ≤ 128eps()
+    @test norm(impulse .- Vortex.impulse((plate, points, sheet))) ≤ 1e-5
+end
+
+@testset "Advection" begin
+    motion = Vortex.Plates.PlateMotion(rand(Complex128), rand())
+    c = rand(Complex128)
+    α = 0.5π*rand()
+    L = 2rand()
+
+    points = Vortex.Point.(rand(Complex128, 10), rand(10))
+
+    plate  = Vortex.Plate(128, L, c, α)
+    Vortex.Plates.enforce_no_flow_through!(plate, motion, points)
+
+    plate₊ = Vortex.Plate(128, L, c, α)
+
+    Δt = 1e-2
+    advect!(plate₊, plate, motion, Δt)
+    advect!(plate,  plate, motion, Δt)
+
+    @test length(plate₊) == length(plate)
+    @test plate₊.C  == plate.C
+    @test plate₊.zs == plate.zs
+    @test plate₊.c  == plate.c
+    @test plate₊.α  == plate.α
+    @test plate₊.Γ  == plate.Γ
+    @test plate₊.B₀ == plate.B₀
+    @test plate₊.B₁ == plate.B₁
+end
 
 end

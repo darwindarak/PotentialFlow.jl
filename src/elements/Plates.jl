@@ -9,6 +9,7 @@ import ..Vortex:@get, MappedVector
 import Base: length
 
 include("plates/chebyshev.jl")
+#import Chebyshev
 
 """
     Vortex.Plate <: VortexCompositeSource
@@ -48,17 +49,17 @@ mutable struct Plate <: Vortex.CompositeSource
     B₁::Float64
 
     "Preplanned discrete Chebyshev transform"
-    dchebt!::ChebyshevTransform{Complex128, true}
+    dchebt!::Chebyshev.Transform{Complex128, true}
 end
 
 function Plate(N, L, c, α)
-    ss = chebyshev_nodes(N)
+    ss = Chebyshev.nodes(N)
     zs = c + 0.5L*ss*exp(im*α)
 
     C  = zeros(Complex128, N)
     A = MappedVector(imag, C, 1)
 
-    dchebt! = plan_chebyshev_transform!(C)
+    dchebt! = Chebyshev.plan_transform!(C)
 
     Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0, dchebt!)
 end

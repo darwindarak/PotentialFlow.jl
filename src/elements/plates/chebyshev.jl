@@ -1,32 +1,34 @@
+module Chebyshev
+
 import Base: *, \
-struct ChebyshevTransform{T,I}
+struct Transform{T,I}
     dct!::FFTW.r2rFFTWPlan{T,(3,),true,1}
 end
 
-function plan_chebyshev_transform!(x::Vector{T}) where T
-    ChebyshevTransform{T,true}(FFTW.plan_r2r!(x, FFTW.REDFT00))
+function plan_transform!(x::Vector{T}) where T
+    Transform{T,true}(FFTW.plan_r2r!(x, FFTW.REDFT00))
 end
 
-function plan_chebyshev_transform(x::Vector{T}) where T
-    ChebyshevTransform{T,false}(FFTW.plan_r2r!(x, FFTW.REDFT00))
+function plan_transform(x::Vector{T}) where T
+    Transform{T,false}(FFTW.plan_r2r!(x, FFTW.REDFT00))
 end
 
-(C::ChebyshevTransform{T,true}  * x::Vector{T}) where T = chebyshev_transform!(x, C.dct!)
-(C::ChebyshevTransform{T,false} * x::Vector{T}) where T = chebyshev_transform(x, C.dct!)
-(C::ChebyshevTransform{T,true}  \ A::Vector{T}) where T = inv_chebyshev_transform!(A, C.dct!)
-(C::ChebyshevTransform{T,false} \ A::Vector{T}) where T = inv_chebyshev_transform(A, C.dct!)
+(C::Transform{T,true}  * x::Vector{T}) where T = transform!(x, C.dct!)
+(C::Transform{T,false} * x::Vector{T}) where T = transform(x, C.dct!)
+(C::Transform{T,true}  \ A::Vector{T}) where T = inv_transform!(A, C.dct!)
+(C::Transform{T,false} \ A::Vector{T}) where T = inv_transform(A, C.dct!)
 
 """
-    chebyshev_nodes(N, T = Float64)
+    Chebyshev.nodes(N, T = Float64)
 
 Gives `N` extrema Chebyshev points of type `T` in [-1 ,1].
 """
-function chebyshev_nodes(N, T = Float64)
+function nodes(N, T = Float64)
     T[cos(θ) for θ in linspace(π, 0, N)]
 end
 
 """
-    eval_chet(C, s[, offset = 0])
+    Chebyshev.firstkind(C, s[, offset = 0])
 
 Evaluate a Chebyshev series of the first kind.
 
@@ -36,8 +38,8 @@ Evaluate a Chebyshev series of the first kind.
 - `s`: a scalar or an array of evaluation points ∈ [-1, 1]
 - `offset`: an optional starting index of the series summation
 """
-chebt(A, ss, offset = 0) = [chebt(A, s, offset) for s in ss]
-function chebt(A::AbstractArray{C}, s::S, offset = 0)::C where {C,S <: Real}
+firstkind(A, ss, offset = 0) = [firstkind(A, s, offset) for s in ss]
+function firstkind(A::AbstractArray{C}, s::S, offset = 0)::C where {C,S <: Real}
     -1 ≤ s ≤ 1 || throw(DomainError("s ∉ [-1,1]"))
     T₋ = s
     T  = one(S)
@@ -56,7 +58,7 @@ function chebt(A::AbstractArray{C}, s::S, offset = 0)::C where {C,S <: Real}
 end
 
 """
-    eval_cheu(C, s[, offset = 0])
+    Chebyshev.secondkind(C, s[, offset = 0])
 
 Evaluate a Chebyshev series of the second kind.
 
@@ -66,8 +68,8 @@ Evaluate a Chebyshev series of the second kind.
 - `s`: a scalar or an array of evaluation points ∈ [-1, 1]
 - `offset`: an optional starting index of the series summation
 """
-chebu(C, ss, offset = 0) = [chebu(C, s, offset) for s in ss]
-function chebu(A::AbstractArray{C}, s::S, offset = 0)::C where {C,S <: Real}
+secondkind(C, ss, offset = 0) = [secondkind(C, s, offset) for s in ss]
+function secondkind(A::AbstractArray{C}, s::S, offset = 0)::C where {C,S <: Real}
     -1 ≤ s ≤ 1 || throw(DomainError("s ∉ [-1,1]"))
     U₋ = zero(s)
     U  = one(S)
@@ -86,22 +88,22 @@ function chebu(A::AbstractArray{C}, s::S, offset = 0)::C where {C,S <: Real}
 end
 
 """
-    chebyshev_transform(x[, plan!])
+    Chebyshev.transform(x[, plan!])
 
 Compute the discrete Chebyshev transform of `x`.
 
 # Arguments
 
-- `x`: samples of a function distributed along [extrema Chebyshev nodes](@ref chebyshev_nodes)
+- `x`: samples of a function distributed along [extrema Chebyshev nodes](@ref Chebyshev.nodes)
 - `plan!`: an optional pre-planned in-place DCT-I used to compute the transform
 """
-function chebyshev_transform(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
+function transform(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
     C = copy(x)
-    chebyshev_transform!(C, plan!)
+    transform!(C, plan!)
 end
 
 """
-    chebyshev_transform!(A,[ x, plan!])
+    Chebyshev.transform!(A,[ x, plan!])
 
 Compute the discrete Chebyshev transform of `x` in-place.
 
@@ -109,10 +111,10 @@ Compute the discrete Chebyshev transform of `x` in-place.
 
 - `A`: the output vector (also the input vector if `x` is omitted)
 - `x`: an optional input vector with samples of a function distributed
-  along [extrema Chebyshev nodes](@ref chebyshev_nodes)
+  along [extrema Chebyshev nodes](@ref Chebyshev.nodes)
 - `plan!`: an optional pre-planned in-place DCT-I used to compute the transform
 """
-function chebyshev_transform!(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
+function transform!(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
     N = length(x)
     if N != length(plan!)
         throw(BoundsError("`x` must have the same size as the preplanned DCT"))
@@ -138,34 +140,34 @@ function chebyshev_transform!(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
     x
 end
 
-function chebyshev_transform!{T}(A::T, x::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
+function transform!{T}(A::T, x::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
     copy!(A, x)
-    chebyshev_transform!(A, plan!)
+    transform!(A, plan!)
 end
 
 """
-    inv_chebyshev_transform(A[, plan!])
+    Chebyshev.inv_transform(A[, plan!])
 
 Perform the inverse Chebyshev transform.
 
-This is the inverse of [`chebyshev_transform`](@ref).
+This is the inverse of [`Chebyshev.transform`](@ref).
 
 # Fields
 
 - `A`: the coefficients of a Chebyshev series
 - `plan!`: an optional pre-planned in-place DCT-I used to compute the transform
 """
-function inv_chebyshev_transform(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
+function inv_transform(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
     x = copy(A)
-    inv_chebyshev_transform!(x, plan!)
+    inv_transform!(x, plan!)
 end
 
 """
-    inv_chebyshev_transform!(x, [C, plan!)
+    Chebyshev.inv_transform!(x, [C, plan!)
 
 Perform the inverse Chebyshev transform in place.
 
-This is the inverse of [`chebyshev_transform!`](@ref)
+This is the inverse of [`Chebyshev.transform!`](@ref)
 
 # Arguments
 
@@ -175,7 +177,7 @@ This is the inverse of [`chebyshev_transform!`](@ref)
 - `A`: an optional input vector with coefficients of a Chebyshev series
 - `plan!`: an optional pre-planned in-place DCT-I used to compute the transform
 """
-function inv_chebyshev_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
+function inv_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
     N = length(A)
     if N != length(plan!)
         throw(BoundsError("`A` must have the same size as the preplanned DCT"))
@@ -196,9 +198,9 @@ function inv_chebyshev_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
     plan!*A
 end
 
-function inv_chebyshev_transform!{T}(x::T, A::T, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
+function inv_transform!{T}(x::T, A::T, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
     copy!(x, A)
-    inv_chebyshev_transform!(x, plan!)
+    Chebyshev.inv_transform!(x, plan!)
 end
 
 
@@ -226,4 +228,6 @@ function clenshaw_curtis_weights(N)
     w[1] /= 2; w[N] /= 2
 
     return w
+end
+
 end
