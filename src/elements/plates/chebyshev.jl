@@ -26,22 +26,61 @@ function chebyshev_nodes(N, T = Float64)
 end
 
 """
-    eval_cheb(C, s)
+    eval_chet(C, s[, offset = 0])
 
-Evaluate a Chebyshev series with coefficients `C` at point(s) `s`.
+Evaluate a Chebyshev series of the first kind.
 
-`s` can be either a single number or an array of numbers.
+# Arguments
+
+- `C`: a vector with the coefficients of the series
+- `s`: a scalar or an array of evaluation points ∈ [-1, 1]
+- `offset`: an optional starting index of the series summation
 """
-eval_cheb(C, ss) = [eval_cheb(C, s) for s in ss]
-function eval_cheb(C::AbstractArray{U}, s::S)::U where {U,S <: Real}
+chebt(A, ss, offset = 0) = [chebt(A, s, offset) for s in ss]
+function chebt(A::AbstractArray{C}, s::S, offset = 0)::C where {C,S <: Real}
     -1 ≤ s ≤ 1 || throw(DomainError("s ∉ [-1,1]"))
     T₋ = s
     T  = one(S)
 
-    f = zero(U)
-    for c in C
-        f += c*T
+    for i in 1:offset
         T₋, T = T, 2s*T - T₋
+    end
+
+    N = length(A)
+    f = zero(C)
+    for i in 1+offset:N
+        f += A[i]*T
+        T₋, T = T, 2s*T - T₋
+    end
+    f
+end
+
+"""
+    eval_cheu(C, s[, offset = 0])
+
+Evaluate a Chebyshev series of the second kind.
+
+# Arguments
+
+- `C`: a vector with the coefficients of the series
+- `s`: a scalar or an array of evaluation points ∈ [-1, 1]
+- `offset`: an optional starting index of the series summation
+"""
+chebu(C, ss, offset = 0) = [chebu(C, s, offset) for s in ss]
+function chebu(A::AbstractArray{C}, s::S, offset = 0)::C where {C,S <: Real}
+    -1 ≤ s ≤ 1 || throw(DomainError("s ∉ [-1,1]"))
+    U₋ = zero(s)
+    U  = one(S)
+
+    for i in 1:offset
+        U₋, U = U, 2s*U - U₋
+    end
+
+    N = length(A)
+    f = zero(C)
+    for i in 1+offset:N
+        f += A[i]*U
+        U₋, U = U, 2s*U - U₋
     end
     f
 end

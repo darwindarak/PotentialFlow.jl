@@ -32,7 +32,7 @@
         ỹ = K \ C
         @test y ≈ ỹ
 
-        @test Vortex.Plates.eval_cheb(C, Vortex.Plates.chebyshev_nodes(N)) ≈ ỹ
+        @test Vortex.Plates.chebt(C, Vortex.Plates.chebyshev_nodes(N)) ≈ ỹ
 
         Vortex.Plates.inv_chebyshev_transform!(C)
         @test y ≈ C
@@ -49,6 +49,13 @@
 
         K! \ C
         @test y ≈ C
+
+        # Check evaluation off offset Chebyshev series
+        s = rand(2)
+        @test Vortex.Plates.chebt([rand(), 2.0, 1.0], s, 1)    == @. 2s^2 + 2s - 1
+        @test Vortex.Plates.chebt([rand(), rand(), 1.0], s, 2) == @. 2s^2 - 1
+        @test Vortex.Plates.chebu([rand(), 2.0, 1.0], s, 1)    == @. 4s^2 + 4s - 1
+        @test Vortex.Plates.chebu([rand(), rand(), 1.0], s, 2) == @. 4s^2 - 1
     end
 
     @testset "Singular Interactions" begin
@@ -84,7 +91,7 @@
         motion = Vortex.Plates.PlateMotion(0.0, 0.0)
         Vortex.Plates.enforce_no_flow_through!(plate, motion, blobs)
         @test vel_p == vel_b
-        @test Vortex.Plates.eval_cheb(plate.C, plate.ss) ≈ exp(-im*plate.α).*vel_p
+        @test Vortex.Plates.chebt(plate.C, plate.ss) ≈ exp(-im*plate.α).*vel_p
     end
     @testset "Chebyshev Transform" begin
         const cheb! = Vortex.Plates.chebyshev_transform!
