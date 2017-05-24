@@ -52,10 +52,10 @@
 
         # Check evaluation off offset Chebyshev series
         s = rand(2)
-        @test Vortex.Plates.chebt([rand(), 2.0, 1.0], s, 1)    == @. 2s^2 + 2s - 1
-        @test Vortex.Plates.chebt([rand(), rand(), 1.0], s, 2) == @. 2s^2 - 1
-        @test Vortex.Plates.chebu([rand(), 2.0, 1.0], s, 1)    == @. 4s^2 + 4s - 1
-        @test Vortex.Plates.chebu([rand(), rand(), 1.0], s, 2) == @. 4s^2 - 1
+        @test Vortex.Plates.chebt([rand(), 2.0, 1.0], s, 1)    ≈ @. 2s^2 + 2s - 1
+        @test Vortex.Plates.chebt([rand(), rand(), 1.0], s, 2) ≈ @. 2s^2 - 1
+        @test Vortex.Plates.chebu([rand(), 2.0, 1.0], s, 1)    ≈ @. 4s^2 + 4s - 1
+        @test Vortex.Plates.chebu([rand(), rand(), 1.0], s, 2) ≈ @. 4s^2 - 1
     end
 
     @testset "Singular Interactions" begin
