@@ -109,7 +109,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Plates.Plate",
     "category": "Type",
-    "text": "Vortex.Plate <: VortexCompositeSource\n\nAn infinitely thin, flat plate, represented as a bound vortex sheet\n\nFields\n\nL\nchord length\nc\ncentroid\nα\ncentroid velocity\nΓ\ntotal circulation\nN\nnumber of control points\nss\nnormalized positions (within [-1, 1]) of the control points\nzs\ncontrol point coordinates\nA\nChebyshev coefficients of the normal component of velocity induced along the plate by ambient vorticity\nC\nChebyshev coefficients of the velocity induced along the plate by ambient vorticity\nB₀\nzeroth Chebyshev coefficient associated with body motion\nB₁\nfirst Chebyshev coefficient associated with body motion\ndct!\nPreplanned DCT used to perform the discrete Chebyshev transform\n\nConstructors\n\nPlate(N, L, c, α)\n\n\n\n"
+    "text": "Vortex.Plate <: VortexCompositeSource\n\nAn infinitely thin, flat plate, represented as a bound vortex sheet\n\nFields\n\nL\nchord length\nc\ncentroid\nα\ncentroid velocity\nΓ\ntotal circulation\nN\nnumber of control points\nss\nnormalized positions (within [-1, 1]) of the control points\nzs\ncontrol point coordinates\nA\nChebyshev coefficients of the normal component of velocity induced along the plate by ambient vorticity\nC\nChebyshev coefficients of the velocity induced along the plate by ambient vorticity\nB₀\nzeroth Chebyshev coefficient associated with body motion\nB₁\nfirst Chebyshev coefficient associated with body motion\ndchebt!\nPreplanned discrete Chebyshev transform\n\nConstructors\n\nPlate(N, L, c, α)\n\n\n\n"
 },
 
 {
