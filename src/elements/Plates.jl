@@ -8,6 +8,8 @@ import ..Vortex
 import ..Vortex:@get, MappedVector
 import Base: length
 
+include("plates/chebyshev.jl")
+
 """
     Vortex.Plate <: VortexCompositeSource
 
@@ -45,8 +47,8 @@ mutable struct Plate <: Vortex.CompositeSource
     "first Chebyshev coefficient associated with body motion"
     B₁::Float64
 
-    "Preplanned DCT used to perform the discrete Chebyshev transform"
-    dct!::FFTW.r2rFFTWPlan
+    "Preplanned discrete Chebyshev transform"
+    dchebt!::ChebyshevTransform{Complex128, true}
 end
 
 function Plate(N, L, c, α)
@@ -56,9 +58,9 @@ function Plate(N, L, c, α)
     C  = zeros(Complex128, N)
     A = MappedVector(imag, C, 1)
 
-    dct! = FFTW.plan_r2r!(C, FFTW.REDFT00);
+    dchebt! = plan_chebyshev_transform!(C)
 
-    Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0, dct!)
+    Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0, dchebt!)
 end
 
 length(p::Plate) = p.N
@@ -147,7 +149,7 @@ function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
         plate₊.C    = plate₋.C
         plate₊.B₀   = plate₋.B₀
         plate₊.B₁   = plate₋.B₁
-        plate₊.dct! = plate₋.dct!
+        plate₊.dchebt! = plate₋.dchebt!
     end
     plate₊.c = plate₋.c + ṗ.ċ*Δt
     plate₊.α = plate₋.α + ṗ.α̇*Δt
@@ -168,7 +170,6 @@ end
 unit_impulse(z̃) = -im*(z̃ + real(√(z̃ - 1)*√(z̃ + 1) - z̃))
 unit_impulse(src::Vortex.PointSource, plate::Plate) = unit_impulse(Vortex.position(src), plate)
 
-include("plates/chebyshev.jl")
 include("plates/boundary_conditions.jl")
 include("plates/circulation.jl")
 

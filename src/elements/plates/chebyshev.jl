@@ -1,3 +1,21 @@
+import Base: *, \
+struct ChebyshevTransform{T,I}
+    dct!::FFTW.r2rFFTWPlan{T,(3,),true,1}
+end
+
+function plan_chebyshev_transform!(x::Vector{T}) where T
+    ChebyshevTransform{T,true}(FFTW.plan_r2r!(x, FFTW.REDFT00))
+end
+
+function plan_chebyshev_transform(x::Vector{T}) where T
+    ChebyshevTransform{T,false}(FFTW.plan_r2r!(x, FFTW.REDFT00))
+end
+
+(C::ChebyshevTransform{T,true}  * x::Vector{T}) where T = chebyshev_transform!(x, C.dct!)
+(C::ChebyshevTransform{T,false} * x::Vector{T}) where T = chebyshev_transform(x, C.dct!)
+(C::ChebyshevTransform{T,true}  \ A::Vector{T}) where T = inv_chebyshev_transform!(A, C.dct!)
+(C::ChebyshevTransform{T,false} \ A::Vector{T}) where T = inv_chebyshev_transform(A, C.dct!)
+
 """
     chebyshev_nodes(N, T = Float64)
 

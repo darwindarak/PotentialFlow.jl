@@ -1,6 +1,6 @@
 @testset "Plate" begin
     @testset "Chebyshev transform" begin
-        N = 128
+        N = 127
         w = Vortex.Plates.clenshaw_curtis_weights(N)
         @test sum(w) ≈ 2
 
@@ -10,22 +10,26 @@
         @test w ⋅ x.^2 ≈ 2/3
         @test w ⋅ exp.(x) ≈ (exp(1) - exp(-1))
 
-        C = Vortex.Plates.chebyshev_transform(ones(N))
+        K  = Vortex.Plates.plan_chebyshev_transform(ones(N))
+        K! = Vortex.Plates.plan_chebyshev_transform!(ones(N))
+        @test_throws BoundsError K*ones(N+1)
+        C = K*ones(N)
+
         @test C[1] ≈ 1
         @test norm(C[2:end]) ≤ 128eps()
 
-        C = Vortex.Plates.chebyshev_transform(x)
+        C = K*x
         @test norm(C[1]) ≤ 128eps()
         @test C[2] ≈ 1
         @test norm(C[3:end]) ≤ 128eps()
 
         y = @. 16x^5 - 20x^3 + 5x
-        C = Vortex.Plates.chebyshev_transform(y)
+        C = K*y
         @test norm(C[1:5]) ≤ 128eps()
         @test C[6] ≈ 1
         @test norm(C[7:end]) ≤ 128eps()
 
-        ỹ = Vortex.Plates.inv_chebyshev_transform(C)
+        ỹ = K \ C
         @test y ≈ ỹ
 
         @test Vortex.Plates.eval_cheb(C, Vortex.Plates.chebyshev_nodes(N)) ≈ ỹ
@@ -33,13 +37,18 @@
         Vortex.Plates.inv_chebyshev_transform!(C)
         @test y ≈ C
 
-        # Make sure inverse transforms work with odd number of nodes
-        N = 127
+        # Make sure transforms work with even number of nodes
+        N = 128
         x = Vortex.Plates.chebyshev_nodes(N)
+        K! = Vortex.Plates.plan_chebyshev_transform!(x)
         y = @. 16x^5 - 20x^3 + 5x
-        C = Vortex.Plates.chebyshev_transform(y)
+        C = copy(y)
+        K! * C
         ỹ = Vortex.Plates.inv_chebyshev_transform(C)
         @test y ≈ ỹ
+
+        K! \ C
+        @test y ≈ C
     end
 
     @testset "Singular Interactions" begin
