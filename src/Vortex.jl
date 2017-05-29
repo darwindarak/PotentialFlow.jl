@@ -397,6 +397,9 @@ function advect!(group₊::T, group₋::T, ws, Δt) where {T <: Tuple}
     nothing
 end
 
+#== Acceleration ==#
+@property induced acceleration Complex128 (targvel,) (srcvel,)
+
 @submodule "elements/Points"
 @submodule "elements/Blobs"
 @submodule "elements/Sheets"

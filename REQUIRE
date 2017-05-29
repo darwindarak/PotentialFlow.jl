@@ -3,3 +3,4 @@ Documenter
 DocStringExtensions
 Interpolations
 Reexport
+MacroTools
