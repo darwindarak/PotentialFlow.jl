@@ -51,17 +51,6 @@ length(s::Sheet) = length(s.blobs)
 Vortex.circulation(s::Sheet) = s.Γs[end] - s.Γs[1]
 Vortex.impulse(s::Sheet) = Vortex.impulse(s.blobs)
 
-#Vortex.allocate_velocity(s::Sheet) = zeros(Complex128, length(s.blobs))
-#
-#
-#for T in Vortex.TargetTypes
-#    @eval Vortex.induce_velocity(t::$T, s::Sheet) = Vortex.induce_velocity(t, s.blobs)
-#end
-#Vortex.induce_velocity(t::Sheet, source) = Vortex.induce_velocity(t.blobs, source)
-#Vortex.induce_velocity(t::Sheet, s::Sheet) = Vortex.induce_velocity(t.blobs, s.blobs)
-#
-#Vortex.induce_velocity!(ws::Vector, s::Sheet, source) = Vortex.induce_velocity!(ws, s.blobs, source)
-
 function Vortex.mutually_induce_velocity!(ws₁, ws₂, sheet₁::Sheet, sheet₂::Sheet)
     Vortex.mutually_induce_velocity!(ws₁, ws₂, sheet₁.blobs, sheet₂.blobs)
     nothing

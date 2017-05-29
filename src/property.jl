@@ -1,3 +1,5 @@
+using MacroTools
+
 """
     @property kind name property_type
 
@@ -9,7 +11,7 @@ Macro to define common functions for computing vortex properties
   ```julia
   allocate_<name>(target)
   induce_<name>(target, source)
-  induce_<name>!(output, target source)
+  induce_<name>!(output, target, source)
   ```
   where `source` can be
   - a single vortex element (e.g. a single point vortex)
@@ -40,7 +42,7 @@ Macro to define common functions for computing vortex properties
     defining new properties in the future will be eaiser, and we only
     have one set of bugs to fix.
 """
-macro property(kind, name, prop_type)
+macro property(kind, name, prop_type, target_deps = :(()), source_deps = :(()))
     if kind == :point
         esc(quote
             function $name end
@@ -58,45 +60,62 @@ macro property(kind, name, prop_type)
         _f_induce   = Symbol("_induce_$(lowercase(string(name)))")
         _f_induce!  = Symbol("_induce_$(lowercase(string(name)))!")
 
+        if target_deps isa Symbol
+            t_deps = (target_deps,)
+        else
+            @capture(target_deps, (t_deps__,))
+        end
+        t_deps_i = map(s -> :($s[i]), t_deps)
+
+        if target_deps isa Symbol
+            s_deps = (source_deps,)
+        else
+            @capture(source_deps, (s_deps__,))
+        end
+        s_deps_i = map(s -> :($s[i]), s_deps)
+
         esc(quote
             $f_allocate(group::Tuple) = map($f_allocate, group)
             $f_allocate(targ) = $_f_allocate(unwrap_targ(targ), kind(eltype(unwrap_targ(targ))))
             $_f_allocate(targ, el::Type{Singleton}) = zeros($prop_type, size(targ))
 
-            function $f_induce(targ, src)
-                $_f_induce(unwrap_targ(targ), unwrap_src(src), kind(unwrap_targ(targ)), kind(unwrap_src(src)))
+            function $f_induce(targ, $(t_deps...), src, $(s_deps...))
+                $_f_induce(unwrap_targ(targ), $(t_deps...), unwrap_src(src), $(s_deps...),
+                           kind(unwrap_targ(targ)), kind(unwrap_src(src)))
             end
-            function $f_induce!(out, targ, src)
-                $_f_induce!(out, unwrap_targ(targ), unwrap_src(src), kind(unwrap_targ(targ)), kind(unwrap_src(src)))
+            function $f_induce!(out, targ, $(t_deps...), src, $(s_deps...))
+                $_f_induce!(out, unwrap_targ(targ), $(t_deps...),
+                            unwrap_src(src),  $(s_deps...),
+                            kind(unwrap_targ(targ)), kind(unwrap_src(src)))
             end
 
-            function $_f_induce(targ, src, ::Type{Singleton}, ::Type{Singleton})
-                $f_induce(Vortex.position(targ), src)
+            function $_f_induce(targ, $(t_deps...), src, $(s_deps...), ::Type{Singleton}, ::Type{Singleton})
+                $f_induce(Vortex.position(targ), $(t_deps...), src, $(s_deps...))
             end
 
-            function $_f_induce(targ, src, ::Type{Singleton}, ::Type{Group})
+            function $_f_induce(targ, $(t_deps...), src, $(s_deps...), ::Type{Singleton}, ::Type{Group})
                 w = zero($prop_type)
-                for s in src
-                    w += $f_induce(targ, s)
+                for i in eachindex(src)
+                    w += $f_induce(targ, $(t_deps...), src[i], $(s_deps_i...))
                 end
                 w
             end
 
-            function $_f_induce(targ, src, ::Type{Group}, ::Any)
+            function $_f_induce(targ, $(t_deps...), src, $(s_deps...), ::Type{Group}, ::Any)
                 out = $f_allocate(targ)
-                $f_induce!(out, targ, src)
+                $f_induce!(out, targ, $(t_deps...), src, $(s_deps...))
             end
 
-            function $_f_induce!(out, targ, src, ::Type{Group}, ::Any)
+            function $_f_induce!(out, targ, $(t_deps...), src, $(s_deps...), ::Type{Group}, ::Any)
                 for i in eachindex(targ)
-                    out[i] += $f_induce(targ[i], src)
+                    out[i] += $f_induce(targ[i], $(t_deps_i...), src, $(s_deps...))
                 end
                 out
             end
 
-            function $f_induce!(out::Tuple, targ::Tuple, src)
+            function $f_induce!(out::Tuple, targ::Tuple, $(t_deps...), src, $(s_deps...))
                 for i in eachindex(targ)
-                    $f_induce!(out[i], targ[i], src)
+                    $f_induce!(out[i], targ[i], $(t_deps_i...), src, $(s_deps...))
                 end
                 out
             end
