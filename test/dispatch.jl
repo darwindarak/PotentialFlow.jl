@@ -79,7 +79,7 @@
 
     @testset "defaults" begin
         # Minimum implementation of a vortex point source
-        @eval struct NewPoint <: Vortex.PointSource
+        @eval struct NewPoint <: Vortex.Element
             z::Complex128
             Γ::Float64
         end
@@ -87,6 +87,9 @@
         Vortex.position(p::NewPoint) = p.z
         Vortex.circulation(p::NewPoint) = p.Γ
         Vortex.impulse(p::NewPoint) = -im*p.z*p.Γ
+
+        Vortex.kind(::NewPoint) = Vortex.Singleton
+        Vortex.kind(::Type{NewPoint}) = Vortex.Singleton
 
         function Vortex.induce_velocity(z::Complex128, p::NewPoint)
             p.Γ*Vortex.Points.cauchy_kernel(z - p.z)

@@ -9,7 +9,6 @@ import ..Vortex:@get, MappedVector
 import Base: length
 
 include("plates/chebyshev.jl")
-#import Chebyshev
 
 """
     Vortex.Plate <: VortexCompositeSource
@@ -22,7 +21,7 @@ $(FIELDS)
 # Constructors
 - `Plate(N, L, c, α)`
 """
-mutable struct Plate <: Vortex.CompositeSource
+mutable struct Plate <: Vortex.Element
     "chord length"
     L::Float64
     "centroid"
@@ -102,14 +101,15 @@ function Vortex.induce_velocity(z::Complex128, p::Plate)
     0.5im*w*exp(im*α)
 end
 
-function Vortex.induce_velocity!(ws::Vector, p::Plate, sources::Vortex.Collection)
+function Vortex.induce_velocity!(ws::Vector, p::Plate, sources::T) where T <: Union{Tuple, AbstractArray}
     for source in sources
         Vortex.induce_velocity!(ws, p, source)
     end
     ws
 end
 
-Vortex.induce_velocity!(ws::Vector, p::Plate, ps::Vortex.PointSource) = Vortex.induce_velocity!(ws, p.zs, ps)
+@Vortex.kind Plate Vortex.Singleton
+Vortex.unwrap_targ(p::Plate) = p.zs
 
 function Vortex.induce_velocity!(ws::Vector, p::Plate, b::Vortex.Blob)
     for (i, z) in enumerate(p.zs)
@@ -169,7 +169,7 @@ function unit_impulse(z::Complex128, plate::Plate)
     unit_impulse(z̃)
 end
 unit_impulse(z̃) = -im*(z̃ + real(√(z̃ - 1)*√(z̃ + 1) - z̃))
-unit_impulse(src::Vortex.PointSource, plate::Plate) = unit_impulse(Vortex.position(src), plate)
+unit_impulse(src, plate::Plate) = unit_impulse(Vortex.position(src), plate)
 
 include("plates/boundary_conditions.jl")
 include("plates/circulation.jl")

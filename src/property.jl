@@ -54,42 +54,51 @@ macro property(kind, name, prop_type)
         f_induce   = Symbol("induce_$(lowercase(string(name)))")
         f_induce!  = Symbol("induce_$(lowercase(string(name)))!")
 
+        _f_allocate = Symbol("_allocate_$(lowercase(string(name)))")
+        _f_induce   = Symbol("_induce_$(lowercase(string(name)))")
+        _f_induce!  = Symbol("_induce_$(lowercase(string(name)))!")
+
         esc(quote
-            function $f_allocate(array::AbstractArray{T}) where {T <: Union{PointSource, Complex128}}
-                zeros($prop_type, size(array))
-            end
-
             $f_allocate(group::Tuple) = map($f_allocate, group)
+            $f_allocate(targ) = $_f_allocate(unwrap_targ(targ), kind(eltype(unwrap_targ(targ))))
+            $_f_allocate(targ, el::Type{Singleton}) = zeros($prop_type, size(targ))
 
-            function $f_induce(target::PointSource, source)
-                $f_induce(Vortex.position(target), source)
+            function $f_induce(targ, src)
+                $_f_induce(unwrap_targ(targ), unwrap_src(src), kind(unwrap_targ(targ)), kind(unwrap_src(src)))
+            end
+            function $f_induce!(out, targ, src)
+                $_f_induce!(out, unwrap_targ(targ), unwrap_src(src), kind(unwrap_targ(targ)), kind(unwrap_src(src)))
             end
 
-            function $f_induce(z::Complex128, sources::Collection)
+            function $_f_induce(targ, src, ::Type{Singleton}, ::Type{Singleton})
+                $f_induce(Vortex.position(targ), src)
+            end
+
+            function $_f_induce(targ, src, ::Type{Singleton}, ::Type{Group})
                 w = zero($prop_type)
-                for source in sources
-                    w += $f_induce(z, source)
+                for s in src
+                    w += $f_induce(targ, s)
                 end
                 w
             end
 
-            function $f_induce(targets::Collection, source)
-                ws = $f_allocate(targets)
-                $f_induce!(ws, targets, source)
+            function $_f_induce(targ, src, ::Type{Group}, ::Any)
+                out = $f_allocate(targ)
+                $f_induce!(out, targ, src)
             end
 
-            function $f_induce!(ws::AbstractArray, targets::AbstractArray, source)
-                for i in eachindex(targets)
-                    ws[i] += $f_induce(targets[i], source)
+            function $_f_induce!(out, targ, src, ::Type{Group}, ::Any)
+                for i in eachindex(targ)
+                    out[i] += $f_induce(targ[i], src)
                 end
-                ws
+                out
             end
 
-            function $f_induce!(ws::Tuple, targets::Tuple, source)
-                for i in 1:length(targets)
-                    $f_induce!(ws[i], targets[i], source)
+            function $f_induce!(out::Tuple, targ::Tuple, src)
+                for i in eachindex(targ)
+                    $f_induce!(out[i], targ[i], src)
                 end
-                ws
+                out
             end
             end)
     else
