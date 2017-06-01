@@ -114,31 +114,36 @@
     @testset "Property Macro" begin
         @test_throws ArgumentError @eval Vortex (@property prop count Int)
 
-        @eval Vortex (@property induced count Int)
+        @eval Vortex (@property induced count Int tcount scount)
         @eval Vortex.Points begin
-            Vortex.induce_count(::Complex128, ::Point) = 1
+            Vortex.induce_count(::Complex128, tcount, ::Point, scount) = scount
         end
         @eval Vortex.Blobs begin
-            Vortex.induce_count(::Complex128, ::Blob) = 1
+            Vortex.induce_count(::Complex128, tcount, ::Blob, scount) = tcount
         end
 
         N = rand(1:100)
         points = Vortex.Point.(rand(Complex128, N), rand(N))
+        pcounts = fill(1, length(points))
+
         blobs  = Vortex.Blob.(rand(Complex128, N), rand(N), rand())
+        bcounts = fill(2, length(blobs))
 
         targets = rand(Complex128, rand(1:100))
+        tcounts = fill(3, length(targets))
 
-        @test Vortex.induce_count(targets[1], points) == N
-        @test Vortex.induce_count(targets[1], blobs) == N
-        @test Vortex.induce_count(targets[1], (points, blobs)) == 2N
+        @test Vortex.induce_count(targets[1], tcounts[1], points, pcounts) == length(points)
+        @test Vortex.induce_count(targets[1], tcounts[1], blobs, bcounts) == 3length(blobs)
+        @test Vortex.induce_count(targets[1], tcounts[1],
+                                  (points, blobs), (pcounts, bcounts)) == 3length(blobs) + length(points)
 
-        out = Vortex.induce_count(targets, (points, blobs))
+        out = Vortex.induce_count(targets, tcounts, (points, blobs), (pcounts, bcounts))
         @test length(out) == length(targets)
 
         out₂ = Vortex.allocate_count(targets)
-        Vortex.induce_count!(out₂, targets, (points, blobs))
+        Vortex.induce_count!(out₂, targets, tcounts, (points, blobs), (pcounts, bcounts))
 
         @test out == out₂
-        @test all(out .== 2N)
+        @test all(out .== 3length(blobs) + length(points))
     end
 end
