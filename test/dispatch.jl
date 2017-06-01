@@ -49,6 +49,7 @@
     # Self-induce velocities
     Vortex.reset_velocity!(ws)
     Vortex.self_induce_velocity!(ws, sys)
+    @test ws == Vortex.self_induce_velocity(sys)
 
     wb = Vortex.allocate_velocity(blobs)
     Vortex.induce_velocity!(wb, blobs, blobs)

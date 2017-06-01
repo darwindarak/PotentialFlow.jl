@@ -358,7 +358,7 @@ self_induce_velocity(src) = _self_induce_velocity(src, kind(unwrap_src(src)))
 _self_induce_velocity(src, ::Type{Singleton}) = zero(Complex128)
 function _self_induce_velocity(src, ::Type{Group})
     out = allocate_velocity(src)
-    self_induce_velocity(out, src)
+    self_induce_velocity!(out, src)
 end
 
 """
