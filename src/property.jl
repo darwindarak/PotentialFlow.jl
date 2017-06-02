@@ -1,7 +1,7 @@
 using MacroTools
 
 """
-    @property kind name property_type
+    @property kind name property_type [target_deps source_deps]
 
 Macro to define common functions for computing vortex properties
 
@@ -11,7 +11,7 @@ Macro to define common functions for computing vortex properties
   ```julia
   allocate_<name>(target)
   induce_<name>(target, source)
-  induce_<name>!(output, target, source)
+  induce_<name>!(output, target[, target_deps], source[, source_deps])
   ```
   where `source` can be
   - a single vortex element (e.g. a single point vortex)
@@ -20,6 +20,10 @@ Macro to define common functions for computing vortex properties
   `target` can be the same types as `source` as well as one or more positions,
   and `output` is the output array allocated by `allocate_<name>`
   The return type of `induce_<name>` will be `property_type`.
+  `target_deps` and `source_deps` are optional dependencies that might
+  be required to compute the induced property.  For example, for
+  computing induced acceleration, we need the velocity of both the
+  target and source.
 - `point`: when the property is pointwise defined (e.g. position),
   the macro defines a placeholder function
   ```julia
