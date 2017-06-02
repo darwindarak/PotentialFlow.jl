@@ -14,12 +14,11 @@
 
         vel_s = zeros(Complex128, plate.N)
         vel_p = zeros(Complex128, plate.N)
-        vel_b = zeros(Complex128, plate.N)
 
         Vortex.induce_velocity!(vel_s, plate, sheet)
 
         Vortex.induce_velocity!(vel_p, plate, points)
-        Vortex.induce_velocity!(vel_b, plate, blobs)
+        vel_b = Vortex.induce_velocity(plate, blobs)
 
         @test vel_s == vel_b
         @test vel_p == vel_b
@@ -201,7 +200,8 @@ end
     plate  = Vortex.Plate(128, L, c, α)
     Vortex.Plates.enforce_no_flow_through!(plate, motion, points)
 
-    plate₊ = Vortex.Plate(128, L, c, α)
+    # Internal variables should be overwritten/resized on `advect!`
+    plate₊ = Vortex.Plate(10, rand(), rand(), rand())
 
     Δt = 1e-2
     advect!(plate₊, plate, motion, Δt)
