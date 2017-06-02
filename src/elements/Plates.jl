@@ -179,6 +179,64 @@ unit_impulse(src::Vortex.PointSource, plate::Plate) = unit_impulse(Vortex.positi
 include("plates/boundary_conditions.jl")
 include("plates/circulation.jl")
 
+doc"""
+    surface_pressure(plate, motion, te_sys, Γs₋, Δt)
+
+Compute the pressure difference across the plate along Chebyshev nodes.
+
+!!! note
+    The pressure difference across the bound vortex sheet is given by:
+    ```math
+        [p]_-^+
+      = -\rho \left[ \frac{1}{2}(\boldsymbol{v}^+ + \boldsymbol{v}^-)
+                   - \boldsymbol{v}_b
+             \right]
+             \cdot ( \boldsymbol{\gamma} \cross \boldsymbol{\hat{n}})
+        +\rho \frac{\mathrm{d}\Gamma}{\mathrm{d}t}
+    ```
+    where ``\rho`` is the fluid density, ``\boldsymbol{v}^\pm`` is the
+    velocity on either side of the plate, ``boldsymbol{v}_b`` is the local
+    velocity of the plate, ``\boldsymbol{\gamma}`` is the bound vortex
+    sheet strength, and ``\Gamma`` is the integrated circulation.
+    We will compute ``\frac{\mathrm{d}\Gamma}{\mathrm{d}t}`` using finite
+    differences.  So we will need the circulation along the plate from a
+    previous time-step in order to compute the current pressure
+    distribution.  We assume that value of circulation at the trailing
+    edge of the plate is equal the the net circulation of all the vorticity
+    that has been shed from the trailing edge.
+
+# Arguments
+
+- `plate`: we assume that the `Plate` structure that is passed in
+  already enforces the no-flow-through condition
+- `motion`: the motion of the plate used to compute ``\boldsymbol{v}_b``
+- `te_sys`: the system of vortex elements representing the vorticity
+  shed from the trailing edge of the plate
+- `Γs₋`: the circulation along the plate's Chebyshev nodes, this
+  should be equivalent to calling
+  `Vortex.circulation(te_sys) .+ Vortex.bound_circulation(plate)`
+  from a previous time-step.
+- `Δt`: time-step used to compute ``\frac{\mathrm{d}\Gamma}{\mathrm{d}t}
+  using finite differences
+
+# Returns
+
+- `Δp`: the pressure difference across the plate along Chebyshev nodes
+- `Γs₊`: the circulation along the plate at the current time-step
+  (this value is used in computing the current `Δp` and can be used as
+  the `Γs₋` for computing pressure differences at the **next** time-step)
+"""
+function surface_pressure(plate, motion, ambient_sys, Γs₋, Δt)
+    @get plate (C, ss, α)
+
+    Δp = strength(plate) .* (Chebyshev.firstkind(real.(C), ss) .- tangent(motion.ċ, α))
+
+    Γs₊ = Vortex.circulation(ambient_sys) .+ bound_circulation(plate)
+    Δp .+= (Γs₊ .- Γs₋)./Δt
+
+    Δp, Γs₊
+end
+
 function Base.show(io::IO, p::Plate)
     lesp, tesp = suction_parameters(p)
     println(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(round(rad2deg(p.α),2))ᵒ")
