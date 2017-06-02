@@ -137,24 +137,29 @@ end
 Vortex.induce_velocity!(::PlateMotion, target::Plate, source) = nothing
 Vortex.reset_velocity!(::PlateMotion, src) = nothing
 
-
 function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
-
     if plate₊ != plate₋
         plate₊.L    = plate₋.L
         plate₊.Γ    = plate₋.Γ
-        plate₊.N    = plate₋.N
-        plate₊.ss   .= plate₋.ss
-        plate₊.zs   .= plate₋.zs
-        plate₊.A    = plate₋.A
-        plate₊.C    = plate₋.C
         plate₊.B₀   = plate₋.B₀
         plate₊.B₁   = plate₋.B₁
+        if plate₊.N != plate₋.N
+            plate₊.N    = plate₋.N
+            resize!(plate₊.ss, plate₊.N)
+            resize!(plate₊.zs, plate₊.N)
+            resize!(plate₊.C, plate₊.N)
+        end
+        plate₊.ss   .= plate₋.ss
+        plate₊.zs   .= plate₋.zs
+        plate₊.C    .= plate₋.C
         plate₊.dchebt! = plate₋.dchebt!
     end
     plate₊.c = plate₋.c + ṗ.ċ*Δt
     plate₊.α = plate₋.α + ṗ.α̇*Δt
-    plate₊.zs .+= ṗ.ċ*Δt
+
+    @get plate₊ (c, L, α)
+
+    @. plate₊.zs = c + 0.5L*exp(im*α)*plate₊.ss
     nothing
 end
 
