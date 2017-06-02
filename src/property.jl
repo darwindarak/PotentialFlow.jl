@@ -1,5 +1,7 @@
+using MacroTools
+
 """
-    @property kind name property_type
+    @property kind name property_type [target_deps source_deps]
 
 Macro to define common functions for computing vortex properties
 
@@ -9,7 +11,7 @@ Macro to define common functions for computing vortex properties
   ```julia
   allocate_<name>(target)
   induce_<name>(target, source)
-  induce_<name>!(output, target source)
+  induce_<name>!(output, target[, target_deps], source[, source_deps])
   ```
   where `source` can be
   - a single vortex element (e.g. a single point vortex)
@@ -18,6 +20,10 @@ Macro to define common functions for computing vortex properties
   `target` can be the same types as `source` as well as one or more positions,
   and `output` is the output array allocated by `allocate_<name>`
   The return type of `induce_<name>` will be `property_type`.
+  `target_deps` and `source_deps` are optional dependencies that might
+  be required to compute the induced property.  For example, for
+  computing induced acceleration, we need the velocity of both the
+  target and source.
 - `point`: when the property is pointwise defined (e.g. position),
   the macro defines a placeholder function
   ```julia
@@ -40,7 +46,7 @@ Macro to define common functions for computing vortex properties
     defining new properties in the future will be eaiser, and we only
     have one set of bugs to fix.
 """
-macro property(kind, name, prop_type)
+macro property(kind, name, prop_type, target_deps = :(()), source_deps = :(()))
     if kind == :point
         esc(quote
             function $name end
@@ -54,42 +60,68 @@ macro property(kind, name, prop_type)
         f_induce   = Symbol("induce_$(lowercase(string(name)))")
         f_induce!  = Symbol("induce_$(lowercase(string(name)))!")
 
+        _f_allocate = Symbol("_allocate_$(lowercase(string(name)))")
+        _f_induce   = Symbol("_induce_$(lowercase(string(name)))")
+        _f_induce!  = Symbol("_induce_$(lowercase(string(name)))!")
+
+        if target_deps isa Symbol
+            t_deps = (target_deps,)
+        else
+            @capture(target_deps, (t_deps__,))
+        end
+        t_deps_i = map(s -> :($s[i]), t_deps)
+
+        if target_deps isa Symbol
+            s_deps = (source_deps,)
+        else
+            @capture(source_deps, (s_deps__,))
+        end
+        s_deps_i = map(s -> :($s[i]), s_deps)
+
         esc(quote
-            function $f_allocate(array::AbstractArray{T}) where {T <: Union{PointSource, Complex128}}
-                zeros($prop_type, size(array))
-            end
-
             $f_allocate(group::Tuple) = map($f_allocate, group)
+            $f_allocate(targ) = $_f_allocate(unwrap_targ(targ), kind(eltype(unwrap_targ(targ))))
+            $_f_allocate(targ, el::Type{Singleton}) = zeros($prop_type, size(targ))
 
-            function $f_induce(target::PointSource, source)
-                $f_induce(Vortex.position(target), source)
+            function $f_induce(targ, $(t_deps...), src, $(s_deps...))
+                $_f_induce(unwrap_targ(targ), $(t_deps...), unwrap_src(src), $(s_deps...),
+                           kind(unwrap_targ(targ)), kind(unwrap_src(src)))
+            end
+            function $f_induce!(out, targ, $(t_deps...), src, $(s_deps...))
+                $_f_induce!(out, unwrap_targ(targ), $(t_deps...),
+                            unwrap_src(src),  $(s_deps...),
+                            kind(unwrap_targ(targ)), kind(unwrap_src(src)))
             end
 
-            function $f_induce(z::Complex128, sources::Collection)
+            function $_f_induce(targ, $(t_deps...), src, $(s_deps...), ::Type{Singleton}, ::Type{Singleton})
+                $f_induce(Vortex.position(targ), $(t_deps...), src, $(s_deps...))
+            end
+
+            function $_f_induce(targ, $(t_deps...), src, $(s_deps...), ::Type{Singleton}, ::Type{Group})
                 w = zero($prop_type)
-                for source in sources
-                    w += $f_induce(z, source)
+                for i in eachindex(src)
+                    w += $f_induce(targ, $(t_deps...), src[i], $(s_deps_i...))
                 end
                 w
             end
 
-            function $f_induce(targets::Collection, source)
-                ws = $f_allocate(targets)
-                $f_induce!(ws, targets, source)
+            function $_f_induce(targ, $(t_deps...), src, $(s_deps...), ::Type{Group}, ::Any)
+                out = $f_allocate(targ)
+                $f_induce!(out, targ, $(t_deps...), src, $(s_deps...))
             end
 
-            function $f_induce!(ws::AbstractArray, targets::AbstractArray, source)
-                for i in eachindex(targets)
-                    ws[i] += $f_induce(targets[i], source)
+            function $_f_induce!(out, targ, $(t_deps...), src, $(s_deps...), ::Type{Group}, ::Any)
+                for i in eachindex(targ)
+                    out[i] += $f_induce(targ[i], $(t_deps_i...), src, $(s_deps...))
                 end
-                ws
+                out
             end
 
-            function $f_induce!(ws::Tuple, targets::Tuple, source)
-                for i in 1:length(targets)
-                    $f_induce!(ws[i], targets[i], source)
+            function $f_induce!(out::Tuple, targ::Tuple, $(t_deps...), src, $(s_deps...))
+                for i in eachindex(targ)
+                    $f_induce!(out[i], targ[i], $(t_deps_i...), src, $(s_deps...))
                 end
-                ws
+                out
             end
             end)
     else

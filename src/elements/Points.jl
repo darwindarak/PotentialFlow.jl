@@ -13,10 +13,12 @@ An immutable structure representing a point vortex
 - `z`: position
 - `Γ`: circulation
 """
-struct Point <: Vortex.PointSource
+struct Point <: Vortex.Element
     z::Complex128
     Γ::Float64
 end
+
+Point(e::Vortex.Element) = Point(Vortex.position(e), Vortex.circulation(e))
 
 Vortex.position(p::Point) = p.z
 Vortex.circulation(p::Point) = p.Γ
@@ -27,6 +29,8 @@ cauchy_kernel(z) = z != zero(z) ? 0.5im/(π*conj(z)) : zero(z)
 function Vortex.induce_velocity(z::Complex128, p::Point)
     p.Γ*cauchy_kernel(z - p.z)
 end
+
+@Vortex.kind Point Vortex.Singleton
 
 function Vortex.mutually_induce_velocity!(ws₁, ws₂,
                                           points₁::Vector{Point},

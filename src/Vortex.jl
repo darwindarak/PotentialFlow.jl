@@ -39,12 +39,30 @@ export allocate_velocity, reset_velocity!,
 #== Type Definitions ==#
 
 abstract type Element end
-abstract type PointSource <: Element end
-abstract type CompositeSource <: Element end
-
 const Collection = Union{AbstractArray, Tuple}
-const PointArray = AbstractArray{T} where {T <: PointSource}
-const TargetTypes = (Complex128, PointSource, CompositeSource, Collection)
+
+#== Trait definitions ==#
+abstract type Singleton end
+abstract type Group end
+
+function kind end
+
+macro kind(element, k)
+    esc(quote
+        Vortex.kind(::$element) = $k
+        Vortex.kind(::Type{$element}) = $k
+    end)
+end
+
+@kind Complex128 Singleton
+kind(::AbstractArray{T}) where {T <: Union{Element, Complex128}} = Group
+kind(::Tuple) = Group
+
+# Convenience functions to define wrapper types
+# e.g. vortex sheets as a wrapper around vortex blobs
+unwrap_src(e) = unwrap(e)
+unwrap_targ(e) = unwrap(e)
+unwrap(e) = e
 
 #== Vortex Properties ==#
 
@@ -169,6 +187,7 @@ function reset_velocity!(group::T, src) where {T <: Tuple}
 end
 
 @property induced velocity Complex128
+#@property_traits induced velocity Complex128
 
 @doc """
     allocate_velocity(srcs)
@@ -308,35 +327,38 @@ julia> vels # should be ±0.25im/π
  0.0+0.0795775im
 ```
 """
-function self_induce_velocity!(ws, group::Tuple)
+function self_induce_velocity!(out, group::Tuple)
     N = length(group)
     for s in 1:N
-        self_induce_velocity!(ws[s], group[s])
+        self_induce_velocity!(out[s], group[s])
         for t in s+1:N
-            mutually_induce_velocity!(ws[s], ws[t], group[s], group[t])
+            mutually_induce_velocity!(out[s], out[t], group[s], group[t])
         end
     end
-    nothing
+    out
 end
 
-"""
-    self_induce_velocity(src)
+function self_induce_velocity!(out, src)
+    _self_induce_velocity!(out, unwrap_src(src), kind(unwrap_src(src)))
+end
 
-Compute the self induced velocity of a point source.
-If this method is not implemented for a subtype of `Vortex.PointSource`, the fallback function returns `0.0+0.0im`
-"""
-self_induce_velocity(::PointSource) = zero(Complex128)
-
-function self_induce_velocity!(ws, array::PointArray)
-    N = length(array)
+function _self_induce_velocity!(out, src, ::Type{Group})
+    N = length(src)
     for s in 1:N
-        ws[s] += self_induce_velocity(array[s])
+        out[s] += self_induce_velocity(src[s])
         for t in s+1:N
-            ws[s] += induce_velocity(array[s], array[t])
-            ws[t] += induce_velocity(array[t], array[s])
+            out[s] += induce_velocity(src[s], src[t])
+            out[t] += induce_velocity(src[t], src[s])
         end
     end
-    nothing
+    out
+end
+
+self_induce_velocity(src) = _self_induce_velocity(src, kind(unwrap_src(src)))
+_self_induce_velocity(src, ::Type{Singleton}) = zero(Complex128)
+function _self_induce_velocity(src, ::Type{Group})
+    out = allocate_velocity(src)
+    self_induce_velocity!(out, src)
 end
 
 """
