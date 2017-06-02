@@ -18,6 +18,8 @@ struct Point <: Vortex.Element
     Γ::Float64
 end
 
+Point(e::Vortex.Element) = Point(Vortex.position(e), Vortex.circulation(e))
+
 Vortex.position(p::Point) = p.z
 Vortex.circulation(p::Point) = p.Γ
 Vortex.impulse(p::Point) = -im*p.z*p.Γ

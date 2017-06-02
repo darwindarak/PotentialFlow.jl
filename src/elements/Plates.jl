@@ -111,22 +111,20 @@ end
 @Vortex.kind Plate Vortex.Singleton
 Vortex.unwrap_targ(p::Plate) = p.zs
 
-function Vortex.induce_velocity!(ws::Vector, p::Plate, b::Vortex.Blob)
-    for (i, z) in enumerate(p.zs)
-        ws[i] += b.Γ*Vortex.Points.cauchy_kernel(z - b.z)
-    end
-    ws
+function Vortex.induce_velocity!(ws::Vector, p::Plate, src)
+    _singular_velocity!(ws, p, Vortex.unwrap(src),
+                        Vortex.kind(Vortex.unwrap_src(src)))
 end
 
-function Vortex.induce_velocity!(ws::Vector, p::Plate, blobs::Vector{Vortex.Blob})
-    for (i, z) in enumerate(p.zs), b in blobs
-        ws[i] += b.Γ*Vortex.Points.cauchy_kernel(z - b.z)
-    end
-    ws
+function _singular_velocity!(ws, p, src, ::Type{Vortex.Singleton})
+    Vortex.induce_velocity!(ws, p.zs, Vortex.Point(src))
 end
 
-function Vortex.induce_velocity!(ws::Vector, p::Plate, s::Vortex.Sheet)
-    Vortex.induce_velocity!(ws, p, s.blobs)
+function _singular_velocity!(ws, p, src, ::Type{Vortex.Group})
+    for i in eachindex(src)
+        Vortex.induce_velocity!(ws, p, src[i])
+    end
+    ws
 end
 
 mutable struct PlateMotion
