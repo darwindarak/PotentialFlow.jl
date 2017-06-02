@@ -207,6 +207,9 @@ end
     advect!(plate₊, plate, motion, Δt)
     advect!(plate,  plate, motion, Δt)
 
+    @test plate.zs ≈ @. plate.c + 0.5plate.L*exp(im*plate.α)*plate.ss
+
+    # Check that interval values are the same
     @test length(plate₊) == length(plate)
     @test plate₊.C  == plate.C
     @test plate₊.zs == plate.zs
@@ -215,6 +218,12 @@ end
     @test plate₊.Γ  == plate.Γ
     @test plate₊.B₀ == plate.B₀
     @test plate₊.B₁ == plate.B₁
+
+    # Check that internal pointers are different
+    @test plate₊.C  ≢ plate.C
+    @test plate₊.zs ≢ plate.zs
+    @test plate₊.ss ≢ plate.ss
+    @test plate₊.A.data ≡ plate₊.C
 end
 
 end
