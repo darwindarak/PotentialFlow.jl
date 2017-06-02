@@ -189,11 +189,11 @@ Compute the pressure difference across the plate along Chebyshev nodes.
       = -\rho \left[ \frac{1}{2}(\boldsymbol{v}^+ + \boldsymbol{v}^-)
                    - \boldsymbol{v}_b
              \right]
-             \cdot ( \boldsymbol{\gamma} \cross \boldsymbol{\hat{n}})
+             \cdot ( \boldsymbol{\gamma} \times \boldsymbol{\hat{n}})
         +\rho \frac{\mathrm{d}\Gamma}{\mathrm{d}t}
     ```
     where ``\rho`` is the fluid density, ``\boldsymbol{v}^\pm`` is the
-    velocity on either side of the plate, ``boldsymbol{v}_b`` is the local
+    velocity on either side of the plate, ``\boldsymbol{v}_b`` is the local
     velocity of the plate, ``\boldsymbol{\gamma}`` is the bound vortex
     sheet strength, and ``\Gamma`` is the integrated circulation.
     We will compute ``\frac{\mathrm{d}\Gamma}{\mathrm{d}t}`` using finite
@@ -214,7 +214,7 @@ Compute the pressure difference across the plate along Chebyshev nodes.
   should be equivalent to calling
   `Vortex.circulation(te_sys) .+ Vortex.bound_circulation(plate)`
   from a previous time-step.
-- `Δt`: time-step used to compute ``\frac{\mathrm{d}\Gamma}{\mathrm{d}t}
+- `Δt`: time-step used to compute ``\frac{\mathrm{d}\Gamma}{\mathrm{d}t}``
   using finite differences
 
 # Returns
