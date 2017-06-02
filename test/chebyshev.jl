@@ -97,6 +97,19 @@
 
             K! \ C
             @test y ≈ C
+
+            # Make sure transforms work with odd number of nodes
+            N = 127
+            x = Chebyshev.nodes(N)
+            K! = Chebyshev.plan_transform!(x)
+            y = @. 16x^5 - 20x^3 + 5x
+            C = copy(y)
+            K! * C
+            ỹ = Chebyshev.inv_transform(C)
+            @test y ≈ ỹ
+
+            K! \ C
+            @test y ≈ C
         end
     end
 
