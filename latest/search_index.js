@@ -297,11 +297,19 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "elements.html#VortexModel.Vortex.Plates.surface_pressure",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Plates.surface_pressure",
+    "category": "Function",
+    "text": "surface_pressure(plate, motion, te_sys, Γs₋, Δt)\n\nCompute the pressure difference across the plate along Chebyshev nodes.\n\nnote: Note\nThe pressure difference across the bound vortex sheet is given by:    p_-^+\n  = -rho left frac12(boldsymbolv^+ + boldsymbolv^-)\n               - boldsymbolv_b\n         right\n         cdot ( boldsymbolgamma cross boldsymbolhatn)\n    +rho fracmathrmdGammamathrmdtwhere rho is the fluid density, boldsymbolv^pm is the velocity on either side of the plate, boldsymbolv_b is the local velocity of the plate, boldsymbolgamma is the bound vortex sheet strength, and Gamma is the integrated circulation. We will compute fracmathrmdGammamathrmdt using finite differences.  So we will need the circulation along the plate from a previous time-step in order to compute the current pressure distribution.  We assume that value of circulation at the trailing edge of the plate is equal the the net circulation of all the vorticity that has been shed from the trailing edge.\n\nArguments\n\nplate: we assume that the Plate structure that is passed in already enforces the no-flow-through condition\nmotion: the motion of the plate used to compute boldsymbolv_b\nte_sys: the system of vortex elements representing the vorticity shed from the trailing edge of the plate\nΓs₋: the circulation along the plate's Chebyshev nodes, this should be equivalent to calling Vortex.circulation(te_sys) .+ Vortex.bound_circulation(plate) from a previous time-step.\nΔt: time-step used to compute ``\\frac{\\mathrm{d}\\Gamma}{\\mathrm{d}t} using finite differences\n\nReturns\n\nΔp: the pressure difference across the plate along Chebyshev nodes\nΓs₊: the circulation along the plate at the current time-step (this value is used in computing the current Δp and can be used as the Γs₋ for computing pressure differences at the next time-step)\n\n\n\n"
+},
+
+{
     "location": "elements.html#Methods-on-Plates-1",
     "page": "Vortex Elements",
     "title": "Methods on Plates",
     "category": "section",
-    "text": "Vortex.Plates.enforce_no_flow_through!\nVortex.Plates.vorticity_flux\nVortex.Plates.vorticity_flux!\nVortex.Plates.bound_circulation\nVortex.Plates.bound_circulation!"
+    "text": "Vortex.Plates.enforce_no_flow_through!\nVortex.Plates.vorticity_flux\nVortex.Plates.vorticity_flux!\nVortex.Plates.bound_circulation\nVortex.Plates.bound_circulation!\nVortex.Plates.surface_pressure"
 },
 
 {
