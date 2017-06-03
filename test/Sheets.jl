@@ -58,7 +58,7 @@
         @test ΔΓ + Vortex.circulation(sheet) ≈ ΣΓ
 
         Γ = Vortex.circulation(sheet)
-        sheet₊ = Vortex.Sheets.split!(sheet, rand(2:length(sheet)-2))
+        sheet₊ = Vortex.Sheets.split!(sheet, rand(3:length(sheet)-3))
         @test Γ ≈ sum(Vortex.circulation, (sheet, sheet₊))
 
         @test Vortex.Sheets.compute_trapezoidal_weights(sheet.Γs) ≈ getfield.(sheet.blobs, :Γ)

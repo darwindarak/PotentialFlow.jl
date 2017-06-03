@@ -109,7 +109,11 @@ function Vortex.induce_velocity!(ws::Vector, p::Plate, sources::T) where T <: Un
 end
 
 @Vortex.kind Plate Vortex.Singleton
-Vortex.unwrap_targ(p::Plate) = p.zs
+
+function Vortex.induce_velocity(p::Plate, src)
+    out = Vortex.allocate_velocity(p.zs)
+    Vortex.induce_velocity!(out, p, src)
+end
 
 function Vortex.induce_velocity!(ws::Vector, p::Plate, src)
     _singular_velocity!(ws, p, Vortex.unwrap(src),
