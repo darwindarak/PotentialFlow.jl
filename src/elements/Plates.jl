@@ -6,7 +6,7 @@ export Plate, bound_circulation, bound_circulation!,
 
 import ..Vortex
 import ..Vortex:@get, MappedVector
-import Base: length
+import Base: length, deserialize, AbstractSerializer
 
 include("plates/chebyshev.jl")
 
@@ -49,6 +49,13 @@ mutable struct Plate <: Vortex.Element
 
     "Preplanned discrete Chebyshev transform"
     dchebt!::Chebyshev.Transform{Complex128, true}
+end
+
+function deserialize(s::AbstractSerializer, t::Type{Plate})
+    fields = Tuple(deserialize(s) for i in 1:11)
+    deserialize(s)
+    dchebt! = Chebyshev.plan_transform!(fields[9])
+    Plate(fields..., dchebt!)
 end
 
 function Plate(N, L, c, α)

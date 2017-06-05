@@ -226,4 +226,21 @@ end
     @test plate₊.A.data ≡ plate₊.C
 end
 
+@testset "[De]serialization" begin
+    motion = Vortex.Plates.PlateMotion(rand(Complex128), rand())
+    c = rand(Complex128)
+    α = 0.5π*rand()
+    L = 2rand()
+    plate  = Vortex.Plate(128, L, c, α)
+    Vortex.Plates.enforce_no_flow_through!(plate, motion, ())
+
+    buff = IOBuffer()
+    serialize(buff, plate)
+    seekstart(buff)
+
+    plate₊ = deserialize(buff)
+    Vortex.Plates.enforce_no_flow_through!(plate₊, motion, ())
+    @test plate₊.C ≈ plate.C
+end
+
 end
