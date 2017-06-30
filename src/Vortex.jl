@@ -40,6 +40,7 @@ export allocate_velocity, reset_velocity!,
 
 abstract type Element end
 const Collection = Union{AbstractArray, Tuple}
+abstract type MotionParams end
 
 #== Trait definitions ==#
 abstract type Singleton end

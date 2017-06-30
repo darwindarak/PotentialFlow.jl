@@ -29,6 +29,12 @@ mutable struct Plate <: Vortex.Element
     "centroid velocity"
     α::Float64
 
+    "translational motion parameters"
+     ċparams::Vortex.MotionParams
+
+    "rotational motion parameters"
+    α̇params::Vortex.MotionParams
+
     "total circulation"
     Γ::Float64
 
@@ -58,7 +64,7 @@ function deserialize(s::AbstractSerializer, t::Type{Plate})
     Plate(fields..., dchebt!)
 end
 
-function Plate(N, L, c, α)
+function Plate(N, L, c, α, ċparams, α̇params)
     ss = Chebyshev.nodes(N)
     zs = c + 0.5L*ss*exp(im*α)
 
@@ -67,7 +73,7 @@ function Plate(N, L, c, α)
 
     dchebt! = Chebyshev.plan_transform!(C)
 
-    Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0, dchebt!)
+    Plate(L, c, α,  ċparams, α̇params, 0.0, N, ss, zs, A, C, 0.0, 0.0, dchebt!)
 end
 
 length(p::Plate) = p.N
@@ -76,6 +82,32 @@ Vortex.circulation(p::Plate) = p.Γ
 # For now, the velocity of the plate is explicitly set
 Vortex.allocate_velocity(::Plate) = PlateMotion(0.0, 0.0)
 Vortex.self_induce_velocity!(_, ::Plate) = nothing
+
+# Add some motion types
+struct Sinusoidal <: Vortex.MotionParams
+    A::Float64
+    f::Float64
+    phi::Float64
+    mean::Float64
+end
+
+struct SteadyMotion <: Vortex.MotionParams
+    v::Float64
+end
+
+function motion_function(m::SteadyMotion,t)
+   m.v
+end
+
+function motion_function(m::Sinusoidal,t)
+    @get m (A, f, phi, mean)
+    mean + A*sin(2*π*f*t + phi)
+end
+
+function motion_function(p::Plate,t)
+    PlateMotion(motion_function(p.ċparams,t),
+                motion_function(p.α̇params,t))
+end
 
 function Vortex.impulse(p::Plate)
     @get p (c, B₀, α, Γ, L, A)
