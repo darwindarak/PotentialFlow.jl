@@ -2,7 +2,7 @@ module Plates
 using DocStringExtensions
 
 export Plate, bound_circulation, bound_circulation!,
-    enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse
+    enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force
 
 import ..Vortex
 import ..Vortex:@get, MappedVector
@@ -74,7 +74,7 @@ length(p::Plate) = p.N
 Vortex.circulation(p::Plate) = p.Γ
 
 # For now, the velocity of the plate is explicitly set
-Vortex.allocate_velocity(::Plate) = PlateMotion(0.0, 0.0)
+Vortex.allocate_velocity(::Plate) = PlateMotion(0.0, 0.0, 0.0)
 Vortex.self_induce_velocity!(_, ::Plate) = nothing
 
 function Vortex.impulse(p::Plate)
@@ -140,6 +140,7 @@ end
 
 mutable struct PlateMotion
     ċ::Complex128
+    c̈::Complex128
     α̇::Float64
 end
 
@@ -187,6 +188,7 @@ unit_impulse(src, plate::Plate) = unit_impulse(Vortex.position(src), plate)
 
 include("plates/boundary_conditions.jl")
 include("plates/circulation.jl")
+include("plates/force.jl")
 
 doc"""
     surface_pressure(plate, motion, te_sys, Γs₋, Δt)
