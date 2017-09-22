@@ -1,5 +1,4 @@
 using MacroTools: @capture, postwalk, striplines
-import Core: @__doc__
 
 # begin
 #     signature = induce_velocity(targ::Target, src::Source, t)
@@ -20,7 +19,7 @@ import Core: @__doc__
 
 function source_property(signature, stype, reduce_op)
     if isnull(reduce_op)
-        return :(@__doc__ function $(signature.args[1]) end)
+        return :(Core.@__doc__ function $(signature.args[1]) end)
     end
 
     op = get(reduce_op)
@@ -35,27 +34,26 @@ function source_property(signature, stype, reduce_op)
     end
 
     @capture(postwalk(signature) do ex
-        @capture(ex, s_::Source) && (return :(unwrap_targ($s)))
-        @capture(ex, t_::Target) && (return t)
-        ex
-    end, _(unwrappedargs__))
+             @capture(ex, s_::Source) && (return :(Vortex.unwrap_targ($s)))
+             @capture(ex, t_::Target) && (return t)
+             ex
+             end, _(unwrappedargs__))
 
     @capture(postwalk(signature) do ex
-        @capture(ex, s_::Source) && (return s)
-        @capture(ex, t_::Target) && (return t)
-        ex
-    end, fname_(fargs__))
-    _fname = gensym(fname)
+             @capture(ex, s_::Source) && (return s)
+             @capture(ex, t_::Target) && (return t)
+             ex
+             end, fname_(fargs__))
 
-    source_ind = findfirst(x -> x.args[2] == :Source, signature.args[2:end])
+    source_ind = findfirst(x -> isa(x, Expr) && (x.args[2] == :Source), signature.args[2:end])
     source_name = signature.args[source_ind+1].args[1]
 
     quote
-        @__doc__ function $fname($(fargs...))
-            $_fname($(unwrappedargs...), kind(unwrap_src($source_name)))
+        Core.@__doc__ function $fname($(fargs...))
+            $fname($(unwrappedargs...), Vortex.kind(Vortex.unwrap_src($source_name)))
         end
 
-        function $_fname($(fargs...), ::Type{Group})
+        function $fname($(fargs...), ::Type{Vortex.Group})
             $sumvar = zero($(get(stype)))
             for $index in eachindex($source_name)
                 $sumvar = $op($sumvar, $iterated_call)
@@ -74,43 +72,40 @@ function induced_property(signature, stype, preallocator)
              @capture(ex, t_::Target) && (return t)
              @capture(ex, s_::Source) && (return s)
              ex
-    end, fname_(fargs__))
+             end, fname_(fargs__))
     fname! = Symbol(fname, "!")
-    _fname = gensym(fname)
-    _fname! = gensym(fname!)
 
     f_allocate = get(preallocator)
-    _f_allocate = gensym(f_allocate)
 
     @capture(postwalk(signature) do ex
-             @capture(ex, t_::Target) && (return :(unwrap_targ($t)))
-             @capture(ex, s_::Source) && (return :(unwrap_targ($s)))
+             @capture(ex, t_::Target) && (return :(Vortex.unwrap_targ($t)))
+             @capture(ex, s_::Source) && (return :(Vortex.unwrap_targ($s)))
              ex
-    end, _(unwrappedargs__))
+             end, _(unwrappedargs__))
 
     @capture(postwalk(signature) do ex
-        @capture(ex, s_::Source) && (return :($s[$index]))
-        @capture(ex, t_::Target) && (return t)
-        ex
-    end, _(iteratedsources__))
+             @capture(ex, s_::Source) && (return :($s[$index]))
+             @capture(ex, t_::Target) && (return t)
+             ex
+             end, _(iteratedsources__))
 
     @capture(postwalk(signature) do ex
-        @capture(ex, s_::Source) && (return s)
-        @capture(ex, t_::Target) && (return :($t[$index]))
-        ex
-    end, _(iteratedtargets__))
+             @capture(ex, s_::Source) && (return s)
+             @capture(ex, t_::Target) && (return :($t[$index]))
+             ex
+             end, _(iteratedtargets__))
 
     @capture(postwalk(signature) do ex
-        @capture(ex, t_::Target) && (return :($t::Tuple))
-        @capture(ex, s_::Source) && (return s)
-        ex
-    end, _(targettuples__))
+             @capture(ex, t_::Target) && (return :($t::Tuple))
+             @capture(ex, s_::Source) && (return s)
+             ex
+             end, _(targettuples__))
 
 
-    target_ind = findfirst(x -> x.args[2] == :Target, signature.args[2:end])
+    target_ind = findfirst(x -> isa(x, Expr) && (x.args[2] == :Target), signature.args[2:end])
     target_name = signature.args[target_ind+1].args[1]
 
-    source_ind = findfirst(x -> x.args[2] == :Source, signature.args[2:end])
+    source_ind = findfirst(x -> isa(x, Expr) && (x.args[2] == :Source), signature.args[2:end])
     source_name = signature.args[source_ind+1].args[1]
 
     position_args = copy(fargs)
@@ -120,28 +115,28 @@ function induced_property(signature, stype, preallocator)
         $f_allocate(group::Tuple) = map($f_allocate, group)
 
         function $f_allocate($target_name)
-            $_f_allocate(unwrap_targ($target_name), kind(eltype(unwrap_targ($target_name))))
+            $f_allocate(Vortex.unwrap_targ($target_name), Vortex.kind(eltype(Vortex.unwrap_targ($target_name))))
         end
 
-        $_f_allocate($target_name, el::Type{Singleton}) = zeros($(get(stype)), size($target_name))
+        $f_allocate($target_name, el::Type{Vortex.Singleton}) = zeros($(get(stype)), size($target_name))
 
         function $fname($(fargs...))
-            $_fname($(unwrappedargs...),
-                    kind(unwrap_targ($target_name)),
-                    kind(unwrap_src($source_name)))
+            $fname($(unwrappedargs...),
+                   Vortex.kind(Vortex.unwrap_targ($target_name)),
+                   Vortex.kind(Vortex.unwrap_src($source_name)))
         end
 
         function $fname!(out, $(fargs...))
-            $_fname!(out, $(unwrappedargs...),
-                     kind(unwrap_targ($target_name)),
-                     kind(unwrap_src($source_name)))
+            $fname!(out, $(unwrappedargs...),
+                    Vortex.kind(Vortex.unwrap_targ($target_name)),
+                    Vortex.kind(Vortex.unwrap_src($source_name)))
         end
 
-        function $_fname($(fargs...), ::Type{Singleton}, ::Type{Singleton})
+        function $fname($(fargs...), ::Type{Vortex.Singleton}, ::Type{Vortex.Singleton})
             $fname($(position_args...))
         end
 
-        function $_fname($(fargs...), ::Type{Singleton}, ::Type{Group})
+        function $fname($(fargs...), ::Type{Vortex.Singleton}, ::Type{Vortex.Group})
             $Σ = zero($(get(stype)))
             for $index in eachindex($source_name)
                 $Σ += $fname($(iteratedsources...))
@@ -149,12 +144,12 @@ function induced_property(signature, stype, preallocator)
             $Σ
         end
 
-        function $_fname($(fargs...), ::Type{Group}, ::Any)
+        function $fname($(fargs...), ::Type{Vortex.Group}, ::Any)
             out = $f_allocate($target_name)
             $fname!(out, $(fargs...))
         end
 
-        function $_fname!(out, $(fargs...), ::Type{Group}, ::Any)
+        function $fname!(out, $(fargs...), ::Type{Vortex.Group}, ::Any)
             for $index in eachindex($target_name)
                 out[$index] += $fname($(iteratedtargets...))
             end
@@ -171,7 +166,7 @@ function induced_property(signature, stype, preallocator)
 end
 
 macro property(rawexpr)
-    ex = striplines(rawexpr)
+    ex = (rawexpr)
 
     signature = Nullable()
     stype = Nullable()
