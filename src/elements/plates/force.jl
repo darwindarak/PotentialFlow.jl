@@ -1,24 +1,12 @@
-function rate_of_impulse(plate, motion, elements::Tuple, velocities::Tuple)
-    Ṗ = zero(Complex128)
-    for i in eachindex(elements)
-        Ṗ += rate_of_impulse(plate, motion, elements[i], velocities[i])
-    end
-    return Ṗ
+import ..Vortex: @property
+
+@property begin
+    signature = rate_of_impulse(plate, motion, elements::Source, velocities::Source)
+    reduce = (+)
+    stype = Complex128
 end
 
-function rate_of_impulse(plate, motion, elements, velocities)
-    _rate_of_impulse(plate, motion, Vortex.unwrap(elements), Vortex.unwrap(velocities), Vortex.kind(Vortex.unwrap(elements)))
-end
-
-function _rate_of_impulse(plate, motion, elements, velocities, ::Type{Vortex.Group})
-    Ṗ = zero(Complex128)
-    for i in eachindex(elements)
-        Ṗ += _rate_of_impulse(plate, motion, Vortex.unwrap(elements[i]), Vortex.unwrap(velocities[i]), Vortex.kind(eltype(elements)))
-    end
-    Ṗ
-end
-
-function _rate_of_impulse(plate, motion, element, velocity, ::Type{Vortex.Singleton})
+function rate_of_impulse(plate, motion, element, velocity, ::Type{Vortex.Singleton})
     @get plate (c, α, L)
     @get motion (ċ, α̇)
 
