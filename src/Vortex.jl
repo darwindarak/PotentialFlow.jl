@@ -39,7 +39,6 @@ export allocate_velocity, reset_velocity!,
 #== Type Definitions ==#
 
 abstract type Element end
-const Collection = Union{AbstractArray, Tuple}
 
 #== Trait definitions ==#
 abstract type Singleton end
@@ -66,6 +65,7 @@ unwrap(e) = e
 
 #== Vortex Properties ==#
 
+
 """
     Vortex.position(src::PointSource)
 
@@ -88,7 +88,11 @@ julia> Vortex.position.(points)
  0.0+2.0im
 ```
 """
-@property point position Complex128
+@property begin
+    signature = position(src::Source)
+    stype = Complex128
+end
+
 
 """
     Vortex.circulation(src)
@@ -113,7 +117,12 @@ julia> Vortex.circulation.(points)
  2.0
 ```
 """
-@property aggregate circulation Float64
+@property begin
+    signature = circulation(src::Source)
+    reduce = (+)
+    stype = Float64
+end
+
 
 doc"""
     Vortex.impulse(src)
@@ -136,7 +145,12 @@ julia> Vortex.impulse(sys)
 0.0 + 0.0im
 ```
 """
-@property aggregate impulse Complex128
+@property begin
+    signature = impulse(src::Source)
+    reduce = (+)
+    stype = Complex128
+end
+
 
 #== Velocity ==#
 
@@ -186,8 +200,12 @@ function reset_velocity!(group::T, src) where {T <: Tuple}
     group
 end
 
-@property induced velocity Complex128
-#@property_traits induced velocity Complex128
+
+@property begin
+    signature = induce_velocity(t::Target, s::Source)
+    preallocator = allocate_velocity
+    stype = Complex128
+end
 
 @doc """
     allocate_velocity(srcs)
@@ -379,7 +397,9 @@ Point Vortex: z = 1.0 + 0.01im, Γ = 1.0
 """
 function advect end
 
-function advect!{T <: Collection}(vs₊::T, vs₋::T, w, Δt)
+function advect!(vs₊::T, vs₋::T, w, Δt) where
+    {T <: Union{AbstractArray, Tuple}}
+
     for (i, v) in enumerate(vs₋)
         vs₊[i] = advect(v, w[i], Δt)
     end

@@ -1,130 +1,209 @@
-using MacroTools
+using MacroTools: @capture, postwalk, striplines
+import Core: @__doc__
 
-"""
-    @property kind name property_type [target_deps source_deps]
+# begin
+#     signature = induce_velocity(targ::Target, src::Source, t)
+#     preallocator = allocate_velocity
+#     stype = Complex128
+# end
 
-Macro to define common functions for computing vortex properties
+# begin
+#     signature = circulation(src::Source)
+#     stype = Complex128
+#     reduce = +
+# end
 
-`kind` can be one of:
-- `induced`: when the property is induced by an external vortex source (e.g. velocity),
-  the macro defines the following functions:
-  ```julia
-  allocate_<name>(target)
-  induce_<name>(target, source)
-  induce_<name>!(output, target[, target_deps], source[, source_deps])
-  ```
-  where `source` can be
-  - a single vortex element (e.g. a single point vortex)
-  - a array of homogenous vortex elements (e.g. a group of point vortices)
-  - a tuple of different vortex elements (e.g. a plate and two vortex sheets),
-  `target` can be the same types as `source` as well as one or more positions,
-  and `output` is the output array allocated by `allocate_<name>`
-  The return type of `induce_<name>` will be `property_type`.
-  `target_deps` and `source_deps` are optional dependencies that might
-  be required to compute the induced property.  For example, for
-  computing induced acceleration, we need the velocity of both the
-  target and source.
-- `point`: when the property is pointwise defined (e.g. position),
-  the macro defines a placeholder function
-  ```julia
-  function <name> end
-  ```
-  deferring the actual implementation to the indivual vortex types.
-- `aggregate`: when the property can be summed over multiple elements (e.g. circulation),
-  the macro defines
-  ```julia
-  <name>(source)
-  ```
+# begin
+#     signature = position(src::Source)
+#     stype = Complex128
+# end
 
-!!! note Why a macro?
-    Originally, `induce_velocity` and friends were defined as regular
-    functions.  However, computations of many other properties
-    (e.g. complex potential, acceleration, etc.)  follow the same
-    pattern of summing over sources and distributing over targets.
-    Instead of writing separate code, it seems better to write one set
-    of code that will work on all properties of this kind.  That way,
-    defining new properties in the future will be eaiser, and we only
-    have one set of bugs to fix.
-"""
-macro property(kind, name, prop_type, target_deps = :(()), source_deps = :(()))
-    if kind == :point
-        esc(quote
-            function $name end
-            end)
-    elseif kind == :aggregate
-        esc(quote
-            $name(vs::Collection) = mapreduce($name, +, zero($prop_type), vs)
-            end)
-    elseif kind == :induced
-        f_allocate = Symbol("allocate_$(lowercase(string(name)))")
-        f_induce   = Symbol("induce_$(lowercase(string(name)))")
-        f_induce!  = Symbol("induce_$(lowercase(string(name)))!")
+function source_property(signature, stype, reduce_op)
+    if isnull(reduce_op)
+        return :(@__doc__ function $(signature.args[1]) end)
+    end
 
-        _f_allocate = Symbol("_allocate_$(lowercase(string(name)))")
-        _f_induce   = Symbol("_induce_$(lowercase(string(name)))")
-        _f_induce!  = Symbol("_induce_$(lowercase(string(name)))!")
+    op = get(reduce_op)
 
-        if target_deps isa Symbol
-            t_deps = (target_deps,)
-        else
-            @capture(target_deps, (t_deps__,))
+    sumvar = gensym(:Σ)
+    index = gensym(:i)
+
+    iterated_call = postwalk(signature) do ex
+        @capture(ex, s_::Source) && (return :($s[$index]))
+        @capture(ex, t_::Target) && (return t)
+        ex
+    end
+
+    @capture(postwalk(signature) do ex
+        @capture(ex, s_::Source) && (return :(unwrap_targ($s)))
+        @capture(ex, t_::Target) && (return t)
+        ex
+    end, _(unwrappedargs__))
+
+    @capture(postwalk(signature) do ex
+        @capture(ex, s_::Source) && (return s)
+        @capture(ex, t_::Target) && (return t)
+        ex
+    end, fname_(fargs__))
+    _fname = gensym(fname)
+
+    source_ind = findfirst(x -> x.args[2] == :Source, signature.args[2:end])
+    source_name = signature.args[source_ind+1].args[1]
+
+    quote
+        @__doc__ function $fname($(fargs...))
+            $_fname($(unwrappedargs...), kind(unwrap_src($source_name)))
         end
-        t_deps_i = map(s -> :($s[i]), t_deps)
 
-        if target_deps isa Symbol
-            s_deps = (source_deps,)
-        else
-            @capture(source_deps, (s_deps__,))
+        function $_fname($(fargs...), ::Type{Group})
+            $sumvar = zero($(get(stype)))
+            for $index in eachindex($source_name)
+                $sumvar = $op($sumvar, $iterated_call)
+            end
+            $sumvar
         end
-        s_deps_i = map(s -> :($s[i]), s_deps)
+    end
+end
 
-        esc(quote
-            $f_allocate(group::Tuple) = map($f_allocate, group)
-            $f_allocate(targ) = $_f_allocate(unwrap_targ(targ), kind(eltype(unwrap_targ(targ))))
-            $_f_allocate(targ, el::Type{Singleton}) = zeros($prop_type, size(targ))
+function induced_property(signature, stype, preallocator)
 
-            function $f_induce(targ, $(t_deps...), src, $(s_deps...))
-                $_f_induce(unwrap_targ(targ), $(t_deps...), unwrap_src(src), $(s_deps...),
-                           kind(unwrap_targ(targ)), kind(unwrap_src(src)))
-            end
-            function $f_induce!(out, targ, $(t_deps...), src, $(s_deps...))
-                $_f_induce!(out, unwrap_targ(targ), $(t_deps...),
-                            unwrap_src(src),  $(s_deps...),
-                            kind(unwrap_targ(targ)), kind(unwrap_src(src)))
-            end
+    Σ = gensym(:Σ)
+    index = gensym(:i)
 
-            function $_f_induce(targ, $(t_deps...), src, $(s_deps...), ::Type{Singleton}, ::Type{Singleton})
-                $f_induce(Vortex.position(targ), $(t_deps...), src, $(s_deps...))
-            end
+    @capture(postwalk(signature) do ex
+             @capture(ex, t_::Target) && (return t)
+             @capture(ex, s_::Source) && (return s)
+             ex
+    end, fname_(fargs__))
+    fname! = Symbol(fname, "!")
+    _fname = gensym(fname)
+    _fname! = gensym(fname!)
 
-            function $_f_induce(targ, $(t_deps...), src, $(s_deps...), ::Type{Singleton}, ::Type{Group})
-                w = zero($prop_type)
-                for i in eachindex(src)
-                    w += $f_induce(targ, $(t_deps...), src[i], $(s_deps_i...))
-                end
-                w
-            end
+    f_allocate = get(preallocator)
+    _f_allocate = gensym(f_allocate)
 
-            function $_f_induce(targ, $(t_deps...), src, $(s_deps...), ::Type{Group}, ::Any)
-                out = $f_allocate(targ)
-                $f_induce!(out, targ, $(t_deps...), src, $(s_deps...))
-            end
+    @capture(postwalk(signature) do ex
+             @capture(ex, t_::Target) && (return :(unwrap_targ($t)))
+             @capture(ex, s_::Source) && (return :(unwrap_targ($s)))
+             ex
+    end, _(unwrappedargs__))
 
-            function $_f_induce!(out, targ, $(t_deps...), src, $(s_deps...), ::Type{Group}, ::Any)
-                for i in eachindex(targ)
-                    out[i] += $f_induce(targ[i], $(t_deps_i...), src, $(s_deps...))
-                end
-                out
-            end
+    @capture(postwalk(signature) do ex
+        @capture(ex, s_::Source) && (return :($s[$index]))
+        @capture(ex, t_::Target) && (return t)
+        ex
+    end, _(iteratedsources__))
 
-            function $f_induce!(out::Tuple, targ::Tuple, $(t_deps...), src, $(s_deps...))
-                for i in eachindex(targ)
-                    $f_induce!(out[i], targ[i], $(t_deps_i...), src, $(s_deps...))
-                end
-                out
+    @capture(postwalk(signature) do ex
+        @capture(ex, s_::Source) && (return s)
+        @capture(ex, t_::Target) && (return :($t[$index]))
+        ex
+    end, _(iteratedtargets__))
+
+    @capture(postwalk(signature) do ex
+        @capture(ex, t_::Target) && (return :($t::Tuple))
+        @capture(ex, s_::Source) && (return s)
+        ex
+    end, _(targettuples__))
+
+
+    target_ind = findfirst(x -> x.args[2] == :Target, signature.args[2:end])
+    target_name = signature.args[target_ind+1].args[1]
+
+    source_ind = findfirst(x -> x.args[2] == :Source, signature.args[2:end])
+    source_name = signature.args[source_ind+1].args[1]
+
+    position_args = copy(fargs)
+    position_args[target_ind] = :(Vortex.position($target_name))
+
+    quote
+        $f_allocate(group::Tuple) = map($f_allocate, group)
+
+        function $f_allocate($target_name)
+            $_f_allocate(unwrap_targ($target_name), kind(eltype(unwrap_targ($target_name))))
+        end
+
+        $_f_allocate($target_name, el::Type{Singleton}) = zeros($(get(stype)), size($target_name))
+
+        function $fname($(fargs...))
+            $_fname($(unwrappedargs...),
+                    kind(unwrap_targ($target_name)),
+                    kind(unwrap_src($source_name)))
+        end
+
+        function $fname!(out, $(fargs...))
+            $_fname!(out, $(unwrappedargs...),
+                     kind(unwrap_targ($target_name)),
+                     kind(unwrap_src($source_name)))
+        end
+
+        function $_fname($(fargs...), ::Type{Singleton}, ::Type{Singleton})
+            $fname($(position_args...))
+        end
+
+        function $_fname($(fargs...), ::Type{Singleton}, ::Type{Group})
+            $Σ = zero($(get(stype)))
+            for $index in eachindex($source_name)
+                $Σ += $fname($(iteratedsources...))
             end
-            end)
+            $Σ
+        end
+
+        function $_fname($(fargs...), ::Type{Group}, ::Any)
+            out = $f_allocate($target_name)
+            $fname!(out, $(fargs...))
+        end
+
+        function $_fname!(out, $(fargs...), ::Type{Group}, ::Any)
+            for $index in eachindex($target_name)
+                out[$index] += $fname($(iteratedtargets...))
+            end
+            out
+        end
+
+        function $fname!(out::Tuple, $(targettuples...))
+            for $index in eachindex($target_name)
+                $fname!(out[$index], $(iteratedtargets...))
+            end
+            out
+        end
+    end
+end
+
+macro property(rawexpr)
+    ex = striplines(rawexpr)
+
+    signature = Nullable()
+    stype = Nullable()
+    reduce_op = Nullable()
+    preallocator = Nullable()
+    has_sources = has_targets = false
+
+    postwalk(ex) do x
+        @capture(x, signature = f_) && (signature = Nullable(f))
+        @capture(x, stype = t_)             && (stype = Nullable(t))
+        @capture(x, reduce = op_)           && (reduce_op = Nullable(op))
+        @capture(x, preallocator = p_)      && (preallocator = Nullable(p))
+
+        has_sources |= @capture(x, _::Source)
+        has_targets |= @capture(x, _::Target)
+
+        return x
+    end
+
+    if isnull(signature)
+        throw(ArgumentError("missing `signature = ...` entry"))
+    end
+
+    if !(@capture(get(signature), _(__)))
+        throw(ArgumentError("signature must look like a function call"))
+    end
+
+    if has_sources && has_targets
+        return esc(induced_property(get(signature), stype, preallocator))
+    elseif has_sources
+        return esc(source_property(get(signature), stype, reduce_op))
     else
-        throw(ArgumentError("first argument must be `:induced`, `:point` or `:aggregate`"))
+        throw(ArgumentError("missing at least one `::Source` argument in signature"))
     end
 end
