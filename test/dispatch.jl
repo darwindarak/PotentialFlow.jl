@@ -112,9 +112,17 @@
     end
 
     @testset "Property Macro" begin
-        @test_throws ArgumentError @eval Vortex (@property prop count Int)
+        @test_throws ArgumentError @eval Vortex (
+            @property begin
+                signature = ""
+            end)
 
-        @eval Vortex (@property induced count Int tcount scount)
+        @eval Vortex (@property begin
+                      signature = induce_count(t::Target, tc::Target, s::Source, sc::Source)
+                      preallocator = allocate_count
+                      stype = Int
+                      end)
+
         @eval Vortex.Points begin
             Vortex.induce_count(::Complex128, tcount, ::Point, scount) = scount
         end
