@@ -2,11 +2,14 @@ module Plates
 using DocStringExtensions
 
 export Plate, bound_circulation, bound_circulation!,
-    enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force
+    enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force, Motions
 
 import ..Vortex
 import ..Vortex:@get, MappedVector
 import Base: length, deserialize, AbstractSerializer
+
+include("plates/Motions.jl")
+import .Motions: Motion
 
 include("plates/chebyshev.jl")
 
@@ -73,11 +76,7 @@ end
 length(p::Plate) = p.N
 Vortex.circulation(p::Plate) = p.Γ
 
-# For now, the velocity of the plate is explicitly set
-function Vortex.allocate_velocity(::Plate)
-    warn("Plate velocity should be constructed explicitly.  Calling `allocate_velocity` for a plate returns a stationary motion")
-    PlateMotion(0.0, 0.0)
-end
+Vortex.allocate_velocity(::Plate) = Motion(0.0, 0.0)
 
 Vortex.self_induce_velocity!(motion, ::Plate) = nothing
 
@@ -142,30 +141,10 @@ function _singular_velocity!(ws, p, src, ::Type{Vortex.Group})
     ws
 end
 
-struct Motion{F}
-    f::F
-end
-(m::Motion)(t) = m.f(t)
-Motion(ċ, α̇) = Motion(ConstantMotion{ċ, α̇}())
-struct ConstantMotion{U, Ω} end
-ConstantMotion(ċ, α̇) = ConstantMotion{ċ, α̇}()
-(::ConstantMotion{U, Ω})(t) where {U, Ω} = (complex(U), Ω, 0.0)
+Vortex.induce_velocity!(::Motion, target::Plate, source) = nothing
+Vortex.reset_velocity!(::Motion, src) = nothing
 
-mutable struct PlateMotion{F}
-    ċ::Complex128
-    c̈::Complex128
-    α̇::Float64
-
-    motion::Motion{F}
-end
-PlateMotion(ċ, α̇) = PlateMotion(complex(ċ), 0.0im, float(α̇), Motion(ċ, α̇))
-PlateMotion(motion) = PlateMotion(motion(0)..., motion)
-
-
-Vortex.induce_velocity!(::PlateMotion, target::Plate, source) = nothing
-Vortex.reset_velocity!(::PlateMotion, src) = nothing
-
-function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
+function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::Motion, Δt)
     if plate₊ != plate₋
         plate₊.L    = plate₋.L
         plate₊.Γ    = plate₋.Γ
