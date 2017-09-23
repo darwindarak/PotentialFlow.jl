@@ -5,11 +5,13 @@ makedocs(
     sitename = "VortexModel.jl",
     pages = [
         "Home" => "index.md",
-        "Getting Started Guide" => "quickstart.md",
-        "Vortex Elements" => "elements.md",
-        "Computing Velocities" => "velocities.md",
-        "Time Marching" => "timemarching.md",
-        "Enforcing No-Flow-Through" => "noflowthrough.md"
+        "Manual" => [#"manual/quickstart.md",
+                     "manual/elements.md",
+                     "manual/velocities.md",
+                     "manual/timemarching.md",
+                     "manual/noflowthrough.md"
+                     ],
+        "Internals" => [ "internals/properties.md"]
     ],
     assets = ["assets/custom.css"],
     strict = true

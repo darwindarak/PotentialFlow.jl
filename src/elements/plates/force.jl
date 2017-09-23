@@ -1,5 +1,15 @@
 import ..Vortex: @property
 
+"""
+    rate_of_impulse(plate, motion, elements::Source, velocities::Source)
+
+Compute the rate of change of impulse of a vortex element and its
+image relative to a plate.
+
+Note that this is not just the rate of impulse of the vortex element
+itself, but also includes the rate of impulse of the bound vortex
+sheet generated in response to the vortex element.
+"""
 @property begin
     signature = rate_of_impulse(plate, motion, elements::Source, velocities::Source)
     reduce = (+)

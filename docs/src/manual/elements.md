@@ -95,6 +95,8 @@ Vortex.Plates.vorticity_flux
 Vortex.Plates.vorticity_flux!
 Vortex.Plates.bound_circulation
 Vortex.Plates.bound_circulation!
+Vortex.Plates.rate_of_impulse
+Vortex.Plates.force
 Vortex.Plates.surface_pressure
 ```
 
