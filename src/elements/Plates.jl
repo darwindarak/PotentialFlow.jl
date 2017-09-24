@@ -2,11 +2,14 @@ module Plates
 using DocStringExtensions
 
 export Plate, bound_circulation, bound_circulation!,
-    enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse
+    enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force, Motions
 
 import ..Vortex
 import ..Vortex:@get, MappedVector
 import Base: length, deserialize, AbstractSerializer
+
+include("plates/Motions.jl")
+import .Motions: Motion
 
 include("plates/chebyshev.jl")
 
@@ -73,9 +76,9 @@ end
 length(p::Plate) = p.N
 Vortex.circulation(p::Plate) = p.Γ
 
-# For now, the velocity of the plate is explicitly set
-Vortex.allocate_velocity(::Plate) = PlateMotion(0.0, 0.0)
-Vortex.self_induce_velocity!(_, ::Plate) = nothing
+Vortex.allocate_velocity(::Plate) = Motion(0.0, 0.0)
+
+Vortex.self_induce_velocity!(motion, ::Plate) = nothing
 
 function Vortex.impulse(p::Plate)
     @get p (c, B₀, α, Γ, L, A)
@@ -138,15 +141,10 @@ function _singular_velocity!(ws, p, src, ::Type{Vortex.Group})
     ws
 end
 
-mutable struct PlateMotion
-    ċ::Complex128
-    α̇::Float64
-end
+Vortex.induce_velocity!(::Motion, target::Plate, source) = nothing
+Vortex.reset_velocity!(::Motion, src) = nothing
 
-Vortex.induce_velocity!(::PlateMotion, target::Plate, source) = nothing
-Vortex.reset_velocity!(::PlateMotion, src) = nothing
-
-function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::PlateMotion, Δt)
+function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::Motion, Δt)
     if plate₊ != plate₋
         plate₊.L    = plate₋.L
         plate₊.Γ    = plate₋.Γ
@@ -187,6 +185,7 @@ unit_impulse(src, plate::Plate) = unit_impulse(Vortex.position(src), plate)
 
 include("plates/boundary_conditions.jl")
 include("plates/circulation.jl")
+include("plates/force.jl")
 
 doc"""
     surface_pressure(plate, motion, te_sys, Γs₋, Δt)

@@ -28,7 +28,7 @@
             induce_velocity!(vel_p, plate, b)
         end
 
-        motion = Vortex.Plates.PlateMotion(0.0, 0.0)
+        motion = Vortex.Plates.Motion(0.0, 0.0)
         Vortex.Plates.enforce_no_flow_through!(plate, motion, blobs)
         @test vel_p == vel_b
         @test Vortex.Plates.Chebyshev.firstkind(plate.C, plate.ss) ≈ exp(-im*plate.α).*vel_p
@@ -65,7 +65,7 @@
 
         points = Vortex.Point.(zs, Γs)
         plate = Vortex.Plate(Np, 2.0, c, α)
-        plate_vel = Vortex.Plates.PlateMotion(ċ, α̇)
+        plate_vel = Vortex.Plates.Motion(ċ, α̇)
         Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, points)
         γs = zeros(Float64, Np)
         Vortex.Plates.strength!(γs, plate)
@@ -111,7 +111,7 @@
 
         points = Vortex.Point.(zs, Γs)
         plate = Vortex.Plate(Np, 2.0, c, α)
-        plate_vel = Vortex.Plates.PlateMotion(ċ, α̇)
+        plate_vel = Vortex.Plates.Motion(ċ, α̇)
         Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, points)
 
         sys = (plate, points)
@@ -125,7 +125,7 @@
         L = 2rand()
 
         plate = Vortex.Plate(128, L, 0.0, α)
-        plate_vel = Vortex.Plates.PlateMotion(U, 0.0)
+        plate_vel = Vortex.Plates.Motion(U, 0.0)
         Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
 
         C = deepcopy(plate.C)
@@ -190,7 +190,7 @@
 end
 
 @testset "Advection" begin
-    motion = Vortex.Plates.PlateMotion(rand(Complex128), rand())
+    motion = Vortex.Plates.Motion(rand(Complex128), rand())
     c = rand(Complex128)
     α = 0.5π*rand()
     L = 2rand()
@@ -227,7 +227,7 @@ end
 end
 
 @testset "[De]serialization" begin
-    motion = Vortex.Plates.PlateMotion(rand(Complex128), rand())
+    motion = Vortex.Plates.Motion(rand(Complex128), rand())
     c = rand(Complex128)
     α = 0.5π*rand()
     L = 2rand()
