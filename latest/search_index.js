@@ -25,47 +25,47 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "quickstart.html#",
-    "page": "Getting Started Guide",
-    "title": "Getting Started Guide",
+    "location": "manual/quickstart.html#",
+    "page": "Getting Started",
+    "title": "Getting Started",
     "category": "page",
     "text": ""
 },
 
 {
-    "location": "quickstart.html#getting-started-1",
-    "page": "Getting Started Guide",
+    "location": "manual/quickstart.html#getting-started-1",
+    "page": "Getting Started",
     "title": "Getting Started",
     "category": "section",
     "text": "This getting started guide will introduce the main components of VortexModel.jl. The code examples here should be directly copy-paste-able into the Julia REPL (even with the julia> prompt and sample results).DocTestSetup = quote\n    srand(1)\nend"
 },
 
 {
-    "location": "quickstart.html#Creating-Vortex-Elements-1",
-    "page": "Getting Started Guide",
+    "location": "manual/quickstart.html#Creating-Vortex-Elements-1",
+    "page": "Getting Started",
     "title": "Creating Vortex Elements",
     "category": "section",
     "text": "We start by importing the library and creating a single point vortex with unit circulation located at (1,1):julia> using VortexModel\n\njulia> p = Vortex.Point( 1.0 + 1.0im, 1.0 )\nPoint Vortex: z = 1.0 + 1.0im, Γ = 1.0By convention, the arguments for vortex type constructors are position(s) and circulation(s), followed by any type specific parameters. For example, a vortex blob at the same location as p with a blob radius of 0.1 is created withjulia> Vortex.Blob(1.0 + 1.0im, 1.0, 0.1)\nVortex Blob: z = 1.0 + 1.0im, Γ = 1.0, δ = 0.1We can use Julia's vectorized dot syntax to construct whole arrays of vortex elements. For example, here we create five point vortices and five vortex blobs:julia> N = 5;\n\njulia> zs = Complex.(randn(N), randn(N));\n\njulia> points = Vortex.Point.(zs + 1.5, rand(N))\n5-element Array{VortexModel.Vortex.Points.Point,1}:\n Point Vortex: z = 1.797 + 0.311im, Γ = 0.425\n Point Vortex: z = 1.882 + 2.295im, Γ = 0.773\n Point Vortex: z = 0.902 - 2.267im, Γ = 0.281\n Point Vortex: z = 1.49 + 0.53im, Γ = 0.209\n Point Vortex: z = 0.661 + 0.431im, Γ = 0.251\n\njulia> blobs = Vortex.Blob.(zs - 1.5, rand(N), 0.1)\n5-element Array{VortexModel.Vortex.Blobs.Blob,1}:\n Vortex Blob: z = -1.203 + 0.311im, Γ = 0.02, δ = 0.1\n Vortex Blob: z = -1.118 + 2.295im, Γ = 0.288, δ = 0.1\n Vortex Blob: z = -2.098 - 2.267im, Γ = 0.86, δ = 0.1\n Vortex Blob: z = -1.51 + 0.53im, Γ = 0.077, δ = 0.1\n Vortex Blob: z = -2.339 + 0.431im, Γ = 0.64, δ = 0.1We can mix different vortex types together by grouping them in tuples. For example, a collection of vortex elements consisting of the point vortices and vortex blobs created earlier can be grouped together with:julia> sys = (points, blobs);note: Note\nThe Unicode characters used in the examples can be entered in the Julia REPL (and most text editors with the appropriate plugins) via tab completion..  For example:Γ: \\Gamma<TAB>\nΔ: \\Delta<TAB>\nẋ: x\\dot<TAB>\n🌀: \\:cyclone:<TAB>We can access properties of any vortex element by directly accessing its fields, for example:julia> p.Γ\n1.0However, it is better practice to use accessor methods, such as:julia> Vortex.circulation(p)\n1.0since not all vortex element types store their circulation in a Γ field but all types are required to implement a Vortex.circulation method (also see Vortex.impulse and Vortex.position). These accessor methods, combined with the dot syntax, also make it easier to work with properties of arrays and tuples of vortex elements.julia> Vortex.circulation(points)\n1.939982714228534\n\njulia> Vortex.circulation(blobs)\n1.8849356499471654\n\njulia> Vortex.circulation(sys)\n3.8249183641756996\n\njulia> Vortex.circulation.(blobs)\n5-element Array{Float64,1}:\n 0.0203749\n 0.287702\n 0.859512\n 0.0769509\n 0.640396\n\njulia> Vortex.position.(blobs)\n5-element Array{Complex{Float64},1}:\n -1.20271+0.311111im\n  -1.1176+2.29509im\n -2.09763-2.26709im\n -1.51045+0.529966im\n -2.33903+0.431422im"
 },
 
 {
-    "location": "quickstart.html#Computing-Vortex-Velocities-1",
-    "page": "Getting Started Guide",
+    "location": "manual/quickstart.html#Computing-Vortex-Velocities-1",
+    "page": "Getting Started",
     "title": "Computing Vortex Velocities",
     "category": "section",
     "text": "Now that we can create vortex elements, we want to add in some dynamics. The key functions for this are the induce_velocity and induce_velocity! pair and self_induce_velocity!.induce_velocity(target, source) computes the complex velocity that a vortex element(s) source induces on a target. The target can bea complex position\njulia> induce_velocity(0.0 + 0.0im , points)\n0.05610938572529216 - 0.1319030126670981im\n\njulia> induce_velocity(0.0 + 0.0im , sys)\n0.05066830110387291 - 0.04224547600656549im\na vortex element\njulia> induce_velocity(p, sys)\n-0.095439940976663 - 0.024542142467999073im\nan array/tuple of vortex elements\njulia> induce_velocity(points, blobs)\n5-element Array{Complex{Float64},1}:\n -0.00789749+0.0645051im\n  -0.0278927+0.0538741im\n   0.0271037+0.0706032im\n  -0.0111193+0.0675933im\n  -0.0117893+0.078857im\n\njulia> induce_velocity(blobs, sys)\n5-element Array{Complex{Float64},1}:\n  0.0126862+0.0352193im\n  -0.111207-0.0472771im\n  0.0873796-0.0535197im\n -0.0375196+0.031068im\n -0.0279267-0.103821imThe in-place version, induce_velocity!(velocities, targets, source), computes the velocity and writes the results into a pre-allocated data structure. For example:julia> vel_points = zeros(Complex128, length(points))\n5-element Array{Complex{Float64},1}:\n 0.0+0.0im\n 0.0+0.0im\n 0.0+0.0im\n 0.0+0.0im\n 0.0+0.0im\n\njulia> induce_velocity!(vel_points, points, blobs);\n\njulia> vel_points\n5-element Array{Complex{Float64},1}:\n -0.00789749+0.0645051im\n  -0.0278927+0.0538741im\n   0.0271037+0.0706032im\n  -0.0111193+0.0675933im\n  -0.0117893+0.078857imTo make it easier to allocate velocities for more complex collections of vortex elements, the library provides the allocate_velocity function:julia> vels = allocate_velocity(sys);\n\njulia> typeof(vels)\nTuple{Array{Complex{Float64},1},Array{Complex{Float64},1}}The code above created a tuple containing two arrays of velocities, corresponding to the structure of sys. Similarly, there is also the reset_velocity!(velocities, sources) function, which resizes the entries in velocities to match the structure of sources if necessary, then sets all velocities to zero. We can compute the velocity that a source induces on the entire points/blobs system with:julia> src = Vortex.Point(1.0, 1.0);\n\njulia> induce_velocity!(vels, sys, src)\n(Complex{Float64}[-0.067601+0.173242im, -0.0604154+0.023228im, 0.0700725-0.00301774im, -0.162041+0.149685im, -0.228068-0.179224im], Complex{Float64}[-0.0100056-0.0708409im, -0.0374576-0.0345609im, 0.0244871-0.033458im, -0.0128124-0.0606923im, -0.00605748-0.0468824im])If we want the velocity that the points/blobs system induces on itself, we can callreset_velocity!(vels, sys)\ninduce_velocity!(vels[1], points, points)\ninduce_velocity!(vels[1], points, src)\ninduce_velocity!(vels[2], blobs, src)\ninduce_velocity!(vels[2], blobs, blobs)This becomes difficult to keep track of when sys gets larger or more complicated (e.g. nested collection of elements). Instead, we can use the self_induce_velocity! function, which takes care of applying all the pairwise interactions (recursively if need be):julia> reset_velocity!(vels, sys);\n\njulia> self_induce_velocity!(vels, sys);"
 },
 
 {
-    "location": "quickstart.html#Time-Marching-1",
-    "page": "Getting Started Guide",
+    "location": "manual/quickstart.html#Time-Marching-1",
+    "page": "Getting Started",
     "title": "Time Marching",
     "category": "section",
     "text": "using VortexModel\nusing Gadfly\nimport Colors: colormap, alphacolor\nsrand(1)\n\nfunction plot_system(sys)\n    plot(x = real.(Vortex.position.(vcat(sys...))),\n         y = imag.(Vortex.position.(vcat(sys...))),\n         color = Vortex.circulation.(vcat(sys...)),\n         Coord.cartesian(fixed=true),\n         Guide.colorkey(\"Γ\"),\n         Scale.color_continuous(colormap=Scale.lab_gradient(colormap(\"reds\")...)),\n         style(grid_line_width=0mm, highlight_width=0mm))\nendNow that we compute the velocities of a system of vortex elements, we can march the system forward in time to simulate its behavior. As an example, we will simulate of two clusters of vortex blobs merging.N = 200\nzs = Complex.(0.5randn(N), 0.5randn(N))\nΓs  = @. exp(-4abs2(zs))\ncluster₁ = Vortex.Blob.(zs + 1, Γs, 0.01)\ncluster₂ = Vortex.Blob.(zs - 1, Γs, 0.01)\n\nsys = (cluster₁, cluster₂)\nvels = allocate_velocity(sys)\nplot_system(sys)\ndraw(SVGJS(\"initial_clusters.svg\", 6inch, 4inch), ans); nothing # hidewarning: Warning\nFunctions for plotting vortex elements are still waiting for a couple more issues to be fixed on Plots.jl.  For now, we can use Gadfly.jl directly as follows:using Gadfly\nplot(x = real.(Vortex.position.(vcat(sys...))),\n     y = imag.(Vortex.position.(vcat(sys...))),\n     color = Vortex.circulation.(vcat(sys...)),\n     Coord.cartesian(fixed=true),\n     Guide.colorkey(\"Γ\"),\n     Scale.color_continuous(colormap=Scale.lab_gradient(colormap(\"reds\")...)),\n     style(grid_line_width=0mm, highlight_width=0mm))Alternatively, we can use PyPlot.jl with something like:using PyPlot\nfor cluster in sys\n    scatter(real.(Vortex.position.(cluster)),\n            imag.(Vortex.position.(cluster)),\n            c = Vortex.circulation.(cluster),\n            vmin = 0, vmax = 1, alpha = 0.7,\n            cmap = PyPlot.get_cmap(\"Reds\"))\nend\ncolorbar()\naxis(:scaled)\naxis([-3,3,-3,3])<object data=\"initial_clusters.svg\" type=\"image/svg+xml\"></object>Given an array or tuple of vortex elements and their velocities, we can compute their positions after some time interval with the advect!(x₊, x, ẋ, Δt) function, wherex₊ is where the new states are stored\nx is the current state\nΔt is the time interval\nẋ is the velocity.In our case, we will let x₊ and x both be set to sys:Δt = 0.01\nfor t in 0:Δt:1.0\n    reset_velocity!(vels, sys)\n    self_induce_velocity!(vels, sys)\n    advect!(sys, sys, vels, Δt)\nend\nplot_system(sys)\ndraw(SVGJS(\"final_clusters.svg\", 6inch, 4inch), ans); nothing # hide<object data=\"final_clusters.svg\" type=\"image/svg+xml\"></object>"
 },
 
 {
-    "location": "elements.html#",
+    "location": "manual/elements.html#",
     "page": "Vortex Elements",
     "title": "Vortex Elements",
     "category": "page",
@@ -73,7 +73,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#Vortex-Elements-1",
+    "location": "manual/elements.html#Vortex-Elements-1",
     "page": "Vortex Elements",
     "title": "Vortex Elements",
     "category": "section",
@@ -81,7 +81,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Points.Point",
+    "location": "manual/elements.html#VortexModel.Vortex.Points.Point",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Points.Point",
     "category": "Type",
@@ -89,7 +89,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Blobs.Blob",
+    "location": "manual/elements.html#VortexModel.Vortex.Blobs.Blob",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Blobs.Blob",
     "category": "Type",
@@ -97,7 +97,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.Sheet",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.Sheet",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.Sheet",
     "category": "Type",
@@ -105,7 +105,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Plates.Plate",
+    "location": "manual/elements.html#VortexModel.Vortex.Plates.Plate",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Plates.Plate",
     "category": "Type",
@@ -113,7 +113,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#Built-in-Vortex-Types-1",
+    "location": "manual/elements.html#Built-in-Vortex-Types-1",
     "page": "Vortex Elements",
     "title": "Built-in Vortex Types",
     "category": "section",
@@ -121,7 +121,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.position",
+    "location": "manual/elements.html#VortexModel.Vortex.position",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.position",
     "category": "Function",
@@ -129,7 +129,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.circulation",
+    "location": "manual/elements.html#VortexModel.Vortex.circulation",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.circulation",
     "category": "Function",
@@ -137,7 +137,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.impulse",
+    "location": "manual/elements.html#VortexModel.Vortex.impulse",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.impulse",
     "category": "Function",
@@ -145,7 +145,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.advect",
+    "location": "manual/elements.html#VortexModel.Vortex.advect",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.advect",
     "category": "Function",
@@ -153,7 +153,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.advect!",
+    "location": "manual/elements.html#VortexModel.Vortex.advect!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.advect!",
     "category": "Function",
@@ -161,7 +161,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#Vortex-Properties-1",
+    "location": "manual/elements.html#Vortex-Properties-1",
     "page": "Vortex Elements",
     "title": "Vortex Properties",
     "category": "section",
@@ -169,7 +169,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.append_segment!",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.append_segment!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.append_segment!",
     "category": "Function",
@@ -177,7 +177,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.truncate!",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.truncate!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.truncate!",
     "category": "Function",
@@ -185,7 +185,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.redistribute_points!",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.redistribute_points!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.redistribute_points!",
     "category": "Function",
@@ -193,7 +193,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.remesh",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.remesh",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.remesh",
     "category": "Function",
@@ -201,7 +201,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.remesh!",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.remesh!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.remesh!",
     "category": "Function",
@@ -209,7 +209,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.split!",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.split!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.split!",
     "category": "Function",
@@ -217,7 +217,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.filter!",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.filter!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.filter!",
     "category": "Function",
@@ -225,7 +225,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.filter_position!",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.filter_position!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.filter_position!",
     "category": "Function",
@@ -233,7 +233,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.arclength",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.arclength",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.arclength",
     "category": "Function",
@@ -241,7 +241,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Sheets.arclengths",
+    "location": "manual/elements.html#VortexModel.Vortex.Sheets.arclengths",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Sheets.arclengths",
     "category": "Function",
@@ -249,7 +249,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#Methods-on-Vortex-Sheets-1",
+    "location": "manual/elements.html#Methods-on-Vortex-Sheets-1",
     "page": "Vortex Elements",
     "title": "Methods on Vortex Sheets",
     "category": "section",
@@ -257,7 +257,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Plates.enforce_no_flow_through!",
+    "location": "manual/elements.html#VortexModel.Vortex.Plates.enforce_no_flow_through!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Plates.enforce_no_flow_through!",
     "category": "Function",
@@ -265,7 +265,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Plates.vorticity_flux",
+    "location": "manual/elements.html#VortexModel.Vortex.Plates.vorticity_flux",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Plates.vorticity_flux",
     "category": "Function",
@@ -273,7 +273,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Plates.vorticity_flux!",
+    "location": "manual/elements.html#VortexModel.Vortex.Plates.vorticity_flux!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Plates.vorticity_flux!",
     "category": "Function",
@@ -281,7 +281,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Plates.bound_circulation",
+    "location": "manual/elements.html#VortexModel.Vortex.Plates.bound_circulation",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Plates.bound_circulation",
     "category": "Function",
@@ -289,7 +289,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Plates.bound_circulation!",
+    "location": "manual/elements.html#VortexModel.Vortex.Plates.bound_circulation!",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Plates.bound_circulation!",
     "category": "Function",
@@ -297,7 +297,23 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#VortexModel.Vortex.Plates.surface_pressure",
+    "location": "manual/elements.html#VortexModel.Vortex.Plates.rate_of_impulse",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Plates.rate_of_impulse",
+    "category": "Function",
+    "text": "rate_of_impulse(plate, motion, elements::Source, velocities::Source)\n\nCompute the rate of change of impulse of a vortex element and its image relative to a plate.\n\nNote that this is not just the rate of impulse of the vortex element itself, but also includes the rate of impulse of the bound vortex sheet generated in response to the vortex element.\n\n\n\n"
+},
+
+{
+    "location": "manual/elements.html#VortexModel.Vortex.Plates.force",
+    "page": "Vortex Elements",
+    "title": "VortexModel.Vortex.Plates.force",
+    "category": "Function",
+    "text": "force(plate, motion, elements, velocities, newelements = ())\n\nCompute the force on plate, given its motion and the state of the ambient vorticity.\n\nArguments\n\nplate: the plate\nmotion: a structure that contains the velocity, acceleration, and angular velocity of the plate.\nelements: vortex elements representing the ambient vorticity\nvelocities: the velocities of the vortex elements\nnewelements: an optional argument listing vortex elements that are just added to the flow field (it can be an element that is contained in elements)\nΔt: this is only required if newelements is not empty, we assume that the new vortex elements are created over the span of Δt\n\nReturns\n\nF: the force excerted on the plate in complex coordinates\n\n\n\n"
+},
+
+{
+    "location": "manual/elements.html#VortexModel.Vortex.Plates.surface_pressure",
     "page": "Vortex Elements",
     "title": "VortexModel.Vortex.Plates.surface_pressure",
     "category": "Function",
@@ -305,15 +321,15 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "elements.html#Methods-on-Plates-1",
+    "location": "manual/elements.html#Methods-on-Plates-1",
     "page": "Vortex Elements",
     "title": "Methods on Plates",
     "category": "section",
-    "text": "Vortex.Plates.enforce_no_flow_through!\nVortex.Plates.vorticity_flux\nVortex.Plates.vorticity_flux!\nVortex.Plates.bound_circulation\nVortex.Plates.bound_circulation!\nVortex.Plates.surface_pressure"
+    "text": "Vortex.Plates.enforce_no_flow_through!\nVortex.Plates.vorticity_flux\nVortex.Plates.vorticity_flux!\nVortex.Plates.bound_circulation\nVortex.Plates.bound_circulation!\nVortex.Plates.rate_of_impulse\nVortex.Plates.force\nVortex.Plates.surface_pressure"
 },
 
 {
-    "location": "elements.html#Index-1",
+    "location": "manual/elements.html#Index-1",
     "page": "Vortex Elements",
     "title": "Index",
     "category": "section",
@@ -321,7 +337,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#",
+    "location": "manual/velocities.html#",
     "page": "Computing Velocities",
     "title": "Computing Velocities",
     "category": "page",
@@ -329,7 +345,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#Computing-Velocities-1",
+    "location": "manual/velocities.html#Computing-Velocities-1",
     "page": "Computing Velocities",
     "title": "Computing Velocities",
     "category": "section",
@@ -337,7 +353,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#Sources-and-Targets-1",
+    "location": "manual/velocities.html#Sources-and-Targets-1",
     "page": "Computing Velocities",
     "title": "Sources and Targets",
     "category": "section",
@@ -345,7 +361,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#VortexModel.Vortex.allocate_velocity",
+    "location": "manual/velocities.html#VortexModel.Vortex.allocate_velocity",
     "page": "Computing Velocities",
     "title": "VortexModel.Vortex.allocate_velocity",
     "category": "Function",
@@ -353,7 +369,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#VortexModel.Vortex.reset_velocity!",
+    "location": "manual/velocities.html#VortexModel.Vortex.reset_velocity!",
     "page": "Computing Velocities",
     "title": "VortexModel.Vortex.reset_velocity!",
     "category": "Function",
@@ -361,7 +377,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#VortexModel.Vortex.induce_velocity",
+    "location": "manual/velocities.html#VortexModel.Vortex.induce_velocity",
     "page": "Computing Velocities",
     "title": "VortexModel.Vortex.induce_velocity",
     "category": "Function",
@@ -369,7 +385,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#VortexModel.Vortex.induce_velocity!",
+    "location": "manual/velocities.html#VortexModel.Vortex.induce_velocity!",
     "page": "Computing Velocities",
     "title": "VortexModel.Vortex.induce_velocity!",
     "category": "Function",
@@ -377,7 +393,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#VortexModel.Vortex.self_induce_velocity!",
+    "location": "manual/velocities.html#VortexModel.Vortex.self_induce_velocity!",
     "page": "Computing Velocities",
     "title": "VortexModel.Vortex.self_induce_velocity!",
     "category": "Function",
@@ -385,7 +401,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#VortexModel.Vortex.mutually_induce_velocity!",
+    "location": "manual/velocities.html#VortexModel.Vortex.mutually_induce_velocity!",
     "page": "Computing Velocities",
     "title": "VortexModel.Vortex.mutually_induce_velocity!",
     "category": "Function",
@@ -393,7 +409,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#Methods-1",
+    "location": "manual/velocities.html#Methods-1",
     "page": "Computing Velocities",
     "title": "Methods",
     "category": "section",
@@ -401,7 +417,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "velocities.html#Index-1",
+    "location": "manual/velocities.html#Index-1",
     "page": "Computing Velocities",
     "title": "Index",
     "category": "section",
@@ -409,7 +425,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "timemarching.html#",
+    "location": "manual/timemarching.html#",
     "page": "Time Marching",
     "title": "Time Marching",
     "category": "page",
@@ -417,7 +433,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "timemarching.html#Time-Marching-1",
+    "location": "manual/timemarching.html#Time-Marching-1",
     "page": "Time Marching",
     "title": "Time Marching",
     "category": "section",
@@ -425,7 +441,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "noflowthrough.html#",
+    "location": "manual/noflowthrough.html#",
     "page": "Enforcing No-Flow-Through",
     "title": "Enforcing No-Flow-Through",
     "category": "page",
@@ -433,7 +449,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "noflowthrough.html#Enforcing-No-Flow-Through-1",
+    "location": "manual/noflowthrough.html#Enforcing-No-Flow-Through-1",
     "page": "Enforcing No-Flow-Through",
     "title": "Enforcing No-Flow-Through",
     "category": "section",
@@ -441,7 +457,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "noflowthrough.html#Vortex-Sheet-Strength-1",
+    "location": "manual/noflowthrough.html#Vortex-Sheet-Strength-1",
     "page": "Enforcing No-Flow-Through",
     "title": "Vortex Sheet Strength",
     "category": "section",
@@ -449,11 +465,179 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "noflowthrough.html#Circulation-1",
+    "location": "manual/noflowthrough.html#Circulation-1",
     "page": "Enforcing No-Flow-Through",
     "title": "Circulation",
     "category": "section",
     "text": "In addition to the distribution of circulation along the plate, it will be useful to know the amount circulation contained between one end of the plate to an arbitrary point on its surface. By definition, we havebeginalign*\nGamma(l)  = int_-L2^l gamma(lambda) dlambda \nGammal(s) = fracL2int_-1^s gammal(sigma) dsigma\nendalign*We can integrate gamma term by term to obtain:<details>\n<summary></summary>\nIn equation $\\eqref{eq:gamma}$, the Chebyshev polynomial of the second kind in ther summation can be written in terms of Chebyshev polynomials of the first kind:\n$$\n2\\sqrt{1 - s^2}U_{n-1}(s)  = \\frac{T_{n-1}(s) - T_{n+1}(s)}{\\sqrt{1 - s^2}}.\n$$\nThis means that all the terms in equation $\\eqref{eq:gamma}$ can be expressed in the form:\n$$\n\\frac{T_n(s)}{\\sqrt{1 - s^2}}.\n$$\nThe integral of these terms are:\n$$\n\\begin{align*}\n\\int_{-1}^s \\frac{T_n(s)}{\\sqrt{1 - s^2}} \\d{s}\n& = \\int_{\\cos^{-1} s}^\\pi \\cos(n\\theta) \\d{\\theta} \\\\\n& = \\begin{cases}\n\\pi - \\cos^{-1}s &: n = 0 \\\\\n-\\frac{1}{n}\\sin\\left(n\\cos^{-1}s\\right) &: n > 0\n\\end{cases}.\n\\end{align*}\n$$\nWe can then multiply the expressions above with their corresponding coefficients to obtain:\n</details>Gammal(s)\n=Gamma_Aleft(fraccos^-1spi - 1right) - fracLsqrt1 - s^22left\n2left(A_0 - unormal cdot vecdotcright)\n+left(A_1 - fracdotalphaL2right)s\n+sum_n=2^infty\nA_n left(fracU_n(s)n+1 - fracU_n-2(s)n-1right)right[Muskhelishvili]: Muskhelishvili, Nikolaĭ Ivanovich, and Jens Rainer Maria Radok. Singular integral equations: boundary problems of function theory and their application to mathematical physics. Courier Corporation, 2008."
+},
+
+{
+    "location": "manual/motions.html#",
+    "page": "Plate Motions",
+    "title": "Plate Motions",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "manual/motions.html#Plate-Motions-1",
+    "page": "Plate Motions",
+    "title": "Plate Motions",
+    "category": "section",
+    "text": "CurrentModule = Vortex.Plates.Motions\nDocTestSetup  = quote\n    import VortexModel.Vortex.Plates: Motions\n    using .Motions\n    srand(1)\nendThe motion of a plate is specified through two data types:Motion is the type that should be used to represent the plate's velocity.  For example, in advect!(plate₊, plate₋, platevel, Δt), platevel is of type Motion. It contains the most current values (ċ, c̈, α̇) (the plate's centroid velocity and acceleration, and angular velocity, respectively), as well as a Kinematics type.\nKinematics is an abstract type representing a function that takes in a time and returns (ċ, c̈, α̇)"
+},
+
+{
+    "location": "manual/motions.html#Motion-1",
+    "page": "Plate Motions",
+    "title": "Motion",
+    "category": "section",
+    "text": "By default, Motion assumes a constant translational and angular velocity. For example,julia> motion = Motion(1.0im, π/2)\nPlate Motion:\n  ċ = 0.0 + 1.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 1.57\n  Constant (ċ = 0.0 + 1.0im, α̇ = 1.5707963267948966)Here, Constant is a subtype of Kinematics that returns the same (ċ, c̈, α̇) triple at all timesjulia> motion.kin.([0.0, 1.0, 2.0])\n3-element Array{Tuple{Complex{Float64},Complex{Float64},Float64},1}:\n (0.0+1.0im, 0.0+0.0im, 1.5708)\n (0.0+1.0im, 0.0+0.0im, 1.5708)\n (0.0+1.0im, 0.0+0.0im, 1.5708)Calling Motion(1.0im, π/2) is equivalent doingkin = Motions.Constant(1.0im, π/2)\nmotion = Motion(1.0im, 0.0im, π/2, kin)\n\n# output\n\nPlate Motion:\n  ċ = 0.0 + 1.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 1.57\n  Constant (ċ = 0.0 + 1.0im, α̇ = 1.5707963267948966)The next section describes how to construct more interesting kinematics."
+},
+
+{
+    "location": "manual/motions.html#Kinematics-1",
+    "page": "Plate Motions",
+    "title": "Kinematics",
+    "category": "section",
+    "text": "The Kinematics type is just an abstract type for functions that take in time and return the (ċ, c̈, α̇) triple.  Let's create a MyMotion type that describes a horizontally translating plate that also sinusoidally pitches about its centroid.struct MyMotion <: Kinematics\n    U₀::Complex128\n    ω::Float64\nend\n\n(m::MyMotion)(t) = (m.U₀, 0.0im, sin(m.ω*t))\n\nsinusoid = MyMotion(1.0, π/4)\n\n# output\n\nMyMotion(1.0 + 0.0im, 0.7853981633974483)We can then evaluate sinusoid at different timesjulia> sinusoid.([0.0, 1.0, 2.0])\n3-element Array{Tuple{Complex{Float64},Complex{Float64},Float64},1}:\n (1.0+0.0im, 0.0+0.0im, 0.0)\n (1.0+0.0im, 0.0+0.0im, 0.707107)\n (1.0+0.0im, 0.0+0.0im, 1.0)"
+},
+
+{
+    "location": "manual/motions.html#Profiles-1",
+    "page": "Plate Motions",
+    "title": "Profiles",
+    "category": "section",
+    "text": "import VortexModel.Vortex.Plates: Motions\nimport .Motions: Kinematics, Motion, d_dt\nusing Gadfly\nsrand(1)To make defining complex kinematics a little eaiser, the library also provides a Motions.Profile type, an abstract type for real-valued functions of time. Before going into how to define new profiles, we'll first show an example of why we might want to represent functions as a type. We start off with a predefined profile, a smooth ramp:ramp = Motions.EldredgeRamp(6)\n\nT = linspace(-1, 4, 200)\nplot(x = T, y = ramp.(T), Geom.line, Guide.xlabel(\"t\"))\ndraw(SVGJS(\"ramp.svg\", 6inch, 4inch), ans); nothing # hide<object data=\"ramp.svg\" type=\"image/svg+xml\"></object>Now suppose we want to scale the ramp and shift itshifted_ramp = -(ramp >> 2)\n\nplot(x = T, y = shifted_ramp.(T), Geom.line, Guide.xlabel(\"t\"))\ndraw(SVGJS(\"shifted_ramp.svg\", 6inch, 4inch), ans); nothing # hide<object data=\"shifted_ramp.svg\" type=\"image/svg+xml\"></object>then take its derivativeddt_ramp = d_dt(shifted_ramp)\n\nplot(x = T, y = ddt_ramp.(T), Geom.line, Guide.xlabel(\"t\"), Guide.ylabel(\"ẏ\"))\ndraw(SVGJS(\"ddt_ramp.svg\", 6inch, 4inch), ans); nothing # hide<object data=\"ddt_ramp.svg\" type=\"image/svg+xml\"></object>We see that wrapping these functions in a type allows us to operate on them as if they values, making it easier to compose multiple motions together:ps_ramp = Motions.ColoniusRamp(5)\ncomposed_ramp = ramp - (ps_ramp >> 2)\n\nplot(x = T, y = composed_ramp.(T), Geom.line, Guide.xlabel(\"t\"), Guide.ylabel(\"y\"))\ndraw(SVGJS(\"composed_ramp.svg\", 6inch, 4inch), ans); nothing # hide<object data=\"composed_ramp.svg\" type=\"image/svg+xml\"></object>"
+},
+
+{
+    "location": "manual/motions.html#Defining-a-profile-1",
+    "page": "Plate Motions",
+    "title": "Defining a profile",
+    "category": "section",
+    "text": "import VortexModel.Vortex.Plates: Motions\nimport .Motions: Kinematics, Motion, d_dt\nusing Gadfly\nsrand(1)Defining a profile is done in two steps:Create a subtype of Motions.Profile that contains the relavant parameters, e.g.\nAdd a method on the type (see Function like objects)For example,struct Sinusoid <: Motions.Profile\n    ω::Float64\nend\n\n(s::Sinusoid)(t) = sin(s.ω*t)which can then be used as follows:T = linspace(-6, 6, 200)\n\ns = Sinusoid(2.0)\nc = d_dt(2s >> 0.5)\n\nplot(layer(x = T, y = s.(T), Geom.line, Theme(default_color = \"#00BFFF\")),\n     layer(x = T, y = c.(T), Geom.line, Theme(default_color = \"#D4CA3A\")))\ndraw(SVGJS(\"custom_profile.svg\", 6inch, 4inch), ans); nothing # hide<object data=\"custom_profile.svg\" type=\"image/svg+xml\"></object>"
+},
+
+{
+    "location": "manual/motions.html#VortexModel.Vortex.Plates.Motions.Kinematics",
+    "page": "Plate Motions",
+    "title": "VortexModel.Vortex.Plates.Motions.Kinematics",
+    "category": "Type",
+    "text": "An abstract type for types that takes in time and returns (ċ, c̈, α̇).\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#VortexModel.Vortex.Plates.Motions.Motion",
+    "page": "Plate Motions",
+    "title": "VortexModel.Vortex.Plates.Motions.Motion",
+    "category": "Type",
+    "text": "Motion\n\nA type to store the plate's current kinematics\n\nFields\n\nċ: current centroid velocity\nc̈: current centroid acceleration\nα̇: current angular velocity\nkin: a Kinematics structure\n\nThe first three fields are meant as a cache of the current kinematics while the kin field can be used to find the plate kinematics at any time.\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#VortexModel.Vortex.Plates.Motions.d_dt-Tuple{VortexModel.Vortex.Plates.Motions.Profile}",
+    "page": "Plate Motions",
+    "title": "VortexModel.Vortex.Plates.Motions.d_dt",
+    "category": "Method",
+    "text": "d_dt(p::Profile)\n\nTake the time derivative of p and return it as a new profile.\n\nExample\n\njulia> s = Motions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> s.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 1.0\n 0.707107\n\njulia> c = d_dt(s)\nd/dt (Sinusoid (ω = 3.14))\n\njulia> c.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n  3.14159\n  1.92367e-16\n -2.22144\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#VortexModel.Vortex.Plates.Motions.Pitchup",
+    "page": "Plate Motions",
+    "title": "VortexModel.Vortex.Plates.Motions.Pitchup",
+    "category": "Type",
+    "text": "Pitchup <: Kinematics\n\nKinematics describing a pitchup motion (horizontal translation with rotation)\n\nFields\n\nU₀\nFreestream velocity\na\nAxis of rotation, relative to the plate centroid\nK\nNon-dimensional pitch rate K = dotlpha_0racc2U_0\nα₀\nInitial angle of attack\nt₀\nNominal start of pitch up\nΔα\nTotal pitching angle\nα\nα̇\nα̈\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#VortexModel.Vortex.Plates.Motions.Profile",
+    "page": "Plate Motions",
+    "title": "VortexModel.Vortex.Plates.Motions.Profile",
+    "category": "Type",
+    "text": "An abstract type for real-valued functions of time.\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#Base.:*-Tuple{Number,VortexModel.Vortex.Plates.Motions.Profile}",
+    "page": "Plate Motions",
+    "title": "Base.:*",
+    "category": "Method",
+    "text": "s::Number * p::Profile\n\nReturns a scaled profile with (s*p)(t) = s*p(t)\n\nExample\n\njulia> s = Motions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> 2s\n2 × (Sinusoid (ω = 3.14))\n\njulia> (2s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 2.0\n 1.41421\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#Base.:+-Tuple{VortexModel.Vortex.Plates.Motions.Profile,VortexModel.Vortex.Plates.Motions.AddedProfiles}",
+    "page": "Plate Motions",
+    "title": "Base.:+",
+    "category": "Method",
+    "text": "p₁::Profile + p₂::Profile\n\nAdd the profiles so that (p₁ + p₂)(t) = p₁(t) + p₂(t).\n\nExamples\n\njulia> ramp₁ = Motions.EldredgeRamp(5)\nlogcosh ramp (aₛ = 5.0)\n\njulia> ramp₂ = Motions.ColoniusRamp(5)\npower series ramp (n = 5.0)\n\njulia> ramp₁ + ramp₂\nAddedProfiles:\n  logcosh ramp (aₛ = 5.0)\n  power series ramp (n = 5.0)\n\n\njulia> ramp₁ + (ramp₂ + ramp₁) == ramp₁ + ramp₂ + ramp₁\ntrue\n\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#Base.:--Tuple{VortexModel.Vortex.Plates.Motions.Profile}",
+    "page": "Plate Motions",
+    "title": "Base.:-",
+    "category": "Method",
+    "text": "-(p₁::Profile, p₂::Profile)\n\njulia> s = Motions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> 2s\n2 × (Sinusoid (ω = 3.14))\n\njulia> (2s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 2.0\n 1.41421\n\njulia> s = Motions.Sinusoid(π);\n\njulia> s.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 1.0\n 0.707107\n\njulia> (-s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n -0.0\n -1.0\n -0.707107\n\njulia> (s - s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 0.0\n 0.0\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#Base.:>>-Tuple{VortexModel.Vortex.Plates.Motions.Profile,Number}",
+    "page": "Plate Motions",
+    "title": "Base.:>>",
+    "category": "Method",
+    "text": "p::Profile >> Δt::Number\n\nShift the profile in time so that (p >> Δt)(t) = p(t - Δt)\n\nExample\n\njulia> s = Motions.Sinusoid(π);\n\njulia> s >> 0.5\nSinusoid (ω = 3.14) >> 0.5\n\njulia> (s >> 0.5).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n -1.0\n  0.0\n  0.707107\n\njulia> (s << 0.5).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n  1.0\n  1.22465e-16\n -0.707107\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#Function-Documentation-1",
+    "page": "Plate Motions",
+    "title": "Function Documentation",
+    "category": "section",
+    "text": "Modules = [Motions]\nOrder   = [:type, :function]"
+},
+
+{
+    "location": "manual/motions.html#Index-1",
+    "page": "Plate Motions",
+    "title": "Index",
+    "category": "section",
+    "text": "Pages   = [\"motions.md\"]"
+},
+
+{
+    "location": "internals/properties.html#",
+    "page": "Handing Pairwise Interactions",
+    "title": "Handing Pairwise Interactions",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "internals/properties.html#Handing-Pairwise-Interactions-1",
+    "page": "Handing Pairwise Interactions",
+    "title": "Handing Pairwise Interactions",
+    "category": "section",
+    "text": "We want users to be able to define their own vortex types, as well as arbitrarily group and nest different vortex elements together. For example, suppose the user has defined a new element, MyVortexType, then they should be able to do something likemyvortices = MyVortexType.(...)\npoints = Vortex.Point.(...)\nsheet = Vortex.Sheet(...)\n\nsystem = (myvortices, (points, sheet))\nvelocities = allocate_velocity(system)\n\nself_induce_velocity!(velocities, system)But how would myvortices know how to induce velocities on points, sheet, or the tuple (points, sheet)? It would be asking a lot for the user to have to define all possible pairwise interactions between their new vortex type and all other built-in types. Instead, the user should only have to define induce_velocity between MyVortexType and a complex point, leaving library to simply just apply induce_velocity recursively to all ther targets. But how would the library know if a vortex element is actually a collection of more primitive types that should be recursed over? For example, while it is obvious that Vector{Vortex.Point} should be treated as a collection of point vortices, it has no prior knowledge of how MyVortexType is defined. It might be something like Vortex.Blob, which cannot recursed into, or it can be more like Vortex.Sheet, which is just a wrapper around Vector{Vortex.Blob}. The following section describes how the library handles this problem using Tim Holy's trait trick."
+},
+
+{
+    "location": "internals/properties.html#Traits:-Singleton-vs.-Group-1",
+    "page": "Handing Pairwise Interactions",
+    "title": "Traits: Singleton vs. Group",
+    "category": "section",
+    "text": "Let's trace through how the library currently handles a call likeinduce_velocity(target::V1, source::V2)If the user has explicitly defined induce_velocity between the vortex types V1 and V2, then Julia will call that method. Otherwise, this call will be turned intoinduce_velocity(unwrap_targ(target), unwrap_src(source),\n                kind(unwrap_targ(target)), kind(unwrap_src(source)))There are two different things going on here:unwrap_targ and unwrap_src: There are some vortex types that are essentually wrappers around more primitive types. For example, Vortex.Sheet is a wrapper around Vector{Vortex.Blob}, with some extra information to maintain connectivity between the blobs. Instead of having to redefine all the required functions for Vortex.Sheet, we simply define the function Vortex.unwrap(s::Sheet) = s.blobs. Then whenever the library encounters a Vortex.Sheet, it will know to unwrap it and treat it as an array of Vortex.Blob. By default, unwrap_targ(v) = v and unwrap_src(v) = v.\nkind: This is a trait function takes a vortex element and returns either Type{Singleton} or Type{Group}. A vortex with trait Type{Singleton} tells the library that it should be treated as a single entity, and should not be recursed into. Alternatively, an element with Type{Group} trait tells that library that this element is indexable and should be iterated through.There are four possible (target,source) trait combinations:induce_velocity(uw_target, uw_source, ::Type{Singleton}, ::Type{Singleton})\ninduce_velocity(uw_target, uw_source, ::Type{Group}, ::Type{Singleton})\ninduce_velocity(uw_target, uw_source, ::Type{Singleton}, ::Type{Group})\ninduce_velocity(uw_target, uw_source, ::Type{Group}, ::Type{Group})but we only have to handle three cases:(::Type{Singleton}, ::Type{Singleton}): The fact that the call chain got to this point at all means, that there is no specialized induce_velocity defined between uw_target and uw_source, otherwise Julia's dispatch system would have call that one instead (see the induce_velocity definitions in Plates.jl). Since all vortex types are required to define induced_velocity on a point, this call is turned into\ninduce_velocity(Vortex.position(uw_target), uw_soruce)\n(::Type{Singleton}, ::Type{Group}): In this case, we iterate through i in 1:length(uw_source) and sum up the the results of induce_velocity(uw_target, uw_source[i])\n(::Type{Group}, ::Any): Since the output is no longer a scalar value, we first preallocate the output with allocate_velocity(uw_target), then iteratively apply induce_velocity over all the elements of uw_target. Once the target has been expanded all the way to Singleton types, then we are back to the (target, source) kind being either (::Type{Singleton}, ::Type{Group}) or (::Type{Singleton}, ::Type{Singleton}), which can be handled by the two cases listed above.Ultimately, this whole setup is just a way to allow induce_velocity to be called recursively on arbitrary groupings of vortex elements. However, velocity is not the only property that can be computed this way. Other quantities, such as acceleration, circulation, etcs., can all be be computed using the same framework. Instead of writing essentially the same code for all of them, we can use the @property macro"
+},
+
+{
+    "location": "internals/properties.html#The-@property-macro-1",
+    "page": "Handing Pairwise Interactions",
+    "title": "The @property macro",
+    "category": "section",
+    "text": "All the induce_velocity methods listed above (and their in-place version, induce_velocity!) can be generated with@property begin\n    signature = induce_velocity(targ::Target, src::Source)\n    preallocator = allocate_velocity\n    stype = Complex128\nendwheresignature tells the macro what the function should be called as well as the roles of the different arguments.\npreallocator is the name you want to use to allocate output space for the targets\nstype is the data type of the output.note: Note\nYou can see the actual functions generated withjulia> import VortexModel.Vortex: @property\n\njulia> @macroexpand(@property begin\n           signature = induce_velocity(targ::Target, src::Source)\n           preallocator = allocate_velocity\n           stype = Complex128\n       end)Suppose we want a function to also get the acceleration of the vortex elements. To find the acceleration, we need to know the current velocity, so we can have something like@property begin\n    signature = induce_acceleration(targ::Target, targvel::Target, src::Source, srcvel::Source)\n    preallocator = allocate_acceleration\n    stype = Complex128\nendBy annotating targvel as a Target, we are saying that whenever you iterate through targ, we should pass in the corresponding element in targvel, and likewise for srcvel. Arguments that are not annotated will be treated as parameters to be passed in at each iteration without indexing.There are also properties that do not require a target, but are properties of the source itself. For example, we have@property begin\n    signature = circulation(src::Source)\n    stype = Float64\n    reduce = (+)\nendThe reduce operation means that it is a property that can be aggregate over a collection of vortex elements. In this particular case, it means that the circulation of a group of vortex elements is just the sum of the circulation of each element. Another example of this can be seen in the definition of rate_of_impulse."
 },
 
 ]}
