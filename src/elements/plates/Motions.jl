@@ -1,13 +1,36 @@
 module Motions
 
-export Motion
+export Motion, Kinematics, d_dt
 
+using DocStringExtensions
 import ForwardDiff
-import Base: +, *, -, >>, <<
+import Base: +, *, -, >>, <<, show
 
+"""
+An abstract type for types that takes in time and returns `(ċ, c̈, α̇)`.
+"""
 abstract type Kinematics end
+
+"""
+An abstract type for real-valued functions of time.
+"""
 abstract type Profile end
 
+"""
+    Motion
+
+A type to store the plate's current kinematics
+
+# Fields
+
+- `ċ`: current centroid velocity
+- `c̈`: current centroid acceleration
+- `α̇`: current angular velocity
+- `kin`: a [`Kinematics`](@ref) structure
+
+The first three fields are meant as a cache of the current kinematics
+while the `kin` field can be used to find the plate kinematics at any time.
+"""
 mutable struct Motion
     ċ::Complex128
     c̈::Complex128
@@ -19,7 +42,7 @@ end
 Motion(ċ, α̇) = Motion(complex(ċ), 0.0im, float(α̇), Constant(ċ, α̇))
 Motion(kin::Kinematics) = Motion(kin(0)..., kin)
 
-function Base.show(io::IO, m::Motion)
+function show(io::IO, m::Motion)
     println(io, "Plate Motion:")
     println(io, "  ċ = $(round(m.ċ, 2))")
     println(io, "  c̈ = $(round(m.c̈, 2))")
@@ -33,8 +56,16 @@ struct Constant{C <: Complex, A <: Real} <: Kinematics
 end
 Constant(ċ, α̇) = Constant(complex(ċ), α̇)
 (c::Constant{C})(t) where C = c.ċ, zero(C), c.α̇
-Base.show(io::IO, c::Constant) = print(io, "Constant (ċ = $(c.ċ), α̇ = $(c.α̇))")
+show(io::IO, c::Constant) = print(io, "Constant (ċ = $(c.ċ), α̇ = $(c.α̇))")
 
+"""
+    Pitchup <: Kinematics
+
+Kinematics describing a pitchup motion (horizontal translation with rotation)
+
+# Fields
+$(FIELDS)
+"""
 struct Pitchup <: Kinematics
     "Freestream velocity"
     U₀::Float64
@@ -82,22 +113,109 @@ struct DerivativeProfile{P} <: Profile
     p::P
 end
 
-function Base.show(io::IO, ṗ::DerivativeProfile)
+function show(io::IO, ṗ::DerivativeProfile)
     print(io, "d/dt ($(ṗ.p))")
 end
 
 (ṗ::DerivativeProfile)(t) = ForwardDiff.derivative(ṗ.p, t)
 
+"""
+    d_dt(p::Profile)
+
+Take the time derivative of `p` and return it as a new profile.
+
+# Example
+
+```jldoctest
+julia> s = Motions.Sinusoid(π)
+Sinusoid (ω = 3.14)
+
+julia> s.([0.0, 0.5, 0.75])
+3-element Array{Float64,1}:
+ 0.0
+ 1.0
+ 0.707107
+
+julia> c = d_dt(s)
+d/dt (Sinusoid (ω = 3.14))
+
+julia> c.([0.0, 0.5, 0.75])
+3-element Array{Float64,1}:
+  3.14159
+  1.92367e-16
+ -2.22144
+```
+"""
 d_dt(p::Profile) = DerivativeProfile(p)
 
 struct ScaledProfile{N <: Real, P <: Profile} <: Profile
     s::N
     p::P
 end
-function Base.show(io::IO, p::ScaledProfile)
-    print(io, "$(p.s) × $(p.p)")
+function show(io::IO, p::ScaledProfile)
+    print(io, "$(p.s) × ($(p.p))")
 end
+
+"""
+    s::Number * p::Profile
+
+Returns a scaled profile with `(s*p)(t) = s*p(t)`
+
+# Example
+
+```jldoctest
+julia> s = Motions.Sinusoid(π)
+Sinusoid (ω = 3.14)
+
+julia> 2s
+2 × (Sinusoid (ω = 3.14))
+
+julia> (2s).([0.0, 0.5, 0.75])
+3-element Array{Float64,1}:
+ 0.0
+ 2.0
+ 1.41421
+```
+"""
 s::Number * p::Profile = ScaledProfile(s, p)
+
+"""
+    -(p₁::Profile, p₂::Profile)
+
+```jldoctest
+julia> s = Motions.Sinusoid(π)
+Sinusoid (ω = 3.14)
+
+julia> 2s
+2 × (Sinusoid (ω = 3.14))
+
+julia> (2s).([0.0, 0.5, 0.75])
+3-element Array{Float64,1}:
+ 0.0
+ 2.0
+ 1.41421
+
+julia> s = Motions.Sinusoid(π);
+
+julia> s.([0.0, 0.5, 0.75])
+3-element Array{Float64,1}:
+ 0.0
+ 1.0
+ 0.707107
+
+julia> (-s).([0.0, 0.5, 0.75])
+3-element Array{Float64,1}:
+ -0.0
+ -1.0
+ -0.707107
+
+julia> (s - s).([0.0, 0.5, 0.75])
+3-element Array{Float64,1}:
+ 0.0
+ 0.0
+ 0.0
+```
+"""
 -(p::Profile) = ScaledProfile(-1, p)
 (p::ScaledProfile)(t) = p.s*p.p(t)
 
@@ -105,26 +223,78 @@ struct ShiftedProfile{N <: Real, P <: Profile} <: Profile
     Δt::N
     p::P
 end
-function Base.show(io::IO, p::ShiftedProfile)
+function show(io::IO, p::ShiftedProfile)
     print(io, "$(p.p) >> $(p.Δt)")
 end
 
 (p::ShiftedProfile)(t) = p.p(t - p.Δt)
+
+"""
+    p::Profile >> Δt::Number
+
+Shift the profile in time so that `(p >> Δt)(t) = p(t - Δt)`
+
+# Example
+
+```jldoctest
+julia> s = Motions.Sinusoid(π);
+
+julia> s >> 0.5
+Sinusoid (ω = 3.14) >> 0.5
+
+julia> (s >> 0.5).([0.0, 0.5, 0.75])
+3-element Array{Float64,1}:
+ -1.0
+  0.0
+  0.707107
+
+julia> (s << 0.5).([0.0, 0.5, 0.75])
+3-element Array{Float64,1}:
+  1.0
+  1.22465e-16
+ -0.707107
+```
+"""
 p::Profile >> Δt::Number = ShiftedProfile(Δt, p)
 p::Profile << Δt::Number = ShiftedProfile(-Δt, p)
 
 struct AddedProfiles{T <: Tuple} <: Profile
     ps::T
 end
-function Base.show(io::IO, Σp::AddedProfiles)
+function show(io::IO, Σp::AddedProfiles)
     println(io, "AddedProfiles:")
     for p in Σp.ps
         println(io, "  $p")
     end
 end
 
-+(p::Profile, Σp::AddedProfiles) = AddedProfiles((Σp..., p))
-+(Σp::AddedProfiles, p::Profile) = AddedProfiles((p, Σp...))
+"""
+    p₁::Profile + p₂::Profile
+
+Add the profiles so that `(p₁ + p₂)(t) = p₁(t) + p₂(t)`.
+
+# Examples
+
+```jldoctest
+julia> ramp₁ = Motions.EldredgeRamp(5)
+logcosh ramp (aₛ = 5.0)
+
+julia> ramp₂ = Motions.ColoniusRamp(5)
+power series ramp (n = 5.0)
+
+julia> ramp₁ + ramp₂
+AddedProfiles:
+  logcosh ramp (aₛ = 5.0)
+  power series ramp (n = 5.0)
+
+
+julia> ramp₁ + (ramp₂ + ramp₁) == ramp₁ + ramp₂ + ramp₁
+true
+
+```
+"""
++(p::Profile, Σp::AddedProfiles) = AddedProfiles((p, Σp.ps...))
++(Σp::AddedProfiles, p::Profile) = AddedProfiles((Σp.ps..., p))
 function +(Σp₁::AddedProfiles, Σp₂::AddedProfiles)
     AddedProfiles((Σp₁..., Σp₂...))
 end
@@ -141,18 +311,21 @@ function (Σp::AddedProfiles)(t)
     f
 end
 
+struct Sinusoid <: Profile
+    ω::Float64
+end
+(s::Sinusoid)(t) = sin(s.ω*t)
+show(io::IO, s::Sinusoid) = print(io, "Sinusoid (ω = $(round(s.ω, 2)))")
+
 struct EldredgeRamp <: Profile
     aₛ::Float64
 end
-
-function (r::EldredgeRamp)(t)
-    0.5(log(2cosh(r.aₛ*t)) + r.aₛ*t)/r.aₛ
-end
+(r::EldredgeRamp)(t) = 0.5(log(2cosh(r.aₛ*t)) + r.aₛ*t)/r.aₛ
+show(io::IO, r::EldredgeRamp) = print(io, "logcosh ramp (aₛ = $(round(r.aₛ, 2)))")
 
 struct ColoniusRamp <: Profile
     n::Int
 end
-
 function (r::ColoniusRamp)(t)
     Δt = t + 0.5
     if Δt ≤ 0
@@ -167,5 +340,6 @@ function (r::ColoniusRamp)(t)
         f*Δt^(r.n + 2)/(2r.n + 2)
     end
 end
+show(io::IO, r::ColoniusRamp) = print(io, "power series ramp (n = $(round(r.n, 2)))")
 
 end
