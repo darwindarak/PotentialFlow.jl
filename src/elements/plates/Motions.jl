@@ -41,6 +41,7 @@ end
 
 Motion(ċ, α̇) = Motion(complex(ċ), 0.0im, float(α̇), Constant(ċ, α̇))
 Motion(kin::Kinematics) = Motion(kin(0)..., kin)
+(m::Motion)(t) = m.kin(t)
 
 function show(io::IO, m::Motion)
     println(io, "Plate Motion:")
