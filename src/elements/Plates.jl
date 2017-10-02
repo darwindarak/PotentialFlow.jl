@@ -245,6 +245,26 @@ function surface_pressure(plate, motion, ambient_sys, Γs₋, Δt)
     Δp, Γs₊
 end
 
+"""
+    edges(plate)
+
+Return the coordinates of the leading and trailing edges
+
+# Example
+
+```jldoctest
+julia> p = Vortex.Plate(128, 1.0, 0, π/4)
+Plate: N = 128, L = 1.0, c = 0.0 + 0.0im, α = 45.0ᵒ
+       LESP = 0.0, TESP = 0.0
+
+julia> Vortex.Plates.edges(p)
+(0.3535533905932738 + 0.35355339059327373im, -0.3535533905932738 - 0.35355339059327373im)
+```
+
+- `Plate(N, L, c, α)`
+"""
+edges(plate) = plate.zs[end], plate.zs[1]
+
 function Base.show(io::IO, p::Plate)
     lesp, tesp = suction_parameters(p)
     println(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(round(rad2deg(p.α),2))ᵒ")
