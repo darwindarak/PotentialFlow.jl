@@ -29,6 +29,8 @@ using .Utils
 
 include("property.jl")
 
+include("plotting.jl")
+
 using DocStringExtensions
 
 export allocate_velocity, reset_velocity!,
@@ -39,6 +41,7 @@ export allocate_velocity, reset_velocity!,
 #== Type Definitions ==#
 
 abstract type Element end
+
 
 #== Trait definitions ==#
 abstract type Singleton end
@@ -433,6 +436,12 @@ function advect!(group₊::T, group₋::T, ws, Δt) where {T <: Tuple}
         advect!(group₊[i], group₋[i], ws[i], Δt)
     end
     nothing
+end
+
+@property begin
+    signature = induce_acc(targ::Target, targvel::Target, src::Source, srcvel::Source)
+    preallocator = allocate_acc
+    stype = Complex128
 end
 
 @submodule "elements/Points"
