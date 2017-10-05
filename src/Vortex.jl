@@ -29,8 +29,6 @@ using .Utils
 
 include("property.jl")
 
-include("plotting.jl")
-
 using DocStringExtensions
 
 export allocate_velocity, reset_velocity!,
@@ -448,5 +446,7 @@ end
 @submodule "elements/Blobs"
 @submodule "elements/Sheets"
 @submodule "elements/Plates"
+
+include("plotting.jl")
 
 end
