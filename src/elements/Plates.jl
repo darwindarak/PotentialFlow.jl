@@ -5,7 +5,7 @@ export Plate, bound_circulation, bound_circulation!,
     enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force, Motions
 
 import ..Vortex
-import ..Vortex:@get, MappedVector
+import ..Vortex:@get, MappedVector, @property
 import Base: length, deserialize, AbstractSerializer
 
 include("plates/Motions.jl")
@@ -264,6 +264,8 @@ julia> Vortex.Plates.edges(p)
 - `Plate(N, L, c, α)`
 """
 edges(plate) = plate.zs[end], plate.zs[1]
+
+include("plates/pressure.jl")
 
 function Base.show(io::IO, p::Plate)
     lesp, tesp = suction_parameters(p)
