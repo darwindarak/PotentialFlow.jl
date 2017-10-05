@@ -40,6 +40,7 @@ export allocate_velocity, reset_velocity!,
 
 abstract type Element end
 
+
 #== Trait definitions ==#
 abstract type Singleton end
 abstract type Group end
@@ -435,9 +436,17 @@ function advect!(group₊::T, group₋::T, ws, Δt) where {T <: Tuple}
     nothing
 end
 
+@property begin
+    signature = induce_acc(targ::Target, targvel::Target, src::Source, srcvel::Source)
+    preallocator = allocate_acc
+    stype = Complex128
+end
+
 @submodule "elements/Points"
 @submodule "elements/Blobs"
 @submodule "elements/Sheets"
 @submodule "elements/Plates"
+
+include("plotting.jl")
 
 end
