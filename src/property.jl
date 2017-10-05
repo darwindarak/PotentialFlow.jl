@@ -18,48 +18,68 @@ using MacroTools: @capture, postwalk, striplines
 # end
 
 function source_property(signature, stype, reduce_op)
-    if isnull(reduce_op)
-        return :(Core.@__doc__ function $(signature.args[1]) end)
-    end
-
-    op = get(reduce_op)
-
-    sumvar = gensym(:Σ)
-    index = gensym(:i)
-
-    iterated_call = postwalk(signature) do ex
-        @capture(ex, s_::Source) && (return :($s[$index]))
-        @capture(ex, t_::Target) && (return t)
-        ex
-    end
-
-    @capture(postwalk(signature) do ex
-             @capture(ex, s_::Source) && (return :(Vortex.unwrap_targ($s)))
-             @capture(ex, t_::Target) && (return t)
-             ex
-             end, _(unwrappedargs__))
+    source_ind = findfirst(x -> isa(x, Expr) && (x.args[2] == :Source), signature.args[2:end])
+    source_name = signature.args[source_ind+1].args[1]
 
     @capture(postwalk(signature) do ex
              @capture(ex, s_::Source) && (return s)
-             @capture(ex, t_::Target) && (return t)
              ex
              end, fname_(fargs__))
 
-    source_ind = findfirst(x -> isa(x, Expr) && (x.args[2] == :Source), signature.args[2:end])
-    source_name = signature.args[source_ind+1].args[1]
+    @capture(postwalk(signature) do ex
+             @capture(ex, s_::Source) && (return :(Vortex.unwrap_targ($s)))
+             ex
+             end, _(unwrappedargs__))
+
+    if isnull(reduce_op)
+        mappedvars = Symbol[]
+        mappedsyms = Symbol[]
+
+        @capture(postwalk(signature) do ex
+                 if @capture(ex, s_::Source)
+                     sym = gensym(s)
+                     push!(mappedvars, s)
+                     push!(mappedsyms, sym)
+                     return sym
+                 end
+                 ex
+             end, _(mappedargs__))
+
+        fgroup = quote
+            function $fname($(fargs...), ::Type{Vortex.Group})
+                map($(mappedvars...)) do $(mappedsyms...)
+                    $fname($(mappedargs...))
+                end
+            end
+        end
+    else
+        op = get(reduce_op)
+
+        sumvar = gensym(:Σ)
+        index = gensym(:i)
+
+        iterated_call = postwalk(signature) do ex
+            @capture(ex, s_::Source) && (return :($s[$index]))
+            ex
+        end
+
+        fgroup = quote
+            function $fname($(fargs...), ::Type{Vortex.Group})
+                $sumvar = zero($(get(stype)))
+                for $index in eachindex($source_name)
+                    $sumvar = $op($sumvar, $iterated_call)
+                end
+                $sumvar
+            end
+        end
+    end
 
     quote
         Core.@__doc__ function $fname($(fargs...))
             $fname($(unwrappedargs...), Vortex.kind(Vortex.unwrap_src($source_name)))
         end
 
-        function $fname($(fargs...), ::Type{Vortex.Group})
-            $sumvar = zero($(get(stype)))
-            for $index in eachindex($source_name)
-                $sumvar = $op($sumvar, $iterated_call)
-            end
-            $sumvar
-        end
+        $fgroup
     end
 end
 
