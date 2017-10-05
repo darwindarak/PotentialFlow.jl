@@ -60,7 +60,7 @@ function Vortex.self_induce_velocity!(ws, blobs::Vector{Blob})
         ws[t] += blobs[s].Γ*K
         ws[s] -= blobs[t].Γ*K
     end
-    nothing
+    ws
 end
 
 Vortex.advect(b::Blob, w::Complex128, Δt::Float64) = Blob(b.z + w*Δt, b.Γ, b.δ)

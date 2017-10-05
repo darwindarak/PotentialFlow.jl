@@ -53,7 +53,7 @@ function Vortex.self_induce_velocity!(ws, points::Vector{Point})
         ws[t] += points[s].Γ*K
         ws[s] -= points[t].Γ*K
     end
-    nothing
+    ws
 end
 
 Vortex.advect(p::Point, w::Complex128, Δt::Float64) = Point(p.z + w*Δt, p.Γ)
