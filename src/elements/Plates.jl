@@ -11,7 +11,7 @@ using ..Blobs
 
 using ..Elements
 import ..Elements: position, impulse, circulation
-import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!,
+import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
                   self_induce_velocity!, allocate_velocity, advect!, reset_velocity!
 
 import ..Utils:@get, MappedVector
@@ -279,6 +279,8 @@ julia> Plates.edges(p)
 ```
 """
 edges(plate) = plate.zs[end], plate.zs[1]
+
+include("plates/pressure.jl")
 
 function Base.show(io::IO, p::Plate)
     lesp, tesp = suction_parameters(p)

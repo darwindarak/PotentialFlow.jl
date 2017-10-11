@@ -65,7 +65,12 @@ Compute the bound circulation between the trailing edge of the plate to `s`.
 bound_circulation(plate) = bound_circulation(plate, plate.ss)
 
 function bound_circulation(plate, s::Real)
-    @get plate (A, B₀, B₁, L, Γ, N)
+    @get plate (A, B₀, B₁, L, Γ)
+    _bound_circulation(A, B₀, B₁, L, Γ, s)
+end
+
+function _bound_circulation(A, B₀, B₁, L, Γ, s)
+    N = length(A)
 
     Γₛ = 0.0
 
