@@ -1,20 +1,20 @@
 """
-    enforce_no_flow_through!(p::Plate, motion, elements)
+    enforce_no_flow_through!(p::Plate, motion, elements, t)
 
 Update the plate, `p`, to enforce the no-flow-through condition given ambient vortex elements, `elements`, and while moving with kinematics specified by `motion`.
 
 # Example
 
 ```jldoctest
-julia> plate = Vortex.Plate(128, 2.0, 0.0, π/3)
+julia> plate = Plate(128, 2.0, 0.0, π/3)
 Plate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 60.0ᵒ
        LESP = 0.0, TESP = 0.0
 
-julia> motion = allocate_velocity(plate); motion.ċ = 1.0;
+julia> motion = Plates.RigidBodyMotion(1.0, 0.0);
 
 julia> point = Vortex.Point(0.0 + 2im, 1.0);
 
-julia> Vortex.enforce_no_flow_through!(plate, motion, point)
+julia> Plates.enforce_no_flow_through!(plate, motion, point, 0.0)
 
 julia> plate
 Plate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 60.0ᵒ
@@ -42,7 +42,7 @@ end
 
 
 """
-    influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v)
+    influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v, t)
 
 Compute in-place the change in plate's Chebyshev coefficients `∂A` by a vortex element `v`
 """
@@ -86,19 +86,17 @@ For a given edge, if the current suction parameter is less than the criticial su
 Enforcing the trailing edge Kutta condition with an point vortex at negative infinity:
 
 ```jldoctest
-julia> plate = Vortex.Plate(128, 2.0, 0.0, π/6)
+julia> plate = Plate(128, 2.0, 0.0, π/6)
 Plate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 30.0ᵒ
        LESP = 0.0, TESP = 0.0
 
-julia> motion = allocate_velocity(plate);
+julia> motion = Plates.RigidBodyMotion(1.0, 0.0);
 
-julia> motion.ċ = 1.0;
-
-julia> Vortex.enforce_no_flow_through!(plate, motion, ())
+julia> Plates.enforce_no_flow_through!(plate, motion, (), 0.0)
 
 julia> point = Vortex.Point(-Inf, 1.0);
 
-julia> _, Γ, _, _ = Vortex.vorticity_flux(plate, (), point,  Inf);
+julia> _, Γ, _, _ = Plates.vorticity_flux(plate, (), point, 0.0, Inf);
 
 julia> Γ # should equal -πULsin(α) = -π
 -3.1415926535897927

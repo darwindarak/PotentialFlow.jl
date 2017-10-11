@@ -118,4 +118,4 @@ end
 ```
 The `reduce` operation means that it is a property that can be aggregate over a collection of vortex elements.
 In this particular case, it means that the circulation of a group of vortex elements is just the sum of the circulation of each element.
-Another example of this can be seen in the definition of [`rate_of_impulse`](@ref Vortex.Plates.rate_of_impulse).
+Another example of this can be seen in the definition of [`rate_of_impulse`](@ref Plates.rate_of_impulse).

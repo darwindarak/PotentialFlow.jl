@@ -8,14 +8,14 @@ import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_veloci
 #== Type definition ==#
 
 """
-    Point <: Elements.Element
+    Point{T} <: Elements.Element
 
 An immutable structure representing a point source/vortex
 
 ## Fields
 
-- `z`: position
-- `S`: strength/circulation
+- `z::Complex128`: position
+- `S::T`: strength/circulation
 """
 struct Point{T <: Number} <: Element
     z::Complex128
@@ -26,8 +26,6 @@ struct Point{T <: Number} <: Element
 end
 Elements.kind(::Point) = Singleton
 Elements.kind(::Type{Point{T}}) where T = Singleton
-
-(p::Point{T})(; z = p.z, S = p.S) where T = Point{T}(z, S)
 
 #== Methods to be extended ==#
 

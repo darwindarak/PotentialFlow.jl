@@ -167,13 +167,13 @@ function induced_property(signature, stype, preallocator)
 
         $f_allocate($target_name, el::Type{Elements.Singleton}) = zeros($(get(stype)), size($target_name))
 
-        function $fname($(fargs...))
+        Core.@__doc__ function $fname($(fargs...))
             $fname($(unwrappedargs...),
                    Elements.kind(Elements.unwrap_targ($target_name)),
                    Elements.kind(Elements.unwrap_src($source_name)))
         end
 
-        function $fname!(out, $(fargs...))
+        Core.@__doc__ function $fname!(out, $(fargs...))
             $fname!(out, $(unwrappedargs...),
                     Elements.kind(Elements.unwrap_targ($target_name)),
                     Elements.kind(Elements.unwrap_src($source_name)))

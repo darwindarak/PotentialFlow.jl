@@ -22,12 +22,9 @@ using .RigidBodyMotions
 include("plates/chebyshev.jl")
 
 """
-    Vortex.Plate <: VortexCompositeSource
+    Plate <: Elements.Element
 
 An infinitely thin, flat plate, represented as a bound vortex sheet
-
-# Fields
-$(FIELDS)
 
 # Constructors
 - `Plate(N, L, c, α)`
@@ -273,15 +270,13 @@ Return the coordinates of the leading and trailing edges
 # Example
 
 ```jldoctest
-julia> p = Vortex.Plate(128, 1.0, 0, π/4)
+julia> p = Plate(128, 1.0, 0, π/4)
 Plate: N = 128, L = 1.0, c = 0.0 + 0.0im, α = 45.0ᵒ
        LESP = 0.0, TESP = 0.0
 
-julia> Vortex.Plates.edges(p)
+julia> Plates.edges(p)
 (0.3535533905932738 + 0.35355339059327373im, -0.3535533905932738 - 0.35355339059327373im)
 ```
-
-- `Plate(N, L, c, α)`
 """
 edges(plate) = plate.zs[end], plate.zs[1]
 

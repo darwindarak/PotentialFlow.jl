@@ -1,4 +1,4 @@
-using Documenter, VortexModel
+using Documenter, PotentialFlow
 
 makedocs(
     format =:html,

@@ -1,6 +1,6 @@
 # [Getting Started](@id getting-started)
 
-This getting started guide will introduce the main components of **VortexModel.jl**.
+This getting started guide will introduce the main components of **PotentialFlow.jl**.
 The code examples here should be directly copy-paste-able into the Julia REPL (even with the `julia>` prompt and sample results).
 
 ```@meta
@@ -9,50 +9,51 @@ DocTestSetup = quote
 end
 ```
 
-## Creating Vortex Elements
+## Creating Flow Elements
 
 We start by importing the library and creating a single point vortex with unit circulation located at (1,1):
 ```jldoctest quickstart
-julia> using VortexModel
+julia> using PotentialFlow
 
 julia> p = Vortex.Point( 1.0 + 1.0im, 1.0 )
-Point Vortex: z = 1.0 + 1.0im, Γ = 1.0
+Vortex.Point(1.0 + 1.0im, 1.0)
 ```
-By convention, the arguments for vortex type constructors are position(s) and circulation(s), followed by any type specific parameters.
+By convention, the arguments for element constructors are position(s), circulation/strength(s), followed by any type specific parameters.
 For example, a vortex blob at the same location as `p` with a blob radius of 0.1 is created with
 ```jldoctest quickstart
 julia> Vortex.Blob(1.0 + 1.0im, 1.0, 0.1)
-Vortex Blob: z = 1.0 + 1.0im, Γ = 1.0, δ = 0.1
+Vortex.Blob(1.0 + 1.0im, 1.0, 0.1)
 ```
 
-We can use Julia's [vectorized dot syntax](https://docs.julialang.org/en/latest/manual/functions.html#man-vectorized-1) to construct whole arrays of vortex elements.
-For example, here we create five point vortices and five vortex blobs:
+We can use Julia's [vectorized dot syntax](https://docs.julialang.org/en/latest/manual/functions.html#man-vectorized-1) to construct whole arrays of elements.
+For example, here we create five point vortices and five point sources:
 ```jldoctest quickstart
 julia> N = 5;
 
 julia> zs = Complex.(randn(N), randn(N));
 
-julia> points = Vortex.Point.(zs + 1.5, rand(N))
-5-element Array{VortexModel.Vortex.Points.Point,1}:
- Point Vortex: z = 1.797 + 0.311im, Γ = 0.425
- Point Vortex: z = 1.882 + 2.295im, Γ = 0.773
- Point Vortex: z = 0.902 - 2.267im, Γ = 0.281
- Point Vortex: z = 1.49 + 0.53im, Γ = 0.209
- Point Vortex: z = 0.661 + 0.431im, Γ = 0.251
+julia> vortices = Vortex.Point.(zs + 1.5, rand(N))
+5-element Array{PotentialFlow.Points.Point{Float64},1}:
+ Vortex.Point(1.7972879845354617 + 0.31111133849833383im, 0.42471785049513144)
+ Vortex.Point(1.882395967790608 + 2.2950878238373105im, 0.773223048457377)
+ Vortex.Point(0.9023655232717689 - 2.2670863488005306im, 0.2811902322857298)
+ Vortex.Point(1.4895547553626243 + 0.5299655761667461im, 0.20947237319807077)
+ Vortex.Point(0.660973145611236 + 0.43142152642291204im, 0.25137920979222494)
 
-julia> blobs = Vortex.Blob.(zs - 1.5, rand(N), 0.1)
-5-element Array{VortexModel.Vortex.Blobs.Blob,1}:
- Vortex Blob: z = -1.203 + 0.311im, Γ = 0.02, δ = 0.1
- Vortex Blob: z = -1.118 + 2.295im, Γ = 0.288, δ = 0.1
- Vortex Blob: z = -2.098 - 2.267im, Γ = 0.86, δ = 0.1
- Vortex Blob: z = -1.51 + 0.53im, Γ = 0.077, δ = 0.1
- Vortex Blob: z = -2.339 + 0.431im, Γ = 0.64, δ = 0.1
+julia> sources = Source.Point.(zs - 1.5, rand(N))
+5-element Array{PotentialFlow.Points.Point{Complex{Float64}},1}:
+ Source.Point(-1.2027120154645383 + 0.31111133849833383im, 0.02037486871266725)
+ Source.Point(-1.117604032209392 + 2.2950878238373105im, 0.2877015122756894)
+ Source.Point(-2.0976344767282313 - 2.2670863488005306im, 0.859512136087661)
+ Source.Point(-1.5104452446373757 + 0.5299655761667461im, 0.07695088688120899)
+ Source.Point(-2.339026854388764 + 0.43142152642291204im, 0.6403962459899388)
+
 ```
 
 We can mix different vortex types together by grouping them in tuples.
 For example, a collection of vortex elements consisting of the point vortices and vortex blobs created earlier can be grouped together with:
 ```jldoctest quickstart
-julia> sys = (points, blobs);
+julia> sys = (vortices, sources);
 ```
 
 !!! note
@@ -65,88 +66,94 @@ julia> sys = (points, blobs);
 
 We can access properties of any vortex element by directly accessing its fields, for example:
 ```jldoctest quickstart
-julia> p.Γ
-1.0
+julia> p.z
+1.0 + 1.0im
+
 ```
 However, it is better practice to use accessor methods, such as:
 ```jldoctest quickstart
-julia> Vortex.circulation(p)
-1.0
+julia> Elements.position(p)
+1.0 + 1.0im
+
 ```
-since not all vortex element types store their circulation in a `Γ` field but all types are required to implement a `Vortex.circulation` method (also see `Vortex.impulse` and `Vortex.position`).
+since not all element types store their position in a `z` field but they are all required to implement a `Elements.position` method (also see `Elements.impulse` and `Elements.position`).
 These accessor methods, combined with the dot syntax, also make it easier to work with properties of arrays and tuples of vortex elements.
 
 ```jldoctest quickstart
-julia> Vortex.circulation(points)
+julia> Elements.circulation(vortices)
 1.939982714228534
 
-julia> Vortex.circulation(blobs)
-1.8849356499471654
+julia> Elements.circulation(sources)
+0.0
 
-julia> Vortex.circulation(sys)
-3.8249183641756996
+julia> Elements.circulation(sys)
+1.939982714228534
 
-julia> Vortex.circulation.(blobs)
+julia> Elements.circulation.(vortices)
 5-element Array{Float64,1}:
- 0.0203749
- 0.287702
- 0.859512
- 0.0769509
- 0.640396
+ 0.424718
+ 0.773223
+ 0.28119
+ 0.209472
+ 0.251379
 
-julia> Vortex.position.(blobs)
+julia> Elements.position.(sources)
 5-element Array{Complex{Float64},1}:
  -1.20271+0.311111im
   -1.1176+2.29509im
  -2.09763-2.26709im
  -1.51045+0.529966im
  -2.33903+0.431422im
+
 ```
 
-## Computing Vortex Velocities
+## Computing Velocities
 
-Now that we can create vortex elements, we want to add in some dynamics.
+Now that we can create potential flow elements, we want to add in some dynamics.
 The key functions for this are the `induce_velocity` and `induce_velocity!` pair and `self_induce_velocity!`.
 
-`induce_velocity(target, source)` computes the complex velocity that a vortex element(s) source induces on a target.
+`induce_velocity(target, source, t)` computes the complex velocity that a vortex element(s) source induces on a target at time `t`.
 The target can be
 
 - a complex position
   ```jldoctest quickstart
-  julia> induce_velocity(0.0 + 0.0im , points)
+  julia> induce_velocity(0.0 + 0.0im , vortices, 0.0)
   0.05610938572529216 - 0.1319030126670981im
 
-  julia> induce_velocity(0.0 + 0.0im , sys)
-  0.05066830110387291 - 0.04224547600656549im
+  julia> induce_velocity(0.0 + 0.0im , sys, 0.0)
+  0.14592914759546077 - 0.1264803675281937im
+
   ```
 - a vortex element
   ```jldoctest quickstart
-  julia> induce_velocity(p, sys)
-  -0.095439940976663 - 0.024542142467999073im
+  julia> induce_velocity(p, sys, 0.0)
+  -0.004302294537820467 - 0.07805396403126988im
+
   ```
 - an array/tuple of vortex elements
   ```jldoctest quickstart
-  julia> induce_velocity(points, blobs)
+  julia> induce_velocity(vortices, sources, 0.0)
   5-element Array{Complex{Float64},1}:
-   -0.00789749+0.0645051im
-    -0.0278927+0.0538741im
-     0.0271037+0.0706032im
-    -0.0111193+0.0675933im
-    -0.0117893+0.078857im
+   0.0645438+0.00789838im
+    0.053907+0.0279029im
+   0.0706678-0.0271182im
+   0.0676412+0.0111206im
+    0.078947+0.0117864im
 
-  julia> induce_velocity(blobs, sys)
+  julia> induce_velocity(sources, sys, 0.0)
   5-element Array{Complex{Float64},1}:
-    0.0126862+0.0352193im
-    -0.111207-0.0472771im
-    0.0873796-0.0535197im
-   -0.0375196+0.031068im
-   -0.0279267-0.103821im
+      0.140692-0.0968066im
+   -0.00338844-0.00482933im
+     0.0350822-0.105919im
+      0.122123-0.044777im
+    -0.0294289-0.0392489im
+
   ```
 
-The in-place version, `induce_velocity!(velocities, targets, source)`, computes the velocity and writes the results into a pre-allocated data structure.
+The in-place version, `induce_velocity!(velocities, targets, source, t)`, computes the velocity and writes the results into a pre-allocated data structure.
 For example:
 ```jldoctest quickstart
-julia> vel_points = zeros(Complex128, length(points))
+julia> vel_vortices = zeros(Complex128, length(vortices))
 5-element Array{Complex{Float64},1}:
  0.0+0.0im
  0.0+0.0im
@@ -154,15 +161,16 @@ julia> vel_points = zeros(Complex128, length(points))
  0.0+0.0im
  0.0+0.0im
 
-julia> induce_velocity!(vel_points, points, blobs);
+julia> induce_velocity!(vel_vortices, vortices, sources, 0.0);
 
-julia> vel_points
+julia> vel_vortices
 5-element Array{Complex{Float64},1}:
- -0.00789749+0.0645051im
-  -0.0278927+0.0538741im
-   0.0271037+0.0706032im
-  -0.0111193+0.0675933im
-  -0.0117893+0.078857im
+ 0.0645438+0.00789838im
+  0.053907+0.0279029im
+ 0.0706678-0.0271182im
+ 0.0676412+0.0111206im
+  0.078947+0.0117864im
+
 ```
 To make it easier to allocate velocities for more complex collections of vortex elements, the library provides the `allocate_velocity` function:
 ```jldoctest quickstart
@@ -177,43 +185,35 @@ We can compute the velocity that a source induces on the entire points/blobs sys
 ```jldoctest quickstart
 julia> src = Vortex.Point(1.0, 1.0);
 
-julia> induce_velocity!(vels, sys, src)
+julia> induce_velocity!(vels, sys, src, 0.0)
 (Complex{Float64}[-0.067601+0.173242im, -0.0604154+0.023228im, 0.0700725-0.00301774im, -0.162041+0.149685im, -0.228068-0.179224im], Complex{Float64}[-0.0100056-0.0708409im, -0.0374576-0.0345609im, 0.0244871-0.033458im, -0.0128124-0.0606923im, -0.00605748-0.0468824im])
+
 ```
 
 If we want the velocity that the points/blobs system induces on itself, we can call
 ```julia
 reset_velocity!(vels, sys)
-induce_velocity!(vels[1], points, points)
-induce_velocity!(vels[1], points, src)
-induce_velocity!(vels[2], blobs, src)
-induce_velocity!(vels[2], blobs, blobs)
+induce_velocity!(vels[1], vortices, vortices)
+induce_velocity!(vels[1], vortices, sources)
+induce_velocity!(vels[2], sources, vortices)
+induce_velocity!(vels[2], sources, sources)
 ```
 This becomes difficult to keep track of when `sys` gets larger or more complicated (e.g. nested collection of elements).
 Instead, we can use the `self_induce_velocity!` function, which takes care of applying all the pairwise interactions (recursively if need be):
 ```jldoctest quickstart
 julia> reset_velocity!(vels, sys);
 
-julia> self_induce_velocity!(vels, sys);
+julia> self_induce_velocity!(vels, sys, 0.0);
 ```
 
 ## Time Marching
 
 ```@setup timemarching
-using VortexModel
-using Gadfly
-import Colors: colormap, alphacolor
+using PotentialFlow
+using Plots
+clibrary(:colorbrewer)
 srand(1)
-
-function plot_system(sys)
-    plot(x = real.(Vortex.position.(vcat(sys...))),
-         y = imag.(Vortex.position.(vcat(sys...))),
-         color = Vortex.circulation.(vcat(sys...)),
-         Coord.cartesian(fixed=true),
-         Guide.colorkey("Γ"),
-         Scale.color_continuous(colormap=Scale.lab_gradient(colormap("reds")...)),
-         style(grid_line_width=0mm, highlight_width=0mm))
-end
+default(colorbar_title=("Γ"), grid = false, ratio = 1, legend = :none, colorbar = :right, markerstrokealpha = 0, markersize = 5)
 ```
 Now that we compute the velocities of a system of vortex elements, we can march the system forward in time to simulate its behavior.
 As an example, we will simulate of two clusters of vortex blobs merging.
@@ -226,39 +226,9 @@ cluster₂ = Vortex.Blob.(zs - 1, Γs, 0.01)
 
 sys = (cluster₁, cluster₂)
 vels = allocate_velocity(sys)
-plot_system(sys)
-draw(SVGJS("initial_clusters.svg", 6inch, 4inch), ans); nothing # hide
+plot(sys, color = :reds, clim = (0, 1))
+savefig("initial_clusters.svg"); nothing # hide
 ```
-!!! warning
-    Functions for plotting vortex elements are still waiting for a
-    couple more issues to be fixed on
-    [Plots.jl](https://github.com/JuliaPlots/Plots.jl).  For now, we can use
-    [Gadfly.jl](https://github.com/GiovineItalia/Gadfly.jl) directly as follows:
-    ```julia
-    using Gadfly
-    plot(x = real.(Vortex.position.(vcat(sys...))),
-         y = imag.(Vortex.position.(vcat(sys...))),
-         color = Vortex.circulation.(vcat(sys...)),
-         Coord.cartesian(fixed=true),
-         Guide.colorkey("Γ"),
-         Scale.color_continuous(colormap=Scale.lab_gradient(colormap("reds")...)),
-         style(grid_line_width=0mm, highlight_width=0mm))
-    ```
-    Alternatively, we can use [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl) with something like:
-    ```julia
-    using PyPlot
-    for cluster in sys
-        scatter(real.(Vortex.position.(cluster)),
-                imag.(Vortex.position.(cluster)),
-                c = Vortex.circulation.(cluster),
-                vmin = 0, vmax = 1, alpha = 0.7,
-                cmap = PyPlot.get_cmap("Reds"))
-    end
-    colorbar()
-    axis(:scaled)
-    axis([-3,3,-3,3])
-    ```
-
 ```@raw html
 <object data="initial_clusters.svg" type="image/svg+xml"></object>
 ```
@@ -273,11 +243,11 @@ In our case, we will let `x₊` and `x` both be set to `sys`:
 Δt = 0.01
 for t in 0:Δt:1.0
     reset_velocity!(vels, sys)
-    self_induce_velocity!(vels, sys)
+    self_induce_velocity!(vels, sys, t)
     advect!(sys, sys, vels, Δt)
 end
-plot_system(sys)
-draw(SVGJS("final_clusters.svg", 6inch, 4inch), ans); nothing # hide
+plot(sys, color = :reds, clim = (0, 1))
+savefig("final_clusters.svg"); nothing # hide
 ```
 ```@raw html
 <object data="final_clusters.svg" type="image/svg+xml"></object>

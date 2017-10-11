@@ -10,22 +10,6 @@ import ..Motions: position, mutually_induce_velocity!, self_induce_velocity!, ad
 
 const MappedPositions{T} = MappedArrays.ReadonlyMappedArray{Complex128,1,Array{Blob{T},1},typeof(Elements.position)} where T
 
-"""
-    Vortex.Sheet <: Vortex.CompositeSource
-
-A vortex sheet represented by vortex blob control points
-
-## Fields
-- `blobs`: the underlying array of vortex blobs
-- `Γs`: the cumulated sum of circulation starting from the first control point
-- `δ`: the blob radius of all the vortex blobs
-- `zs`: a mapped array that accesses the position of each control point
-
-## Constructors:
-
-- `Sheet(blobs, Γs, δ)`
-- `Sheet(zs, Γs, δ)` where `zs` is an array of positions for the control points
-"""
 mutable struct Sheet{T} <: Element
     blobs::Vector{Blob{T}}
     Ss::Vector{T}
@@ -44,10 +28,10 @@ function Sheet(zs::AbstractVector{T}, Ss::AbstractVector{S}, δ::Float64) where 
     Sheet{S}(blobs, copy(Ss), δ, zs)
 end
 
-function Sheet(blobs::Vector{Blob}, Ss::AbstractVector, δ::Float64)
+function Sheet(blobs::Vector{Blob{T}}, Ss::AbstractVector, δ::Float64) where {T}
     newblobs = copy(blobs)
     zs = mappedarray(Elements.position, blobs)
-    Sheet(newblobs, copy(Ss), δ, zs)
+    Sheet{T}(newblobs, copy(Ss), δ, zs)
 end
 
 Base.length(s::Sheet) = length(s.blobs)

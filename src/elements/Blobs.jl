@@ -10,12 +10,15 @@ import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_veloci
 """
     Blob <: Elements.Element
 
-An immutable structure representing a source/vortex blob
+An immutable structure representing a regularized point source/vortex
 
 ## Fields
 - `z`: position
 - `S`: strength/circulation
-- `δ`: blob radius
+- `δ`: regularization radius
+
+## Constructors
+
 """
 struct Blob{T <: Number} <: Element
     z::Complex128

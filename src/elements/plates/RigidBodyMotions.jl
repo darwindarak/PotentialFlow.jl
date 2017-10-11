@@ -17,7 +17,7 @@ An abstract type for real-valued functions of time.
 abstract type Profile end
 
 """
-    Motion
+    RigidBodyMotion
 
 A type to store the plate's current kinematics
 
@@ -132,7 +132,7 @@ Take the time derivative of `p` and return it as a new profile.
 # Example
 
 ```jldoctest
-julia> s = Motions.Sinusoid(π)
+julia> s = Plates.RigidBodyMotions.Sinusoid(π)
 Sinusoid (ω = 3.14)
 
 julia> s.([0.0, 0.5, 0.75])
@@ -141,7 +141,7 @@ julia> s.([0.0, 0.5, 0.75])
  1.0
  0.707107
 
-julia> c = d_dt(s)
+julia> c = Plates.RigidBodyMotions.d_dt(s)
 d/dt (Sinusoid (ω = 3.14))
 
 julia> c.([0.0, 0.5, 0.75])
@@ -169,7 +169,7 @@ Returns a scaled profile with `(s*p)(t) = s*p(t)`
 # Example
 
 ```jldoctest
-julia> s = Motions.Sinusoid(π)
+julia> s = Plates.RigidBodyMotions.Sinusoid(π)
 Sinusoid (ω = 3.14)
 
 julia> 2s
@@ -188,7 +188,7 @@ s::Number * p::Profile = ScaledProfile(s, p)
     -(p₁::Profile, p₂::Profile)
 
 ```jldoctest
-julia> s = Motions.Sinusoid(π)
+julia> s = Plates.RigidBodyMotions.Sinusoid(π)
 Sinusoid (ω = 3.14)
 
 julia> 2s
@@ -200,7 +200,7 @@ julia> (2s).([0.0, 0.5, 0.75])
  2.0
  1.41421
 
-julia> s = Motions.Sinusoid(π);
+julia> s = Plates.RigidBodyMotions.Sinusoid(π);
 
 julia> s.([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
@@ -242,7 +242,7 @@ Shift the profile in time so that `(p >> Δt)(t) = p(t - Δt)`
 # Example
 
 ```jldoctest
-julia> s = Motions.Sinusoid(π);
+julia> s = Plates.RigidBodyMotions.Sinusoid(π);
 
 julia> s >> 0.5
 Sinusoid (ω = 3.14) >> 0.5
@@ -281,10 +281,10 @@ Add the profiles so that `(p₁ + p₂)(t) = p₁(t) + p₂(t)`.
 # Examples
 
 ```jldoctest
-julia> ramp₁ = Motions.EldredgeRamp(5)
+julia> ramp₁ = Plates.RigidBodyMotions.EldredgeRamp(5)
 logcosh ramp (aₛ = 5.0)
 
-julia> ramp₂ = Motions.ColoniusRamp(5)
+julia> ramp₂ = Plates.RigidBodyMotions.ColoniusRamp(5)
 power series ramp (n = 5.0)
 
 julia> ramp₁ + ramp₂

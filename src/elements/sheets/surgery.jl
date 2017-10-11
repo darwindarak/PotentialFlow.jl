@@ -1,7 +1,7 @@
 using Interpolations
 
 """
-    Vortex.Sheets.redistribute_points!(sheet, zs, Γs)
+    Sheets.redistribute_points!(sheet, zs, Γs)
 
 Returns the modified sheet with replacement control points at positions `zs` and strength `Γs`.
 
@@ -12,7 +12,7 @@ Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
 julia> sys = (sheet,)
 (Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2,)
 
-julia> Vortex.Sheets.redistribute_points!(sheet, 0:0.2:2, 0.0:0.5:5)
+julia> Sheets.redistribute_points!(sheet, 0:0.2:2, 0.0:0.5:5)
 Vortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2
 
 julia> sys[1]
@@ -31,7 +31,7 @@ function redistribute_points!(sheet::Sheet{T}, zs, Ss) where T
 end
 
 """
-    Vortex.Sheets.split!(sheet, n::Int)
+    Sheets.split!(sheet, n::Int)
 
 Remove segments `0:n` from `sheet`, and return those segments as a new sheet.
 
@@ -41,7 +41,7 @@ Remove segments `0:n` from `sheet`, and return those segments as a new sheet.
 julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
 Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
 
-julia> sheet₋ = Vortex.Sheets.split!(sheet, 5)
+julia> sheet₋ = Sheets.split!(sheet, 5)
 Vortex Sheet: L ≈ 0.4, Γ = 4.0, δ = 0.2
 
 julia> sheet
@@ -53,7 +53,7 @@ function split!(sheet::Sheet{T}, n::Int) where T
 
     blobs = splice!(sheet.blobs, 1:n-1)
     Ss = splice!(sheet.Ss, 1:n-1)
-    push!(Γs, sheet.Ss[1])
+    push!(Ss, sheet.Ss[1])
     push!(blobs, Blob{T}(sheet.blobs[1].z, 0.5(Ss[end] - Ss[end-1]), sheet.δ))
 
     sheet.blobs[1] = Blob{T}(sheet.blobs[1].z, 0.5(sheet.Ss[2] - sheet.Ss[1]), sheet.δ)
@@ -62,7 +62,7 @@ function split!(sheet::Sheet{T}, n::Int) where T
 end
 
 """
-    Vortex.Sheets.truncate!(sheet, n::Int)
+    Sheets.truncate!(sheet, n::Int)
 
 Remove segments `0:n` from `sheet`, and return the circulation in those segments.
 
@@ -72,7 +72,7 @@ Remove segments `0:n` from `sheet`, and return the circulation in those segments
 julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
 Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
 
-julia> Vortex.Sheets.truncate!(sheet, 5)
+julia> Sheets.truncate!(sheet, 5)
 4.0
 ```
 """
@@ -86,7 +86,7 @@ function truncate!(sheet::Sheet{T}, n::Int) where T
 end
 
 """
-    Vortex.Sheets.remesh(sheet, Δs::Float64 , params::Tuple = ())
+    Sheets.remesh(sheet, Δs::Float64 , params::Tuple = ())
 
 Uniformly redistribute the control points of the sheet to have a nominal spacing of `Δs`.
 Material quantities that should be redistributed along with the control points can be passed in as elements of `params`.
@@ -106,7 +106,7 @@ Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
 
 julia> age = collect(10.0:-1:0);
 
-julia> Vortex.Sheets.remesh(sheet, 0.2, (age, ))
+julia> Sheets.remesh(sheet, 0.2, (age, ))
 (Complex{Float64}[0.0+0.0im, 0.25+0.0im, 0.5+0.0im, 0.75+0.0im, 1.0+0.0im], [0.0, 2.5, 5.0, 7.5, 10.0], 1.0, ([10.0, 7.5, 5.0, 2.5, 0.0],))
 ```
 """
@@ -143,9 +143,9 @@ function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
 end
 
 """
-    Vortex.Sheets.remesh!(sheet::Sheet, Δs::Float64, params::Tuple = ())
+    Sheets.remesh!(sheet::Sheet, Δs::Float64, params::Tuple = ())
 
-Same as [`Vortex.Sheets.remesh`](@ref), except `sheet` is replaced
+Same as [`Sheets.remesh`](@ref), except `sheet` is replaced
 internally by a uniformly interpolated control points.
 Returns the tuple (sheet, L, p₌) where
 
@@ -159,9 +159,9 @@ Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
 
 julia> age = collect(10.0:-1:0);
 
-julia> Vortex.Sheets.remesh!(sheet, 0.2, (age,));
+julia> Sheets.remesh!(sheet, 0.2, (age,));
 
-julia> Vortex.position.(sheet.blobs)
+julia> Elements.position.(sheet.blobs)
 5-element Array{Complex{Float64},1}:
   0.0+0.0im
  0.25+0.0im
@@ -194,7 +194,7 @@ function remesh!(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
 end
 
 """
-    arclength(s)
+    Sheets.arclength(s)
 
 Compute the polygonal arc length of `s`, where `s` can be either an
 vector of complex numbers or a `Vortex.Sheet`.
@@ -205,7 +205,7 @@ vector of complex numbers or a `Vortex.Sheet`.
 julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
 Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
 
-julia> Vortex.Sheets.arclength(sheet)
+julia> Sheets.arclength(sheet)
 1.0
 """
 function arclength(zs::AbstractVector)
@@ -218,7 +218,7 @@ end
 arclength(sheet::Sheet) = arclength(sheet.zs)
 
 """
-    arclengths(s)
+    Sheets.arclengths(s)
 
 Cumulative sum of the polygonal arc length of `s`, where `s` can be
 either an vector of complex numbers or a `Vortex.Sheet`.
@@ -229,7 +229,7 @@ either an vector of complex numbers or a `Vortex.Sheet`.
 julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
 Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
 
-julia> Vortex.Sheets.arclengths(sheet)
+julia> Sheets.arclengths(sheet)
 11-element Array{Float64,1}:
  0.0
  0.1
@@ -256,7 +256,7 @@ end
 arclengths(sheet::Sheet) = arclengths(sheet.zs)
 
 """
-    Vortex.Sheets.append_segment!(sheet::Sheet, z, Γ)
+    Sheets.append_segment!(sheet::Sheet, z, Γ)
 
 Append a new segment with circulation `Γ` extending from the end of the sheet to `z`.
 
@@ -267,15 +267,15 @@ julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
 Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
 
 julia> sheet.blobs[end]
-Vortex Blob: z = 1.0 + 0.0im, Γ = 0.5, δ = 0.2
+Vortex.Blob(1.0 + 0.0im, 0.5, 0.2)
 
-julia> Vortex.Sheets.append_segment!(sheet, 1.1, 2.0)
+julia> Sheets.append_segment!(sheet, 1.1, 2.0)
 
 julia> sheet
 Vortex Sheet: L ≈ 1.1, Γ = 12.0, δ = 0.2
 
 julia> sheet.blobs[end]
-Vortex Blob: z = 1.1 + 0.0im, Γ = 1.0, δ = 0.2
+Vortex.Blob(1.1 + 0.0im, 1.0, 0.2)
 ```
 """
 function append_segment!(sheet::Sheet{T}, z, S::T) where T
@@ -287,7 +287,7 @@ function append_segment!(sheet::Sheet{T}, z, S::T) where T
 end
 
 """
-    Vortex.Sheets.filter!(sheet, Δs, Δf[, params])
+    Sheets.filter!(sheet, Δs, Δf[, params])
 
 Redistribute and filter the control points of a vortex sheet
 
@@ -324,7 +324,7 @@ function filter!(sheet, Δs, Δf, params::Tuple = ())
 end
 
 """
-    filter_position!(s, Δf, L = arclength(z₌))
+    Sheets.filter_position!(s, Δf, L = arclength(z₌))
 
 Filter out any length scales in `s` that is smaller than `Δf`, storing the result back in `s`.
 `s` can be either a vector of complex positions, or a `Vortex.Sheet`.
