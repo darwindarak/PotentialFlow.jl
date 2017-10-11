@@ -1,7 +1,7 @@
 using Base.Test
 using TestSetExtensions
 
-using VortexModel
+using PotentialFlow
 
 @test isempty(detect_ambiguities(Vortex))
 

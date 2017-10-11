@@ -1,6 +1,6 @@
-module Motions
+module RigidBodyMotions
 
-export Motion, Kinematics, d_dt
+export RigidBodyMotion, Kinematics, d_dt
 
 using DocStringExtensions
 import ForwardDiff
@@ -17,7 +17,7 @@ An abstract type for real-valued functions of time.
 abstract type Profile end
 
 """
-    Motion
+    RigidBodyMotion
 
 A type to store the plate's current kinematics
 
@@ -31,7 +31,7 @@ A type to store the plate's current kinematics
 The first three fields are meant as a cache of the current kinematics
 while the `kin` field can be used to find the plate kinematics at any time.
 """
-mutable struct Motion
+mutable struct RigidBodyMotion
     ċ::Complex128
     c̈::Complex128
     α̇::Float64
@@ -39,12 +39,12 @@ mutable struct Motion
     kin::Kinematics
 end
 
-Motion(ċ, α̇) = Motion(complex(ċ), 0.0im, float(α̇), Constant(ċ, α̇))
-Motion(kin::Kinematics) = Motion(kin(0)..., kin)
-(m::Motion)(t) = m.kin(t)
+RigidBodyMotion(ċ, α̇) = RigidBodyMotion(complex(ċ), 0.0im, float(α̇), Constant(ċ, α̇))
+RigidBodyMotion(kin::Kinematics) = RigidBodyMotion(kin(0)..., kin)
+(m::RigidBodyMotion)(t) = m.kin(t)
 
-function show(io::IO, m::Motion)
-    println(io, "Plate Motion:")
+function show(io::IO, m::RigidBodyMotion)
+    println(io, "Rigid Body Motion:")
     println(io, "  ċ = $(round(m.ċ, 2))")
     println(io, "  c̈ = $(round(m.c̈, 2))")
     println(io, "  α̇ = $(round(m.α̇, 2))")
@@ -64,6 +64,7 @@ show(io::IO, c::Constant) = print(io, "Constant (ċ = $(c.ċ), α̇ = $(c.α̇
 
 Kinematics describing a pitchup motion (horizontal translation with rotation)
 
+# Constructors
 # Fields
 $(FIELDS)
 """
@@ -73,7 +74,7 @@ struct Pitchup <: Kinematics
     "Axis of rotation, relative to the plate centroid"
     a::Float64
 
-    "Non-dimensional pitch rate ``K = \dot{\alpha}_0\frac{c}{2U_0}``"
+    "Non-dimensional pitch rate ``K = \\dot{\\alpha}_0\\frac{c}{2U_0}``"
     K::Float64
 
     "Initial angle of attack"
@@ -94,7 +95,6 @@ function Pitchup(U₀, a, K, α₀, t₀, Δα, ramp)
     p = 2K*((ramp >> t₀) - (ramp >> (t₀ + Δt)))
     ṗ = d_dt(p)
     p̈ = d_dt(ṗ)
-
     Pitchup(U₀, a, K, α₀, t₀, Δα, p, ṗ, p̈)
 end
 
@@ -104,7 +104,11 @@ function (p::Pitchup)(t)
     α̈ = p.α̈(t)
 
     ċ = p.U₀ - p.a*im*α̇*exp(im*α)
-    c̈ = p.a*exp(im*α)*(α̇^2 - im*α̈)
+    if (t - p.t₀) > p.Δα/p.K
+        c̈ = 0.0im
+    else
+        c̈ = p.a*exp(im*α)*(α̇^2 - im*α̈)
+    end
 
     return ċ, c̈, α̇
 end
@@ -128,7 +132,7 @@ Take the time derivative of `p` and return it as a new profile.
 # Example
 
 ```jldoctest
-julia> s = Motions.Sinusoid(π)
+julia> s = Plates.RigidBodyMotions.Sinusoid(π)
 Sinusoid (ω = 3.14)
 
 julia> s.([0.0, 0.5, 0.75])
@@ -137,7 +141,7 @@ julia> s.([0.0, 0.5, 0.75])
  1.0
  0.707107
 
-julia> c = d_dt(s)
+julia> c = Plates.RigidBodyMotions.d_dt(s)
 d/dt (Sinusoid (ω = 3.14))
 
 julia> c.([0.0, 0.5, 0.75])
@@ -165,7 +169,7 @@ Returns a scaled profile with `(s*p)(t) = s*p(t)`
 # Example
 
 ```jldoctest
-julia> s = Motions.Sinusoid(π)
+julia> s = Plates.RigidBodyMotions.Sinusoid(π)
 Sinusoid (ω = 3.14)
 
 julia> 2s
@@ -184,7 +188,7 @@ s::Number * p::Profile = ScaledProfile(s, p)
     -(p₁::Profile, p₂::Profile)
 
 ```jldoctest
-julia> s = Motions.Sinusoid(π)
+julia> s = Plates.RigidBodyMotions.Sinusoid(π)
 Sinusoid (ω = 3.14)
 
 julia> 2s
@@ -196,7 +200,7 @@ julia> (2s).([0.0, 0.5, 0.75])
  2.0
  1.41421
 
-julia> s = Motions.Sinusoid(π);
+julia> s = Plates.RigidBodyMotions.Sinusoid(π);
 
 julia> s.([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
@@ -238,7 +242,7 @@ Shift the profile in time so that `(p >> Δt)(t) = p(t - Δt)`
 # Example
 
 ```jldoctest
-julia> s = Motions.Sinusoid(π);
+julia> s = Plates.RigidBodyMotions.Sinusoid(π);
 
 julia> s >> 0.5
 Sinusoid (ω = 3.14) >> 0.5
@@ -277,10 +281,10 @@ Add the profiles so that `(p₁ + p₂)(t) = p₁(t) + p₂(t)`.
 # Examples
 
 ```jldoctest
-julia> ramp₁ = Motions.EldredgeRamp(5)
+julia> ramp₁ = Plates.RigidBodyMotions.EldredgeRamp(5)
 logcosh ramp (aₛ = 5.0)
 
-julia> ramp₂ = Motions.ColoniusRamp(5)
+julia> ramp₂ = Plates.RigidBodyMotions.ColoniusRamp(5)
 power series ramp (n = 5.0)
 
 julia> ramp₁ + ramp₂

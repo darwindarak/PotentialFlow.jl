@@ -5,33 +5,33 @@
         δ  = rand()
 
         sheet = Vortex.Sheet(zs, cumsum(rand(N)), δ)
-        Γs = [b.Γ for b in sheet.blobs]
+        Γs = circulation.(sheet.blobs)
 
         points = Vortex.Point.(zs, Γs)
         blobs = Vortex.Blob.(zs, Γs, δ)
 
-        plate = Vortex.Plate(128, 2.0, rand(Complex128), 0.5π*rand())
+        plate = Plate(128, 2.0, rand(Complex128), 0.5π*rand())
 
         vel_s = zeros(Complex128, plate.N)
         vel_p = zeros(Complex128, plate.N)
 
-        Vortex.induce_velocity!(vel_s, plate, sheet)
+        induce_velocity!(vel_s, plate, sheet, 0)
 
-        Vortex.induce_velocity!(vel_p, plate, points)
-        vel_b = Vortex.induce_velocity(plate, blobs)
+        induce_velocity!(vel_p, plate, points, 0)
+        vel_b = induce_velocity(plate, blobs, 0)
 
         @test vel_s == vel_b
         @test vel_p == vel_b
 
         reset_velocity!(vel_p)
         for (i, b) in enumerate(blobs)
-            induce_velocity!(vel_p, plate, b)
+            induce_velocity!(vel_p, plate, b, 0)
         end
 
-        motion = Vortex.Plates.Motion(0.0, 0.0)
-        Vortex.Plates.enforce_no_flow_through!(plate, motion, blobs)
+        motion = Plates.RigidBodyMotion(0.0, 0.0)
+        Plates.enforce_no_flow_through!(plate, motion, blobs, 0)
         @test vel_p == vel_b
-        @test Vortex.Plates.Chebyshev.firstkind(plate.C, plate.ss) ≈ exp(-im*plate.α).*vel_p
+        @test Plates.Chebyshev.firstkind(plate.C, plate.ss) ≈ exp(-im*plate.α).*vel_p
     end
     @testset "Bound Circulation" begin
         include("utils/circle_plane.jl")
@@ -64,22 +64,22 @@
         @test norm(imag.(Δż_circle[2:end-1])) ≤ 1e-10
 
         points = Vortex.Point.(zs, Γs)
-        plate = Vortex.Plate(Np, 2.0, c, α)
-        plate_vel = Vortex.Plates.Motion(ċ, α̇)
-        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, points)
+        plate = Plate(Np, 2.0, c, α)
+        plate_vel = Plates.RigidBodyMotion(ċ, α̇)
+        Plates.enforce_no_flow_through!(plate, plate_vel, points, 0)
         γs = zeros(Float64, Np)
-        Vortex.Plates.strength!(γs, plate)
+        Plates.strength!(γs, plate)
         @test maximum(abs2.(γs[2:end-1] .- real.(Δż_circle[2:end-1]))) ≤ 256eps()
 
-        @test γs == Vortex.Plates.strength(plate)
+        @test γs == Plates.strength(plate)
 
         kutta_points = Vortex.Point.(c .+ [-1.1, 1.1].*exp(im*α), 1.0)
-        Vortex.Plates.vorticity_flux!(plate, kutta_points[1], kutta_points[2])
+        Plates.vorticity_flux!(plate, kutta_points[1], kutta_points[2], 0)
 
         ss = linspace(-1, 1, 4001)
-        γs = Vortex.Plates.strength(plate, ss)
-        Γs = Vortex.Plates.bound_circulation(plate, ss)
-        @test Γs[ceil(Int,length(ss)/2)] ≈ Vortex.Plates.bound_circulation(plate)[ceil(Int,length(plate)/2)]
+        γs = Plates.strength(plate, ss)
+        Γs = Plates.bound_circulation(plate, ss)
+        @test Γs[ceil(Int,length(ss)/2)] ≈ Plates.bound_circulation(plate)[ceil(Int,length(plate)/2)]
 
         @test norm(γs - gradient(Γs, step(ss)))/length(ss) < 1e-3
     end
@@ -90,7 +90,7 @@
         α = 0.5π*rand()
         α̇ = rand()
 
-        @test c*exp(-im*α) == Vortex.Plates.tangent(c, α) + im*Vortex.Plates.normal(c, α)
+        @test c*exp(-im*α) == Plates.tangent(c, α) + im*Plates.normal(c, α)
 
         J = JoukowskyMap(c, α)
         N = 100
@@ -110,12 +110,12 @@
         end
 
         points = Vortex.Point.(zs, Γs)
-        plate = Vortex.Plate(Np, 2.0, c, α)
-        plate_vel = Vortex.Plates.Motion(ċ, α̇)
-        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, points)
+        plate = Plate(Np, 2.0, c, α)
+        plate_vel = Plates.RigidBodyMotion(ċ, α̇)
+        Plates.enforce_no_flow_through!(plate, plate_vel, points, 0)
 
         sys = (plate, points)
-        żs = Vortex.induce_velocity(zt, sys)
+        żs = induce_velocity(zt, sys, 0)
         @test ż_circle ≈ żs
     end
 
@@ -124,38 +124,38 @@
         α = rand()*0.5π
         L = 2rand()
 
-        plate = Vortex.Plate(128, L, 0.0, α)
-        plate_vel = Vortex.Plates.Motion(U, 0.0)
-        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
+        plate = Plate(128, L, 0.0, α)
+        plate_vel = Plates.RigidBodyMotion(U, 0.0)
+        Plates.enforce_no_flow_through!(plate, plate_vel, (), 0)
 
         C = deepcopy(plate.C)
 
         point = Vortex.Point(-Inf, 1.0);
-        _, Γ, _, _ = Vortex.Plates.vorticity_flux!(plate, point, point, Inf, 0)
+        _, Γ, _, _ = Plates.vorticity_flux!(plate, point, point, 0, Inf, 0)
 
-        ∂A = Vortex.Plates.influence_on_plate(plate, point)
+        ∂A = Plates.influence_on_plate(plate, point, 0)
         C .+= Γ.*∂A
 
         @test Γ ≈ -π*U*L*sin(α)
         @test Γ == -plate.Γ
 
-        _, b₋ = Vortex.Plates.suction_parameters(plate)
+        _, b₋ = Plates.suction_parameters(plate)
         @test abs(b₋) ≤ eps()
-        @test Vortex.Plates.strength(plate, -1) == 0
+        @test Plates.strength(plate, -1) == 0
         @test C ≈ plate.C
 
-        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
-        @test_throws AssertionError Vortex.Plates.vorticity_flux(plate, point, point, 0, 0)
+        Plates.enforce_no_flow_through!(plate, plate_vel, (), 0)
+        @test_throws AssertionError Plates.vorticity_flux(plate, point, point, 0, 0, 0)
 
-        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
-        Γ, _, _, _ = Vortex.Plates.vorticity_flux(plate, point, point, 0, Inf)
-        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, Vortex.Point(-Inf, Γ))
-        b₊, _ = Vortex.Plates.suction_parameters(plate)
+        Plates.enforce_no_flow_through!(plate, plate_vel, (), 0)
+        Γ, _, _, _ = Plates.vorticity_flux(plate, point, point, 0, 0, Inf)
+        Plates.enforce_no_flow_through!(plate, plate_vel, Vortex.Point(-Inf, Γ), 0)
+        b₊, _ = Plates.suction_parameters(plate)
         @test abs(b₊) ≤ eps()
-        @test Vortex.Plates.strength(plate, 1) == 0
+        @test Plates.strength(plate, 1) == 0
 
-        Vortex.Plates.enforce_no_flow_through!(plate, plate_vel, ())
-        Γ₊, Γ₋, _, _ = Vortex.Plates.vorticity_flux(plate, point, point, Inf, Inf)
+        Plates.enforce_no_flow_through!(plate, plate_vel, (), 0)
+        Γ₊, Γ₋, _, _ = Plates.vorticity_flux(plate, point, point, 0, Inf, Inf)
         @test Γ₊ == Γ₋ == 0
     end
 
@@ -163,45 +163,44 @@
     ċ = rand(Complex128)
     α = rand()*0.5π
     L = 2rand()
-    plate = Vortex.Plate(128, L, 0.0, α)
-    motion = allocate_velocity(plate)
+    plate = Plate(128, L, 0.0, α)
+    @test_warn "Plate kinematics should be initialized manually.  This simply returns a stationary motion" allocate_velocity(plate)
 
-    motion.ċ = ċ
-    motion.α̇ = 0.0
+    motion = Plates.RigidBodyMotion(ċ, 0.0)
 
     points = Vortex.Point.(2.0im + rand(Complex128, 20), rand(20))
     sheet  = Vortex.Sheet(2.0im + rand(Complex128, 20), cumsum(rand(20)), rand())
 
     impulse  = sum(points) do p
-        p.Γ*Vortex.unit_impulse(p, plate)
+        circulation(p)*Plates.unit_impulse(p, plate)
     end
 
     impulse += sum(sheet.blobs) do b
-        b.Γ*Vortex.unit_impulse(b, plate)
+        circulation(b)*Plates.unit_impulse(b, plate)
     end
 
     impulse += im*π*0.5L*imag(ċ*exp(-im*α))
     impulse *= 0.5L*exp(im*α)
 
-    Vortex.Plates.enforce_no_flow_through!(plate, motion, (points, sheet))
+    Plates.enforce_no_flow_through!(plate, motion, (points, sheet), 0)
 
-    @test Vortex.circulation((plate, points, sheet)) ≤ 128eps()
-    @test norm(impulse .- Vortex.impulse((plate, points, sheet))) ≤ 1e-5
+    @test circulation((plate, points, sheet)) ≤ 128eps()
+    @test norm(impulse .- Plates.impulse((plate, points, sheet))) ≤ 1e-5
 end
 
 @testset "Advection" begin
-    motion = Vortex.Plates.Motion(rand(Complex128), rand())
+    motion = Plates.RigidBodyMotion(rand(Complex128), rand())
     c = rand(Complex128)
     α = 0.5π*rand()
     L = 2rand()
 
     points = Vortex.Point.(rand(Complex128, 10), rand(10))
 
-    plate  = Vortex.Plate(128, L, c, α)
-    Vortex.Plates.enforce_no_flow_through!(plate, motion, points)
+    plate = Plate(128, L, c, α)
+    Plates.enforce_no_flow_through!(plate, motion, points, 0)
 
     # Internal variables should be overwritten/resized on `advect!`
-    plate₊ = Vortex.Plate(10, rand(), rand(), rand())
+    plate₊ = Plate(10, rand(), rand(), rand())
 
     Δt = 1e-2
     advect!(plate₊, plate, motion, Δt)
@@ -224,23 +223,6 @@ end
     @test plate₊.zs ≢ plate.zs
     @test plate₊.ss ≢ plate.ss
     @test plate₊.A.data ≡ plate₊.C
-end
-
-@testset "[De]serialization" begin
-    motion = Vortex.Plates.Motion(rand(Complex128), rand())
-    c = rand(Complex128)
-    α = 0.5π*rand()
-    L = 2rand()
-    plate  = Vortex.Plate(128, L, c, α)
-    Vortex.Plates.enforce_no_flow_through!(plate, motion, ())
-
-    buff = IOBuffer()
-    serialize(buff, plate)
-    seekstart(buff)
-
-    plate₊ = deserialize(buff)
-    Vortex.Plates.enforce_no_flow_through!(plate₊, motion, ())
-    @test plate₊.C ≈ plate.C
 end
 
 end

@@ -1,39 +1,39 @@
 """
-    enforce_no_flow_through!(p::Plate, motion, elements)
+    enforce_no_flow_through!(p::Plate, motion, elements, t)
 
 Update the plate, `p`, to enforce the no-flow-through condition given ambient vortex elements, `elements`, and while moving with kinematics specified by `motion`.
 
 # Example
 
 ```jldoctest
-julia> plate = Vortex.Plate(128, 2.0, 0.0, π/3)
+julia> plate = Plate(128, 2.0, 0.0, π/3)
 Plate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 60.0ᵒ
        LESP = 0.0, TESP = 0.0
 
-julia> motion = allocate_velocity(plate); motion.ċ = 1.0;
+julia> motion = Plates.RigidBodyMotion(1.0, 0.0);
 
 julia> point = Vortex.Point(0.0 + 2im, 1.0);
 
-julia> Vortex.enforce_no_flow_through!(plate, motion, point)
+julia> Plates.enforce_no_flow_through!(plate, motion, point, 0.0)
 
 julia> plate
 Plate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 60.0ᵒ
        LESP = 1.27, TESP = -1.93
 ```
 """
-function enforce_no_flow_through!(p::Plate, ṗ, elements)
+function enforce_no_flow_through!(p::Plate, ṗ, elements, t)
     @get p (L, C, α, dchebt!)
     @get ṗ (ċ, α̇)
 
     fill!(C, zero(Complex128))
-    Vortex.induce_velocity!(C, p, elements)
+    induce_velocity!(C, p, elements, t)
 
     n̂ = exp(-im*α)
     scale!(C, n̂)
 
     dchebt! * C
 
-    p.Γ = -Vortex.circulation(elements)
+    p.Γ = -circulation(elements)
     p.B₀ = normal(ċ, α)
     p.B₁ = 0.5α̇*L
 
@@ -42,21 +42,21 @@ end
 
 
 """
-    influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v)
+    influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v, t)
 
 Compute in-place the change in plate's Chebyshev coefficients `∂A` by a vortex element `v`
 """
-function influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v)
+function influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v, t)
     fill!(∂A, zero(Complex128))
-    Vortex.induce_velocity!(∂A, plate, v)
+    induce_velocity!(∂A, plate, v, t)
     scale!(∂A, exp(-im*plate.α))
     plate.dchebt! * ∂A
     nothing
 end
 
-function influence_on_plate(plate::Plate, v)
+function influence_on_plate(plate::Plate, v, t)
     ∂A = Vector{Complex128}(plate.N)
-    influence_on_plate!(∂A, plate, v)
+    influence_on_plate!(∂A, plate, v, t)
     return ∂A
 end
 
@@ -86,25 +86,23 @@ For a given edge, if the current suction parameter is less than the criticial su
 Enforcing the trailing edge Kutta condition with an point vortex at negative infinity:
 
 ```jldoctest
-julia> plate = Vortex.Plate(128, 2.0, 0.0, π/6)
+julia> plate = Plate(128, 2.0, 0.0, π/6)
 Plate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 30.0ᵒ
        LESP = 0.0, TESP = 0.0
 
-julia> motion = allocate_velocity(plate);
+julia> motion = Plates.RigidBodyMotion(1.0, 0.0);
 
-julia> motion.ċ = 1.0;
-
-julia> Vortex.enforce_no_flow_through!(plate, motion, ())
+julia> Plates.enforce_no_flow_through!(plate, motion, (), 0.0)
 
 julia> point = Vortex.Point(-Inf, 1.0);
 
-julia> _, Γ, _, _ = Vortex.vorticity_flux(plate, (), point,  Inf);
+julia> _, Γ, _, _ = Plates.vorticity_flux(plate, (), point, 0.0, Inf);
 
 julia> Γ # should equal -πULsin(α) = -π
 -3.1415926535897927
 ```
 """
-function vorticity_flux(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
+function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
                         ∂C₁ = Vector{Complex128}(plate.N),
                         ∂C₂ = Vector{Complex128}(plate.N))
 
@@ -113,11 +111,11 @@ function vorticity_flux(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
     b₊ = +2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L)
     b₋ = -2(A[0] - B₀) + (A[1] - B₁) + 2Γ/(π*L)
 
-    influence_on_plate!(∂C₁, plate, v₁)
-    influence_on_plate!(∂C₂, plate, v₂)
+    influence_on_plate!(∂C₁, plate, v₁, t)
+    influence_on_plate!(∂C₂, plate, v₂, t)
 
-    Γ₁ = Vortex.circulation(v₁)
-    Γ₂ = Vortex.circulation(v₂)
+    Γ₁ = circulation(v₁)
+    Γ₂ = circulation(v₂)
 
     A₁₊ =  2imag(∂C₁[1]) + imag(∂C₁[2]) - 2Γ₁/(π*L)
     A₂₊ =  2imag(∂C₂[1]) + imag(∂C₂[2]) - 2Γ₂/(π*L)
@@ -157,10 +155,10 @@ modify `plate.C` with those changes so that no-flow-through is
 enforced in the presence of `v₁` and `v₂` with strengths that satisfy
 the suction parameters.
 """
-function vorticity_flux!(plate::Plate, v₁, v₂, lesp = 0.0, tesp = 0.0,
+function vorticity_flux!(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
                         ∂C₁ = Vector{Complex128}(plate.N),
                         ∂C₂ = Vector{Complex128}(plate.N))
-    Γ₁, Γ₂, _, _ = vorticity_flux(plate, v₁, v₂, lesp, tesp, ∂C₁, ∂C₂)
+    Γ₁, Γ₂, _, _ = vorticity_flux(plate, v₁, v₂, t, lesp, tesp, ∂C₁, ∂C₂)
     @. plate.C += ∂C₁ + ∂C₂
     plate.Γ -= Γ₁ + Γ₂
 

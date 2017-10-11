@@ -7,7 +7,7 @@
 
         sheet = Vortex.Sheet(zs, Γs, δ)
 
-        @test Vortex.circulation(sheet) ≈ Vortex.circulation(sheet.blobs)
+        @test circulation(sheet) ≈ circulation(sheet.blobs)
     end
 
     @testset "Sheet induced velocities" begin
@@ -20,20 +20,20 @@
         ws = allocate_velocity(sheet)
         wb = allocate_velocity(sheet.blobs)
 
-        self_induce_velocity!(ws, sheet)
+        self_induce_velocity!(ws, sheet, 0)
         for (i, t) in enumerate(sheet.blobs), s in sheet.blobs
-            wb[i] += induce_velocity(t, s)
+            wb[i] += induce_velocity(t, s, 0)
         end
         @test wb ≈ ws
-        @test wb ≈ induce_velocity(sheet, sheet)
+        @test wb ≈ induce_velocity(sheet, sheet, 0)
 
-        sheet₊ = Vortex.Sheet(Vortex.Blob[], Float64[], 0.0)
+        sheet₊ = Vortex.Sheet(Vector{Vortex.Blob}(10), rand(10), 0.0)
         Δt = 1e-2
-        Vortex.advect!(sheet₊, sheet, ws, Δt)
-        Vortex.advect!(sheet, sheet, ws, Δt)
+        advect!(sheet₊, sheet, ws, Δt)
+        advect!(sheet, sheet, ws, Δt)
 
-        @test sheet₊.Γs ==  sheet.Γs
-        @test !(sheet₊.Γs === sheet.Γs)
+        @test sheet₊.Ss ==  sheet.Ss
+        @test !(sheet₊.Ss === sheet.Ss)
 
         @test sheet₊.blobs == sheet.blobs
         @test !(sheet₊.blobs === sheet.blobs)
@@ -49,62 +49,62 @@
         sheet = Vortex.Sheet(zs, Γs, δ)
 
         truncate_n = 50
-        ΣΓ = Vortex.circulation(sheet)
+        ΣΓ = circulation(sheet)
         ΔΓ₀ = Γs[truncate_n] - Γs[1]
-        ΔΓ  = Vortex.Sheets.truncate!(sheet, truncate_n)
+        ΔΓ  = Sheets.truncate!(sheet, truncate_n)
         @test ΔΓ₀ ≈ ΔΓ
 
-        @test Vortex.Sheets.compute_trapezoidal_weights(sheet.Γs) ≈ getfield.(sheet.blobs, :Γ)
-        @test ΔΓ + Vortex.circulation(sheet) ≈ ΣΓ
+        @test Sheets.compute_trapezoidal_weights(sheet.Ss) ≈ circulation.(sheet.blobs)
+        @test ΔΓ + circulation(sheet) ≈ ΣΓ
 
-        Γ = Vortex.circulation(sheet)
-        sheet₊ = Vortex.Sheets.split!(sheet, rand(3:length(sheet)-3))
-        @test Γ ≈ sum(Vortex.circulation, (sheet, sheet₊))
+        Γ = circulation(sheet)
+        sheet₊ = Sheets.split!(sheet, rand(3:length(sheet)-3))
+        @test Γ ≈ sum(circulation, (sheet, sheet₊))
 
-        @test Vortex.Sheets.compute_trapezoidal_weights(sheet.Γs) ≈ getfield.(sheet.blobs, :Γ)
-        @test Vortex.Sheets.compute_trapezoidal_weights(sheet₊.Γs) ≈ getfield.(sheet₊.blobs, :Γ)
+        @test Sheets.compute_trapezoidal_weights(sheet.Ss) ≈ circulation.(sheet.blobs)
+        @test Sheets.compute_trapezoidal_weights(sheet₊.Ss) ≈ circulation.(sheet₊.blobs)
 
         N = 200
         θ = linspace(π, 0, N)
         zs = complex.(cos.(θ))
         Γs = sin.(θ)
-        Vortex.Sheets.redistribute_points!(sheet, zs, Γs)
+        Sheets.redistribute_points!(sheet, zs, Γs)
         fill!(Γs, 0.0)
-        @test sheet.Γs != Γs
-        @test Vortex.Sheets.compute_trapezoidal_weights(sheet.Γs) ≈ getfield.(sheet.blobs, :Γ)
-        @test Vortex.position.(sheet.blobs) == getfield.(sheet.blobs, :z)
-        @test sheet.zs == Vortex.position.(sheet.blobs)
+        @test sheet.Ss != Γs
+        @test Sheets.compute_trapezoidal_weights(sheet.Ss) ≈ getfield.(sheet.blobs, :S)
+        @test Elements.position.(sheet.blobs) == getfield.(sheet.blobs, :z)
+        @test sheet.zs == Elements.position.(sheet.blobs)
 
-        Vortex.Sheets.remesh!(sheet, 0.005)
+        Sheets.remesh!(sheet, 0.005)
         @test length(sheet) == 400
         @test sheet.zs ≈ linspace(-1, 1, 400)
-        @test norm(sheet.Γs .- sqrt.(1 - linspace(-1,1,400).^2)) ≤ 1e-3
+        @test norm(sheet.Ss .- sqrt.(1 - linspace(-1,1,400).^2)) ≤ 1e-3
 
         θ = linspace(π, 0, N)
         zs = complex.(cos.(θ))
         Γs = sin.(θ)
-        Vortex.Sheets.redistribute_points!(sheet, zs, Γs)
+        Sheets.redistribute_points!(sheet, zs, Γs)
         sheet₁ = deepcopy(sheet)
         sheet₂ = deepcopy(sheet)
 
-        @test_warn r"smaller than nominal spacing" Vortex.Sheets.filter!(sheet₁, 3.0, 0.03)
+        @test_warn r"smaller than nominal spacing" Sheets.filter!(sheet₁, 3.0, 0.03)
         @test sheet₁.zs == sheet₂.zs
-        @test sheet₁.Γs == sheet₂.Γs
+        @test sheet₁.Ss == sheet₂.Ss
         @test sheet₁.blobs == sheet₂.blobs
 
-        @test_warn r"smaller than nominal spacing" Vortex.Sheets.remesh!(sheet₂, 3.0)
+        @test_warn r"smaller than nominal spacing" Sheets.remesh!(sheet₂, 3.0)
         @test sheet₁.zs == sheet₂.zs
-        @test sheet₁.Γs == sheet₂.Γs
+        @test sheet₁.Ss == sheet₂.Ss
         @test sheet₁.blobs == sheet₂.blobs
 
-        Vortex.Sheets.remesh!(sheet₂, 0.01)
-        Vortex.Sheets.filter_position!(sheet₂, 0.03)
+        Sheets.remesh!(sheet₂, 0.01)
+        Sheets.filter_position!(sheet₂, 0.03)
 
-        property = copy(sheet₁.Γs)
-        Vortex.Sheets.filter!(sheet₁, 0.01, 0.03, (property,))
+        property = copy(sheet₁.Ss)
+        Sheets.filter!(sheet₁, 0.01, 0.03, (property,))
 
         @test sheet₁.zs == sheet₂.zs
-        @test sheet₁.Γs == sheet₂.Γs
-        @test sheet₁.Γs == property
+        @test sheet₁.Ss == sheet₂.Ss
+        @test sheet₁.Ss == property
     end
 end

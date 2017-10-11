@@ -1,6 +1,6 @@
-# VortexModel
+# PotentialFlow
 
-*a scaffolding for building vortex models*
+*a scaffolding for building 2D inviscid models*
 
 | Documentation | Build Status |
 |:---:|:---:|
@@ -11,11 +11,11 @@
 This package requires Julia `0.6-` and above.
 It is not a registered package, so it should be installed with:
 ```julia
-julia> Pkg.clone("git@github.com:darwindarak/VortexModel.jl.git")
+julia> Pkg.clone("git@github.com:darwindarak/PotentialFlow.jl.git")
 ```
 Since it is still under heavy development, you should run
 ```julia
-julia> Pkg.test("VortexModel") # might take some time
+julia> Pkg.test("PotentialFlow") # might take some time
 ```
 to make sure things are working as intended and
 ```julia

@@ -2,71 +2,85 @@ module Blobs
 
 export Blob
 
-import ..Vortex
+using ..Elements
+import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect
+
+#== Type definition ==#
 
 """
-    Vortex.Blob <: Vortex.PointSource
+    Blob <: Elements.Element
 
-An immutable structure representing a vortex blob
+An immutable structure representing a regularized point source/vortex
 
 ## Fields
 - `z`: position
-- `Γ`: circulation
-- `δ`: blob radius
-"""
-struct Blob <: Vortex.Element
-    z::Complex128
-    Γ::Float64
-    δ::Float64
-end
+- `S`: strength/circulation
+- `δ`: regularization radius
 
-Vortex.position(b::Blob) = b.z
-Vortex.circulation(b::Blob) = b.Γ
-Vortex.impulse(b::Blob) = -im*b.z*b.Γ
+## Constructors
+
+"""
+struct Blob{T <: Number} <: Element
+    z::Complex128
+    S::T
+    δ::Float64
+    Blob{T}(z, s::Real, δ) where T <: Complex = new(z, im*s, δ)
+    Blob{T}(z, s, δ)       where T <: Complex = new(z, s, δ)
+    Blob{T}(z, s::Real, δ) where T <: Real    = new(z, s, δ)
+end
+Elements.kind(::Blob) = Singleton
+Elements.kind(::Type{Blob{T}}) where T = Singleton
+
+(b::Blob{T})(; z = b.z, S = b.S, δ = b.δ) where T = Blob{T}(z, S, δ)
+
+#== Methods to be extended ==#
+
+Elements.position(b::Blob) = b.z
 
 blob_kernel(z, δ) = 0.5im*z/(π*(abs2(z) + δ^2))
 
-function Vortex.induce_velocity(z::Complex128, b::Blob)
-    b.Γ*blob_kernel(z - b.z, b.δ)
+function induce_velocity(z::Complex128, b::Blob, t)
+    b.S*blob_kernel(z - b.z, b.δ)
 end
 
-@Vortex.kind Blob Vortex.Singleton
 
-function Vortex.induce_velocity(target::Blob, source::Blob)
+function induce_velocity(target::Blob, source::Blob, t)
     δ = √(0.5(target.δ^2 + source.δ^2))
-    source.Γ*blob_kernel(target.z - source.z, δ)
+    source.S'*blob_kernel(target.z - source.z, δ)
 end
 
-function Vortex.mutually_induce_velocity!(ws₁, ws₂,
-                                          blobs₁::Vector{Blob},
-                                          blobs₂::Vector{Blob})
+function mutually_induce_velocity!(ws₁, ws₂,
+                                   blobs₁::Vector{Blob},
+                                   blobs₂::Vector{Blob}, t)
     for (s, source) in enumerate(blobs₁)
         for (t, target) in enumerate(blobs₂)
             δ = √(0.5(target.δ^2 + source.δ^2))
             K = blob_kernel(target.z - source.z, δ)
-            ws₂[t] += source.Γ*K
-            ws₁[s] -= target.Γ*K
+            ws₂[t] += source.S'*K
+            ws₁[s] -= target.S'*K
         end
     end
     nothing
 end
 
-function Vortex.self_induce_velocity!(ws, blobs::Vector{Blob})
+function self_induce_velocity!(ws, blobs::Vector{Blob}, t)
     N = length(blobs)
 
     for s in 1:N, t in s+1:N
         δ = √(0.5(blobs[t].δ^2 + blobs[s].δ^2))
         K = blob_kernel(blobs[t].z -blobs[s].z, δ)
-        ws[t] += blobs[s].Γ*K
-        ws[s] -= blobs[t].Γ*K
+        ws[t] += blobs[s].S'*K
+        ws[s] -= blobs[t].S'*K
     end
     ws
 end
 
-Vortex.advect(b::Blob, w::Complex128, Δt::Float64) = Blob(b.z + w*Δt, b.Γ, b.δ)
-
-function Base.show(io::IO, b::Blob)
-    print(io, "Vortex Blob: z = $(round(b.z, 3)), Γ = $(round(b.Γ, 3)), δ = $(round(b.δ, 3))")
+function advect(b::Blob{T}, w::Complex128, Δt::Float64) where T
+    Blob{T}(b.z + w*Δt, b.S, b.δ)
 end
+#
+#function Base.show(io::IO, b::Blob)
+#    print(io, "Vortex Blob: z = $(round(b.z, 3)), Γ = $(round(b.Γ, 3)), δ = $(round(b.δ, 3))")
+#end
 
 end

@@ -1,3 +1,5 @@
+import PotentialFlow.Utils: @get, MappedVector
+
 @testset "Utils" begin
     @testset "get" begin
         z = rand(Complex128)
@@ -23,7 +25,7 @@
 
     @testset "MappedVector" begin
         x = [π, 0.0, π]
-        y = Vortex.Utils.MappedVector(cos, x, 1)
+        y = MappedVector(cos, x, 1)
         @test y[0] == -1.0
         @test y[1] == 1.0
         @test y[2] == -1.0

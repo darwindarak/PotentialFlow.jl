@@ -1,5 +1,5 @@
 @testset "Chebyshev Routines" begin
-    import VortexModel.Vortex.Plates.Chebyshev
+    import PotentialFlow.Plates.Chebyshev
 
     @testset "Quadrature" begin
         N = 127

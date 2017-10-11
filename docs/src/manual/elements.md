@@ -2,41 +2,43 @@
 
 ```@meta
 DocTestSetup = quote
-using VortexModel
+using PotentialFlow
 srand(1)
 end
 ```
-The library currently has four built-in vortex types:
+The library currently has four built-in potential flow elements:
 
 - [`Vortex.Point`](@ref)
 - [`Vortex.Blob`](@ref)
 - [`Vortex.Sheet`](@ref)
-- [`Vortex.Plate`](@ref) (at the moment, there can only be one plate in the fluid at at time)
+- [`Source.Point`](@ref)
+- [`Source.Blob`](@ref)
+- [`Plate`](@ref) (at the moment, there can only be one plate in the fluid at at time)
 
-Most functions in the library that act on vortex elements can take either a single vortex element, or a collection of elements.
+Most functions in the library that act on elements can take either a single element, or a collection of elements.
 These collections can be represented as an array or a tuple.
 Arrays should be used when the elements are the same type, for example:
 ```jldoctest overview
 julia> points = Vortex.Point.(rand(Complex128, 5), rand(5))
-5-element Array{VortexModel.Vortex.Points.Point,1}:
- Point Vortex: z = 0.236 + 0.347im, Γ = 0.556
- Point Vortex: z = 0.313 + 0.008im, Γ = 0.437
- Point Vortex: z = 0.489 + 0.211im, Γ = 0.425
- Point Vortex: z = 0.952 + 1.0im, Γ = 0.773
- Point Vortex: z = 0.252 + 0.987im, Γ = 0.281
+5-element Array{PotentialFlow.Points.Point{Float64},1}:
+ Vortex.Point(0.23603334566204692 + 0.34651701419196046im, 0.5557510873245723)
+ Vortex.Point(0.3127069683360675 + 0.00790928339056074im, 0.43710797460962514)
+ Vortex.Point(0.4886128300795012 + 0.21096820215853596im, 0.42471785049513144)
+ Vortex.Point(0.951916339835734 + 0.9999046588986136im, 0.773223048457377)
+ Vortex.Point(0.25166218303197185 + 0.9866663668987996im, 0.2811902322857298)
 
-julia> Vortex.impulse(points)
+julia> Elements.impulse(points)
 1.3362266530178137 - 1.2821936908564113im
 
 julia> blobs = [Vortex.Blob(rand(Complex128), rand(), 0.1) for i in 1:5]
-5-element Array{VortexModel.Vortex.Blobs.Blob,1}:
- Vortex Blob: z = 0.209 + 0.251im, Γ = 0.02, δ = 0.1
- Vortex Blob: z = 0.288 + 0.86im, Γ = 0.077, δ = 0.1
- Vortex Blob: z = 0.64 + 0.874im, Γ = 0.279, δ = 0.1
- Vortex Blob: z = 0.751 + 0.645im, Γ = 0.078, δ = 0.1
- Vortex Blob: z = 0.848 + 0.086im, Γ = 0.553, δ = 0.1
+5-element Array{PotentialFlow.Blobs.Blob{Float64},1}:
+ Vortex.Blob(0.20947237319807077 + 0.25137920979222494im, 0.02037486871266725, 0.1)
+ Vortex.Blob(0.2877015122756894 + 0.859512136087661im, 0.07695088688120899, 0.1)
+ Vortex.Blob(0.6403962459899388 + 0.8735441302706854im, 0.27858242002877853, 0.1)
+ Vortex.Blob(0.7513126327861701 + 0.6448833539420931im, 0.07782644396003469, 0.1)
+ Vortex.Blob(0.8481854810000327 + 0.0856351682044918im, 0.5532055454580578, 0.1)
 
-julia> Vortex.impulse(blobs)
+julia> Elements.impulse(blobs)
 0.41217890550975256 - 0.7325028967929701im
 ```
 Knowing that every element has the same type allows the compiler to perform more aggressive optimizations.
@@ -45,13 +47,12 @@ For example:
 ```julia
 julia> sys = (points, blobs);
 
-julia> Vortex.impulse(sys)
+julia> Elements.impulse(sys)
 1.7484055585275664 - 2.0146965876493814im
 ```
 
 This rest of this page documents the data types that represent these elements and some key functions that act on them.
 For more detailed examples, please refer to the [Jupyter notebooks](https://github.com/darwindarak/VortexModel.jl/tree/master/examples).
-
 
 ## Built-in Vortex Types
 
@@ -59,45 +60,46 @@ For more detailed examples, please refer to the [Jupyter notebooks](https://gith
 Vortex.Point
 Vortex.Blob
 Vortex.Sheet
-Vortex.Plate
+Source.Point
+Source.Blob
+Plate
 ```
 
 ## Vortex Properties
 
 ```@docs
-Vortex.position
-Vortex.circulation
-Vortex.impulse
-advect
-advect!
+Elements.position
+Elements.circulation
+Elements.impulse
 ```
 
 ## Methods on Vortex Sheets
 
 ```@docs
-Vortex.Sheets.append_segment!
-Vortex.Sheets.truncate!
-Vortex.Sheets.redistribute_points!
-Vortex.Sheets.remesh
-Vortex.Sheets.remesh!
-Vortex.Sheets.split!
-Vortex.Sheets.filter!
-Vortex.Sheets.filter_position!
-Vortex.Sheets.arclength
-Vortex.Sheets.arclengths
+Sheets.append_segment!
+Sheets.truncate!
+Sheets.redistribute_points!
+Sheets.remesh
+Sheets.remesh!
+Sheets.split!
+Sheets.filter!
+Sheets.filter_position!
+Sheets.arclength
+Sheets.arclengths
 ```
 
 ## Methods on Plates
 
 ```@docs
-Vortex.Plates.enforce_no_flow_through!
-Vortex.Plates.vorticity_flux
-Vortex.Plates.vorticity_flux!
-Vortex.Plates.bound_circulation
-Vortex.Plates.bound_circulation!
-Vortex.Plates.rate_of_impulse
-Vortex.Plates.force
-Vortex.Plates.surface_pressure
+Plates.edges
+Plates.enforce_no_flow_through!
+Plates.vorticity_flux
+Plates.vorticity_flux!
+Plates.bound_circulation
+Plates.bound_circulation!
+Plates.rate_of_impulse
+Plates.force
+Plates.surface_pressure
 ```
 
 ## Index
