@@ -2,7 +2,7 @@ using Documenter, PotentialFlow
 
 makedocs(
     format =:html,
-    sitename = "VortexModel.jl",
+    sitename = "PotentialFlow.jl",
     pages = [
         "Home" => "index.md",
         "Manual" => ["manual/quickstart.md",
@@ -20,7 +20,7 @@ makedocs(
 
 if "DOCUMENTER_KEY" in keys(ENV)
     deploydocs(
-     repo = "github.com/darwindarak/VortexModel.jl.git",
+     repo = "github.com/darwindarak/PotentialFlow.jl.git",
      target = "build",
      deps = nothing,
      make = nothing,
