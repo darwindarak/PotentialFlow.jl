@@ -19,14 +19,14 @@ julia> sys[1]
 Vortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2
 ```
 """
-function redistribute_points!(sheet, zs, Γs)
-    if !(sheet.Γs === Γs)
-        resize!(sheet.Γs, length(Γs))
-        copy!(sheet.Γs, Γs)
+function redistribute_points!(sheet::Sheet{T}, zs, Ss) where T
+    if !(sheet.Ss === Ss)
+        resize!(sheet.Ss, length(Ss))
+        copy!(sheet.Ss, Ss)
     end
 
-    sheet.blobs = Vortex.Blob.(zs, compute_trapezoidal_weights(Γs), sheet.δ)
-    sheet.zs = MappedPositions(Vortex.position, sheet.blobs, 0)
+    sheet.blobs = Blob{T}.(zs, compute_trapezoidal_weights(Ss), sheet.δ)
+    sheet.zs = mappedarray(Elements.position, sheet.blobs)
     sheet
 end
 
@@ -48,17 +48,17 @@ julia> sheet
 Vortex Sheet: L ≈ 0.6, Γ = 6.0, δ = 0.2
 ```
 """
-function split!(sheet, n::Int)
+function split!(sheet::Sheet{T}, n::Int) where T
     @assert 2 < n < length(sheet) - 2
 
     blobs = splice!(sheet.blobs, 1:n-1)
-    Γs = splice!(sheet.Γs, 1:n-1)
-    push!(Γs, sheet.Γs[1])
-    push!(blobs, Vortex.Blob(sheet.blobs[1].z, 0.5(Γs[end] - Γs[end-1]), sheet.δ))
+    Ss = splice!(sheet.Ss, 1:n-1)
+    push!(Γs, sheet.Ss[1])
+    push!(blobs, Blob{T}(sheet.blobs[1].z, 0.5(Ss[end] - Ss[end-1]), sheet.δ))
 
-    sheet.blobs[1] = Vortex.Blob(sheet.blobs[1].z, 0.5(sheet.Γs[2] - sheet.Γs[1]), sheet.δ)
+    sheet.blobs[1] = Blob{T}(sheet.blobs[1].z, 0.5(sheet.Ss[2] - sheet.Ss[1]), sheet.δ)
 
-    Vortex.Sheet(blobs, Γs, sheet.δ)
+    Sheet(blobs, Ss, sheet.δ)
 end
 
 """
@@ -76,13 +76,13 @@ julia> Vortex.Sheets.truncate!(sheet, 5)
 4.0
 ```
 """
-function truncate!(sheet, n::Int)
+function truncate!(sheet::Sheet{T}, n::Int) where T
     @assert 2 ≤ n ≤ length(sheet)-1
-    ΔΓ = sheet.Γs[n] - sheet.Γs[1]
-    splice!(sheet.Γs, 1:n-1)
+    ΔS = sheet.Ss[n] - sheet.Ss[1]
+    splice!(sheet.Ss, 1:n-1)
     splice!(sheet.blobs, 1:n-1)
-    sheet.blobs[1] = Vortex.Blob(sheet.blobs[1].z, 0.5(sheet.Γs[2] - sheet.Γs[1]), sheet.δ)
-    return ΔΓ
+    sheet.blobs[1] = Blob{T}(sheet.blobs[1].z, 0.5(sheet.Ss[2] - sheet.Ss[1]), sheet.δ)
+    return ΔS
 end
 
 """
@@ -110,19 +110,19 @@ julia> Vortex.Sheets.remesh(sheet, 0.2, (age, ))
 (Complex{Float64}[0.0+0.0im, 0.25+0.0im, 0.5+0.0im, 0.75+0.0im, 1.0+0.0im], [0.0, 2.5, 5.0, 7.5, 10.0], 1.0, ([10.0, 7.5, 5.0, 2.5, 0.0],))
 ```
 """
-function remesh(sheet::Sheet, Δs::Float64, params::Tuple = ())
+function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
     L = arclengths(sheet)
 
     if L[end] < Δs
         warn("Cannot remesh, sheet length smaller than nominal spacing")
-        return Vortex.position.(sheet.blobs), sheet.Γs, L[end], params
+        return position.(sheet.blobs), sheet.Ss, L[end], params
     end
 
     knots = (L,)
     mode = Gridded(Linear())
 
     zspline = interpolate(knots, sheet.zs, mode)
-    Γspline = interpolate(knots, sheet.Γs, mode)
+    Γspline = interpolate(knots, sheet.Ss, mode)
 
     psplines = map(params) do p
         interpolate(knots, p, mode)
@@ -133,14 +133,13 @@ function remesh(sheet::Sheet, Δs::Float64, params::Tuple = ())
     L₌ = linspace(0, L[end], N)
 
     z₌ = zspline[L₌]
-    Γ₌ = Γspline[L₌]
+    S₌ = Γspline[L₌]
 
     p₌ = map(psplines) do spline
         spline[L₌]
     end
 
-    z₌, Γ₌, L[end], p₌
-
+    z₌, S₌, L[end], p₌
 end
 
 """
@@ -179,12 +178,12 @@ julia> age
   0.0
 ```
 """
-function remesh!(sheet::Sheet, Δs::Float64, params::Tuple = ())
-    z₌, Γ₌, L, p₌ = remesh(sheet, Δs, params)
+function remesh!(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
+    z₌, S₌, L, p₌ = remesh(sheet, Δs, params)
     if L < Δs
         return sheet, L, params
     end
-    redistribute_points!(sheet, z₌, Γ₌)
+    redistribute_points!(sheet, z₌, S₌)
 
     for i in 1:length(params)
         resize!(params[i], length(p₌[i]))
@@ -279,18 +278,18 @@ julia> sheet.blobs[end]
 Vortex Blob: z = 1.1 + 0.0im, Γ = 1.0, δ = 0.2
 ```
 """
-function append_segment!(sheet::Sheet, z, Γ)
+function append_segment!(sheet::Sheet{T}, z, S::T) where T
     b₋ = sheet.blobs[end]
-    sheet.blobs[end] = Vortex.Blob(b₋.z, b₋.Γ + 0.5Γ, b₋.δ)
-    push!(sheet.blobs, Vortex.Blob(z, 0.5Γ, sheet.δ))
-    push!(sheet.Γs, sheet.Γs[end] + Γ)
+    sheet.blobs[end] = Blob{T}(b₋.z, b₋.S + 0.5S, b₋.δ)
+    push!(sheet.blobs, Blob{T}(z, 0.5S, sheet.δ))
+    push!(sheet.Ss, sheet.Ss[end] + S)
     nothing
 end
 
 """
     Vortex.Sheets.filter!(sheet, Δs, Δf[, params])
 
-Redistribute and filter the control points of a vortex sheet 
+Redistribute and filter the control points of a vortex sheet
 
 # Arguments
 
@@ -308,7 +307,7 @@ returns the tuple (sheet, params).
 Otherwise, it returns (sheet, ())
 """
 function filter!(sheet, Δs, Δf, params::Tuple = ())
-    z₌, Γ₌, L, p₌ = remesh(sheet, Δs, params)
+    z₌, S₌, L, p₌ = remesh(sheet, Δs, params)
 
     for i in 1:length(params)
         resize!(params[i], length(p₌[i]))
@@ -317,7 +316,7 @@ function filter!(sheet, Δs, Δf, params::Tuple = ())
 
     if L > Δs
         filter_position!(z₌, Δf, L)
-        redistribute_points!(sheet, z₌, Γ₌), params
+        redistribute_points!(sheet, z₌, S₌), params
     else
         warn("Filter not applied, total sheet length smaller than nominal spacing")
         sheet, params
@@ -346,8 +345,8 @@ function filter_position!(z₌::AbstractVector, Δf, L = arclength(z₌))
 end
 
 function filter_position!(sheet::Sheet, Δf, L = arclength(sheet))
-    zs = Vortex.position.(sheet.blobs)
+    zs = Elements.position.(sheet.blobs)
     filter_position!(zs, Δf, L)
 
-    redistribute_points!(sheet, zs, sheet.Γs)
+    redistribute_points!(sheet, zs, sheet.Ss)
 end

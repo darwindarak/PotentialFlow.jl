@@ -1,14 +1,6 @@
 module Utils
 
-export @submodule, @get, MappedVector
-
-macro submodule(mod)
-    path = mod * ".jl"
-    name = split(mod, '/')[end]
-    Expr(:block,
-         Expr(:call, :include, path),
-         Expr(:using, :., Symbol(name)))
-end
+export @get, MappedVector
 
 """
 A macro for extracting fields from an object.  For example, instead of a statement
@@ -64,7 +56,7 @@ macro get(object, fields...)
     end
 end
 
-# Based on Tim Holy's JuliaCon 2016 Keynote 
+# Based on Tim Holy's JuliaCon 2016 Keynote
 """
 A wrapper around an array that applies a function to any index element
 
@@ -114,4 +106,3 @@ end
 Base.show(io::IO, m::MappedVector) = Base.show(io, MIME("text/plain"), m)
 
 end
-

@@ -1,15 +1,23 @@
 module Plates
+
 using DocStringExtensions
 
 export Plate, bound_circulation, bound_circulation!,
-    enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force, Motions
+       enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force,
+       RigidBodyMotions
 
-import ..Vortex
-import ..Vortex:@get, MappedVector
-import Base: length, deserialize, AbstractSerializer
+using ..Points
+using ..Blobs
 
-include("plates/Motions.jl")
-import .Motions: Motion
+using ..Elements
+import ..Elements: position, impulse, circulation
+import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!,
+                  self_induce_velocity!, allocate_velocity, advect!, reset_velocity!
+
+import ..Utils:@get, MappedVector
+
+include("plates/RigidBodyMotions.jl")
+using .RigidBodyMotions
 
 include("plates/chebyshev.jl")
 
@@ -24,7 +32,7 @@ $(FIELDS)
 # Constructors
 - `Plate(N, L, c, α)`
 """
-mutable struct Plate <: Vortex.Element
+mutable struct Plate <: Element
     "chord length"
     L::Float64
     "centroid"
@@ -53,13 +61,14 @@ mutable struct Plate <: Vortex.Element
     "Preplanned discrete Chebyshev transform"
     dchebt!::Chebyshev.Transform{Complex128, true}
 end
+@kind Plate Singleton
 
-function deserialize(s::AbstractSerializer, t::Type{Plate})
-    fields = Tuple(deserialize(s) for i in 1:11)
-    deserialize(s)
-    dchebt! = Chebyshev.plan_transform!(fields[9])
-    Plate(fields..., dchebt!)
-end
+#function deserialize(s::AbstractSerializer, t::Type{Plate})
+#    fields = Tuple(deserialize(s) for i in 1:11)
+#    deserialize(s)
+#    dchebt! = Chebyshev.plan_transform!(fields[9])
+#    Plate(fields..., dchebt!)
+#end
 
 function Plate(N, L, c, α)
     ss = Chebyshev.nodes(N)
@@ -73,22 +82,27 @@ function Plate(N, L, c, α)
     Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0, dchebt!)
 end
 
-length(p::Plate) = p.N
-Vortex.circulation(p::Plate) = p.Γ
+Base.length(p::Plate) = p.N
 
-Vortex.allocate_velocity(::Plate) = Motion(0.0, 0.0)
-
-Vortex.self_induce_velocity!(motion, ::Plate) = nothing
-
-function Vortex.impulse(p::Plate)
+circulation(p::Plate) = p.Γ
+function impulse(p::Plate)
     @get p (c, B₀, α, Γ, L, A)
     -im*c*Γ - exp(im*α)*π*(0.5L)^2*im*(A[0] - 0.5A[2] - B₀)
+end
+
+function allocate_velocity(::Plate)
+    warn("Plate kinematics should be initialized manually.  This simply returns a stationary motion")
+    RigidBodyMotion(0.0, 0.0)
+end
+function self_induce_velocity!(motion, ::Plate, t)
+    motion.ċ, motion.c̈, motion.α̇ = motion.kin(t)
+    motion
 end
 
 normal(z, α) = imag(exp(-im*α)*z)
 tangent(z, α) = real(exp(-im*α)*z)
 
-function Vortex.induce_velocity(z::Complex128, p::Plate)
+function induce_velocity(z::Complex128, p::Plate, t)
     @get p (α, L, c, B₀, B₁, Γ, A)
 
     z̃ = conj(2*(z - c)*exp(-im*α)/L)
@@ -111,40 +125,45 @@ function Vortex.induce_velocity(z::Complex128, p::Plate)
     0.5im*w*exp(im*α)
 end
 
-function Vortex.induce_velocity!(ws::Vector, p::Plate, sources::T) where T <: Union{Tuple, AbstractArray}
+function induce_velocity!(ws::Vector, p::Plate, sources::T, t) where T <: Union{Tuple, AbstractArray}
     for source in sources
-        Vortex.induce_velocity!(ws, p, source)
+        induce_velocity!(ws, p, source, t)
     end
     ws
 end
-
-@Vortex.kind Plate Vortex.Singleton
-
-function Vortex.induce_velocity(p::Plate, src)
-    out = Vortex.allocate_velocity(p.zs)
-    Vortex.induce_velocity!(out, p, src)
+function induce_velocity(p::Plate, src, t)
+    out = allocate_velocity(p.zs)
+    induce_velocity!(out, p, src, t)
 end
 
-function Vortex.induce_velocity!(ws::Vector, p::Plate, src)
-    _singular_velocity!(ws, p, Vortex.unwrap(src),
-                        Vortex.kind(Vortex.unwrap_src(src)))
+function induce_velocity!(ws::Vector, p::Plate, src, t)
+    _singular_velocity!(ws, p, Elements.unwrap(src), t,
+                        kind(Elements.unwrap_src(src)))
 end
 
-function _singular_velocity!(ws, p, src, ::Type{Vortex.Singleton})
-    Vortex.induce_velocity!(ws, p.zs, Vortex.Point(src))
+function _singular_velocity!(ws, p, src::Blob{T}, t, ::Type{Singleton}) where T
+    induce_velocity!(ws, p.zs, Point{T}(src.z, src.S), t)
 end
 
-function _singular_velocity!(ws, p, src, ::Type{Vortex.Group})
+function _singular_velocity!(ws, p, src, t, ::Type{Singleton})
+    induce_velocity!(ws, p.zs, src, t)
+end
+
+function _singular_velocity!(ws, p, src, t, ::Type{Group})
     for i in eachindex(src)
-        Vortex.induce_velocity!(ws, p, src[i])
+        induce_velocity!(ws, p, src[i], t)
     end
     ws
 end
 
-Vortex.induce_velocity!(::Motion, target::Plate, source) = nothing
-Vortex.reset_velocity!(::Motion, src) = nothing
+induce_velocity!(m::RigidBodyMotion, target::Plate, source, t) = m
+function reset_velocity!(m::RigidBodyMotion, src)
+    m.ċ = m.c̈ = zero(Complex128)
+    m.α̇ = zero(Complex128)
+    m
+end
 
-function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::Motion, Δt)
+function advect!(plate₊::Plate, plate₋::Plate, ṗ::RigidBodyMotion, Δt)
     if plate₊ != plate₋
         plate₊.L    = plate₋.L
         plate₊.Γ    = plate₋.Γ
@@ -167,7 +186,8 @@ function Vortex.advect!(plate₊::Plate, plate₋::Plate, ṗ::Motion, Δt)
     @get plate₊ (c, L, α)
 
     @. plate₊.zs = c + 0.5L*exp(im*α)*plate₊.ss
-    nothing
+
+    plate₊
 end
 
 """
@@ -181,7 +201,7 @@ function unit_impulse(z::Complex128, plate::Plate)
     unit_impulse(z̃)
 end
 unit_impulse(z̃) = -im*(z̃ + real(√(z̃ - 1)*√(z̃ + 1) - z̃))
-unit_impulse(src, plate::Plate) = unit_impulse(Vortex.position(src), plate)
+unit_impulse(src, plate::Plate) = unit_impulse(position(src), plate)
 
 include("plates/boundary_conditions.jl")
 include("plates/circulation.jl")
@@ -239,7 +259,7 @@ function surface_pressure(plate, motion, ambient_sys, Γs₋, Δt)
 
     Δp = strength(plate) .* (Chebyshev.firstkind(real.(C), ss) .- tangent(motion.ċ, α))
 
-    Γs₊ = Vortex.circulation(ambient_sys) .+ bound_circulation(plate)
+    Γs₊ = circulation(ambient_sys) .+ bound_circulation(plate)
     Δp .+= (Γs₊ .- Γs₋)./Δt
 
     Δp, Γs₊

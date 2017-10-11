@@ -5,3 +5,5 @@ Interpolations
 Reexport
 MacroTools
 ForwardDiff
+OffsetArrays
+MappedArrays

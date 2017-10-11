@@ -1,4 +1,4 @@
-import ..Vortex: @property
+import ..Properties: @property
 
 """
     rate_of_impulse(plate, motion, elements::Source, velocities::Source)
@@ -16,12 +16,12 @@ sheet generated in response to the vortex element.
     stype = Complex128
 end
 
-function rate_of_impulse(plate, motion, element, velocity, ::Type{Vortex.Singleton})
+function rate_of_impulse(plate, motion, element, velocity, ::Type{Singleton})
     @get plate (c, α, L)
     @get motion (ċ, α̇)
 
-    Γ = Vortex.circulation(element)
-    z = 2exp(-im*α)*(Vortex.position(element) - c)/L
+    Γ = circulation(element)
+    z = 2exp(-im*α)*(position(element) - c)/L
     ż = 2exp(-im*α)*(velocity - ċ)/L - im*α̇*z
     p̂ = imag(z) - im*real(√(z - 1)*√(z + 1))
 
@@ -60,8 +60,8 @@ function force(plate, motion, elements, velocities, newelements = (), Δt = 0.0)
     !isempty(newelements) && Δt == 0 && error("Δt should not be zero")
 
     for v in newelements
-        Γ̇ = Vortex.circulation(v)/Δt
-        z = 2exp(-im*α)*(Vortex.position(v) - c)/L
+        Γ̇ = circulation(v)/Δt
+        z = 2exp(-im*α)*(position(v) - c)/L
         p̂ = imag(z) - im*real(√(z - 1)*√(z + 1))
 
         Ṗa += exp(im*α)*0.5L*Γ̇*p̂

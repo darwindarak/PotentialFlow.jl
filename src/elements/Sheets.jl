@@ -1,11 +1,14 @@
 module Sheets
 
 export Sheet
-import ..Vortex
-import ..Vortex: MappedVector
-import Base: length
 
-const MappedPositions = MappedVector{Complex128, Vector{Vortex.Blob}, typeof(Vortex.position)}
+using MappedArrays
+
+using ..Blobs
+using ..Elements
+import ..Motions: position, mutually_induce_velocity!, self_induce_velocity!, advect!
+
+const MappedPositions{T} = MappedArrays.ReadonlyMappedArray{Complex128,1,Array{Blob{T},1},typeof(Elements.position)} where T
 
 """
     Vortex.Sheet <: Vortex.CompositeSource
@@ -23,75 +26,68 @@ A vortex sheet represented by vortex blob control points
 - `Sheet(blobs, Γs, δ)`
 - `Sheet(zs, Γs, δ)` where `zs` is an array of positions for the control points
 """
-mutable struct Sheet <: Vortex.Element
-    blobs::Vector{Vortex.Blob}
-    Γs::Vector{Float64}
+mutable struct Sheet{T} <: Element
+    blobs::Vector{Blob{T}}
+    Ss::Vector{T}
     δ::Float64
-    zs::MappedPositions
+    zs::MappedPositions{T}
 end
 
-Vortex.unwrap(s::Sheet) = s.blobs
+Elements.unwrap(s::Sheet) = s.blobs
 
-function Sheet(zs::AbstractVector{T}, Γs::AbstractVector{Float64}, δ::Float64) where {T <: Number}
-    dΓs = compute_trapezoidal_weights(Γs)
-    blobs = Vortex.Blob.(zs, dΓs, δ)
+function Sheet(zs::AbstractVector{T}, Ss::AbstractVector{S}, δ::Float64) where {T <: Number, S <: Number}
+    dSs = compute_trapezoidal_weights(Ss)
+    blobs = Blob{S}.(zs, dSs, δ)
 
-    zs = MappedPositions(Vortex.position, blobs, 0)
+    zs = mappedarray(Elements.position, blobs)
 
-    Sheet(blobs, copy(Γs), δ, zs)
+    Sheet{S}(blobs, copy(Ss), δ, zs)
 end
 
-function Sheet(blobs::Vector{Vortex.Blob}, Γs::AbstractVector{Float64}, δ::Float64)
+function Sheet(blobs::Vector{Blob}, Ss::AbstractVector, δ::Float64)
     newblobs = copy(blobs)
-    zs = MappedPositions(Vortex.position, newblobs, 0)
-    Sheet(newblobs, copy(Γs), δ, zs)
+    zs = mappedarray(Elements.position, blobs)
+    Sheet(newblobs, copy(Ss), δ, zs)
 end
 
-length(s::Sheet) = length(s.blobs)
-Vortex.circulation(s::Sheet) = s.Γs[end] - s.Γs[1]
-Vortex.impulse(s::Sheet) = Vortex.impulse(s.blobs)
+Base.length(s::Sheet) = length(s.blobs)
 
-function Vortex.mutually_induce_velocity!(ws₁, ws₂, sheet₁::Sheet, sheet₂::Sheet)
-    Vortex.mutually_induce_velocity!(ws₁, ws₂, sheet₁.blobs, sheet₂.blobs)
+function mutually_induce_velocity!(ws₁, ws₂, sheet₁::Sheet, sheet₂::Sheet, t)
+    mutually_induce_velocity!(ws₁, ws₂, sheet₁.blobs, sheet₂.blobs, t)
     nothing
 end
 
-function Vortex.self_induce_velocity!(ws, sheet::Sheet)
-    Vortex.self_induce_velocity!(ws, sheet.blobs)
+function self_induce_velocity!(ws, sheet::Sheet, t)
+    self_induce_velocity!(ws, sheet.blobs, t)
 end
 
-function compute_trapezoidal_weights(Γs)
-    N = length(Γs)
+function compute_trapezoidal_weights(Ss)
+    N = length(Ss)
 
-    dΓs = similar(Γs)
-    dΓs[1] = 0.5*(Γs[2] - Γs[1])
+    dSs = similar(Ss)
+    dSs[1] = 0.5*(Ss[2] - Ss[1])
     for i in 2:N-1
-        dΓs[i] = 0.5*(Γs[i+1] - Γs[i-1])
+        dSs[i] = 0.5*(Ss[i+1] - Ss[i-1])
     end
-    dΓs[N] = 0.5*(Γs[N] - Γs[N-1])
+    dSs[N] = 0.5*(Ss[N] - Ss[N-1])
 
-    return dΓs
+    return dSs
 end
 
-function Vortex.advect!(sheet₊::Sheet, sheet₋::Sheet, ws, Δt)
+function advect!(sheet₊::Sheet{S}, sheet₋::Sheet{S}, ws, Δt) where S
     if sheet₊ != sheet₋
         N₊ = length(sheet₊)
         N₋ = length(sheet₋)
         if N₊ != N₋
             resize!(sheet₊.blobs, N₋)
-            resize!(sheet₊.Γs, N₋)
+            resize!(sheet₊.Ss, N₋)
         end
-        copy!(sheet₊.Γs, sheet₋.Γs)
+        copy!(sheet₊.Ss, sheet₋.Ss)
         sheet₊.δ = sheet₋.δ
     end
 
-    Vortex.advect!(sheet₊.blobs, sheet₋.blobs, ws, Δt)
-    nothing
-end
-
-function Base.show(io::IO, s::Sheet)
-    L = arclength(s)
-    print(io, "Vortex Sheet: L ≈ $(round(L, 3)), Γ = $(round(s.Γs[end] - s.Γs[1], 3)), δ = $(round(s.δ, 3))")
+    advect!(sheet₊.blobs, sheet₋.blobs, ws, Δt)
+    sheet₊
 end
 
 include("sheets/surgery.jl")

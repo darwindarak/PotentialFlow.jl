@@ -1,40 +1,47 @@
 module Points
 
 export Point
-import ..Vortex
+
+using ..Elements
+import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect
+
+#== Type definition ==#
 
 """
-    Vortex.Point <: Vortex.PointSource
+    Point <: Elements.Element
 
-An immutable structure representing a point vortex
+An immutable structure representing a point source/vortex
 
 ## Fields
 
 - `z`: position
-- `Γ`: circulation
+- `S`: strength/circulation
 """
-struct Point <: Vortex.Element
+struct Point{T <: Number} <: Element
     z::Complex128
-    Γ::Float64
+    S::T
+    Point{T}(z, s::Real) where T <: Complex = new(z, im*s)
+    Point{T}(z, s)       where T <: Complex = new(z, s)
+    Point{T}(z, s::Real) where T <: Real = new(z, s)
 end
+Elements.kind(::Point) = Singleton
+Elements.kind(::Type{Point{T}}) where T = Singleton
 
-Point(e::Vortex.Element) = Point(Vortex.position(e), Vortex.circulation(e))
+(p::Point{T})(; z = p.z, S = p.S) where T = Point{T}(z, S)
 
-Vortex.position(p::Point) = p.z
-Vortex.circulation(p::Point) = p.Γ
-Vortex.impulse(p::Point) = -im*p.z*p.Γ
+#== Methods to be extended ==#
+
+Elements.position(p::Point) = p.z
 
 cauchy_kernel(z) = z != zero(z) ? 0.5im/(π*conj(z)) : zero(z)
 
-function Vortex.induce_velocity(z::Complex128, p::Point)
-    p.Γ*cauchy_kernel(z - p.z)
+function induce_velocity(z::Complex128, p::Point, t)
+    p.S'*cauchy_kernel(z - p.z)
 end
 
-@Vortex.kind Point Vortex.Singleton
-
-function Vortex.mutually_induce_velocity!(ws₁, ws₂,
-                                          points₁::Vector{Point},
-                                          points₂::Vector{Point})
+function mutually_induce_velocity!(ws₁, ws₂,
+                                   points₁::Vector{Point},
+                                   points₂::Vector{Point}, t)
     for (s, source) in enumerate(points₁)
         for (t, target) in enumerate(points₂)
             K = cauchy_kernel(target.z - source.z)
@@ -45,7 +52,7 @@ function Vortex.mutually_induce_velocity!(ws₁, ws₂,
     nothing
 end
 
-function Vortex.self_induce_velocity!(ws, points::Vector{Point})
+function self_induce_velocity!(ws, points::Vector{Point}, t)
     N = length(points)
 
     for s in 1:N, t in s+1:N
@@ -56,10 +63,12 @@ function Vortex.self_induce_velocity!(ws, points::Vector{Point})
     ws
 end
 
-Vortex.advect(p::Point, w::Complex128, Δt::Float64) = Point(p.z + w*Δt, p.Γ)
-
-function Base.show(io::IO, p::Point)
-    print(io, "Point Vortex: z = $(round(p.z, 3)), Γ = $(round(p.Γ, 3))")
+function advect(p::Point{T}, w::Complex128, Δt::Float64) where T
+    Point{T}(p.z + w*Δt, p.S)
 end
+
+#function Base.show(io::IO, p::Point)
+#    print(io, "Vortex.Point(z = $(round(p.z, 3)), Γ = $(round(p.Γ, 3)))")
+#end
 
 end
