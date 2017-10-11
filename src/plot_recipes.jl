@@ -1,6 +1,6 @@
 @recipe function plot(points::Array{P}) where P <: Union{Vortex.Blob, Vortex.Point}
-    z = Vortex.position(points)
-    Γ = Vortex.circulation.(points)
+    z = Elements.position(points)
+    Γ = Elements.circulation.(points)
     marker_z --> Γ
     seriestype --> :scatter
     x := real.(z)
@@ -9,8 +9,8 @@
 end
 
 @recipe function plot(points::Array{P}) where P <: Union{Source.Blob, Source.Point}
-    z = Vortex.position(points)
-    Γ = Vortex.circulation.(points)
+    z = Elements.position(points)
+    Γ = Elements.circulation.(points)
     marker_z --> Γ
     seriestype --> :scatter
     x := real.(z)
@@ -20,8 +20,8 @@ end
 
 @recipe function plot(s::Vortex.Sheet)
     z = s.zs
-    Γ = Vortex.circulation.(s.blobs)
-    line_z --> Γ
+    Γ = Elements.circulation.(s.blobs)
+    line_z --> 0.5(Γ[1:end-1] + Γ[2:end])./abs.(diff(z))
     x := real.(z)
     y := imag.(z)
     ()
