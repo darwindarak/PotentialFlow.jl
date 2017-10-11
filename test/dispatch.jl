@@ -6,93 +6,93 @@
 
     z = rand(Complex128)
 
-    wp = Vortex.induce_velocity(z, points)
-    wb = Vortex.induce_velocity(z, blobs)
-    ws = Vortex.induce_velocity(z, sheet)
+    wp = induce_velocity(z, points, 0.0)
+    wb = induce_velocity(z, blobs, 0.0)
+    ws = induce_velocity(z, sheet, 0.0)
 
     @test wb == ws
 
-    w = Vortex.induce_velocity(z, (points, blobs, sheet))
+    w = induce_velocity(z, (points, blobs, sheet), 0.0)
     @test w == (wp + wb + ws)
 
-    w = Vortex.induce_velocity(z, ((points, blobs), sheet))
+    w = induce_velocity(z, ((points, blobs), sheet), 0.0)
     @test w == (wp + wb + ws)
 
     zs = getfield.(points, :z)
-    wps = Vortex.induce_velocity(zs, points)
-    wbs = Vortex.induce_velocity(zs, blobs)
-    wss = Vortex.induce_velocity(zs, sheet)
+    wps = induce_velocity(zs, points, 0.0)
+    wbs = induce_velocity(zs, blobs, 0.0)
+    wss = induce_velocity(zs, sheet, 0.0)
 
     @test wss == wbs
-    @test wbs == Vortex.induce_velocity(points, blobs)
-    @test wss == Vortex.induce_velocity(points, sheet)
+    @test wbs == induce_velocity(points, blobs, 0.0)
+    @test wss == induce_velocity(points, sheet, 0.0)
 
-    @test wbs .+ wss == Vortex.induce_velocity(points, (blobs, sheet))
+    @test wbs .+ wss == induce_velocity(points, (blobs, sheet), 0.0)
 
-    Vortex.reset_velocity!(wss)
-    Vortex.induce_velocity!(wss, points, sheet)
+    reset_velocity!(wss)
+    induce_velocity!(wss, points, sheet, 0.0)
 
     @test wss == wbs
 
-    Vortex.reset_velocity!(wps)
-    Vortex.induce_velocity!(wps, points, (blobs, sheet))
+    reset_velocity!(wps)
+    induce_velocity!(wps, points, (blobs, sheet), 0.0)
     @test wps == wss .+ wbs
 
     # Distribute to a group of sources
     sys = (sheet, blobs)
-    ws = Vortex.allocate_velocity(sys)
-    Vortex.induce_velocity!(ws, sys, points)
+    ws = allocate_velocity(sys)
+    induce_velocity!(ws, sys, points, 0.0)
 
-    @test ws[1] == Vortex.induce_velocity(sheet, points)
-    @test ws[2] == Vortex.induce_velocity(blobs, points)
+    @test ws[1] == induce_velocity(sheet, points, 0.0)
+    @test ws[2] == induce_velocity(blobs, points, 0.0)
 
     # Self-induce velocities
-    Vortex.reset_velocity!(ws)
-    Vortex.self_induce_velocity!(ws, sys)
-    @test ws == Vortex.self_induce_velocity(sys)
+    reset_velocity!(ws)
+    self_induce_velocity!(ws, sys, 0.0)
+    @test ws == self_induce_velocity(sys, 0.0)
 
-    wb = Vortex.allocate_velocity(blobs)
-    Vortex.induce_velocity!(wb, blobs, blobs)
-    Vortex.induce_velocity!(wb, blobs, sheet)
+    wb = allocate_velocity(blobs)
+    induce_velocity!(wb, blobs, blobs, 0.0)
+    induce_velocity!(wb, blobs, sheet, 0.0)
 
     @test ws[1] ≈ wb
 
-    Vortex.reset_velocity!(wb)
-    Vortex.induce_velocity!(wb, sheet, sheet)
-    Vortex.induce_velocity!(wb, sheet, blobs)
+    reset_velocity!(wb)
+    induce_velocity!(wb, sheet, sheet, 0.0)
+    induce_velocity!(wb, sheet, blobs, 0.0)
 
     @test ws[2] ≈ wb
 
     points = Vortex.Point.(rand(Complex128, 2N), rand(2N))
-    Vortex.reset_velocity!(ws, (points, blobs))
+    reset_velocity!(ws, (points, blobs))
     @test length.(ws) == (2N, N)
 
-    Vortex.reset_velocity!(ws, (points, points))
-    Vortex.reset_velocity!(wb, points)
-    Vortex.self_induce_velocity!(wb, points)
-    Vortex.mutually_induce_velocity!(ws[1], ws[2], points, points)
+    reset_velocity!(ws, (points, points))
+    reset_velocity!(wb, points)
+    self_induce_velocity!(wb, points, 0.0)
+    mutually_induce_velocity!(ws[1], ws[2], points, points, 0.0)
     @test ws[1] ≈ ws[2]
     @test ws[1] ≈ wb
 
-    Vortex.reset_velocity!(wb, points)
-    Vortex.induce_velocity!(wb, points, points)
+    reset_velocity!(wb, points)
+    induce_velocity!(wb, points, points, 0.0)
     @test ws[1] ≈ wb
 
     @testset "defaults" begin
         # Minimum implementation of a vortex point source
-        @eval struct NewPoint <: Vortex.Element
+        @eval struct NewPoint <: Elements.Element
             z::Complex128
             Γ::Float64
         end
 
-        Vortex.position(p::NewPoint) = p.z
-        Vortex.circulation(p::NewPoint) = p.Γ
-        Vortex.impulse(p::NewPoint) = -im*p.z*p.Γ
+        Elements.position(p::NewPoint) = p.z
+        Elements.circulation(p::NewPoint) = p.Γ
+        Elements.impulse(p::NewPoint) = -im*p.z*p.Γ
 
-        Vortex.kind(::NewPoint) = Vortex.Singleton
-        Vortex.kind(::Type{NewPoint}) = Vortex.Singleton
+        Elements.kind(::NewPoint) = Elements.Singleton
+        Elements.kind(::Type{NewPoint}) = Elements.Singleton
 
-        function Vortex.induce_velocity(z::Complex128, p::NewPoint)
+        function Motions.induce_velocity(z::Complex128, p::NewPoint, t)
             p.Γ*Vortex.Points.cauchy_kernel(z - p.z)
         end
 
@@ -105,29 +105,31 @@
         wn = allocate_velocity(new_points)
         wp = allocate_velocity(points)
 
-        self_induce_velocity!(wn, new_points)
-        self_induce_velocity!(wp, points)
+        self_induce_velocity!(wn, new_points, 0.0)
+        self_induce_velocity!(wp, points, 0.0)
 
         @test wn ≈ wp
     end
 
     @testset "Property Macro" begin
-        @test_throws ArgumentError @eval Vortex (
+        import PotentialFlow.Properties: @property
+
+        @test_throws ArgumentError @eval (
             @property begin
                 signature = ""
             end)
 
-        @eval Vortex (@property begin
+        @eval Elements (@property begin
                       signature = induce_count(t::Target, tc::Target, s::Source, sc::Source)
                       preallocator = allocate_count
                       stype = Int
                       end)
 
         @eval Vortex.Points begin
-            Vortex.induce_count(::Complex128, tcount, ::Point, scount) = scount
+            Elements.induce_count(::Complex128, tcount, ::Point, scount) = scount
         end
         @eval Vortex.Blobs begin
-            Vortex.induce_count(::Complex128, tcount, ::Blob, scount) = tcount
+            Elements.induce_count(::Complex128, tcount, ::Blob, scount) = tcount
         end
 
         N = rand(1:100)
@@ -140,16 +142,16 @@
         targets = rand(Complex128, rand(1:100))
         tcounts = fill(3, length(targets))
 
-        @test Vortex.induce_count(targets[1], tcounts[1], points, pcounts) == length(points)
-        @test Vortex.induce_count(targets[1], tcounts[1], blobs, bcounts) == 3length(blobs)
-        @test Vortex.induce_count(targets[1], tcounts[1],
+        @test Elements.induce_count(targets[1], tcounts[1], points, pcounts) == length(points)
+        @test Elements.induce_count(targets[1], tcounts[1], blobs, bcounts) == 3length(blobs)
+        @test Elements.induce_count(targets[1], tcounts[1],
                                   (points, blobs), (pcounts, bcounts)) == 3length(blobs) + length(points)
 
-        out = Vortex.induce_count(targets, tcounts, (points, blobs), (pcounts, bcounts))
+        out = Elements.induce_count(targets, tcounts, (points, blobs), (pcounts, bcounts))
         @test length(out) == length(targets)
 
-        out₂ = Vortex.allocate_count(targets)
-        Vortex.induce_count!(out₂, targets, tcounts, (points, blobs), (pcounts, bcounts))
+        out₂ = Elements.allocate_count(targets)
+        Elements.induce_count!(out₂, targets, tcounts, (points, blobs), (pcounts, bcounts))
 
         @test out == out₂
         @test all(out .== 3length(blobs) + length(points))

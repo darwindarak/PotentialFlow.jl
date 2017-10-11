@@ -198,7 +198,7 @@ function unit_impulse(z::Complex128, plate::Plate)
     unit_impulse(z̃)
 end
 unit_impulse(z̃) = -im*(z̃ + real(√(z̃ - 1)*√(z̃ + 1) - z̃))
-unit_impulse(src, plate::Plate) = unit_impulse(position(src), plate)
+unit_impulse(src, plate::Plate) = unit_impulse(Elements.position(src), plate)
 
 include("plates/boundary_conditions.jl")
 include("plates/circulation.jl")

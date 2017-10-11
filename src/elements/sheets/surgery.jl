@@ -115,7 +115,7 @@ function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
 
     if L[end] < Δs
         warn("Cannot remesh, sheet length smaller than nominal spacing")
-        return position.(sheet.blobs), sheet.Ss, L[end], params
+        return Elements.position.(sheet.blobs), sheet.Ss, L[end], params
     end
 
     knots = (L,)
