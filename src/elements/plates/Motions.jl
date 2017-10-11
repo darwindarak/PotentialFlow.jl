@@ -1,6 +1,6 @@
-module Motions
+module RigidBodyMotions
 
-export Motion, Kinematics, d_dt
+export RigidMotion, Kinematics, d_dt
 
 using DocStringExtensions
 import ForwardDiff
@@ -31,7 +31,7 @@ A type to store the plate's current kinematics
 The first three fields are meant as a cache of the current kinematics
 while the `kin` field can be used to find the plate kinematics at any time.
 """
-mutable struct Motion
+mutable struct RigidBodyMotion
     ċ::Complex128
     c̈::Complex128
     α̇::Float64
@@ -41,10 +41,10 @@ end
 
 Motion(ċ, α̇) = Motion(complex(ċ), 0.0im, float(α̇), Constant(ċ, α̇))
 Motion(kin::Kinematics) = Motion(kin(0)..., kin)
-(m::Motion)(t) = m.kin(t)
+(m::RigidBodyMotion)(t) = m.kin(t)
 
-function show(io::IO, m::Motion)
-    println(io, "Plate Motion:")
+function show(io::IO, m::RigidBodyMotion)
+    println(io, "Rigid Body Motion:")
     println(io, "  ċ = $(round(m.ċ, 2))")
     println(io, "  c̈ = $(round(m.c̈, 2))")
     println(io, "  α̇ = $(round(m.α̇, 2))")
@@ -93,8 +93,7 @@ function Pitchup(U₀, a, K, α₀, t₀, Δα, ramp)
     Δt = 0.5Δα/K
     p = 2K*((ramp >> t₀) - (ramp >> (t₀ + Δt)))
     ṗ = d_dt(p)
-    p̈ = d_dt(ṗ)
-
+    # p̈ = d_dt(ṗ) Automatic differentiation seems to break this over long times
     Pitchup(U₀, a, K, α₀, t₀, Δα, p, ṗ, p̈)
 end
 
@@ -104,7 +103,11 @@ function (p::Pitchup)(t)
     α̈ = p.α̈(t)
 
     ċ = p.U₀ - p.a*im*α̇*exp(im*α)
-    c̈ = p.a*exp(im*α)*(α̇^2 - im*α̈)
+    if (t - p.t₀) > p.Δα/p.K
+        c̈ = 0.0im
+    else
+        c̈ = p.a*exp(im*α)*(α̇^2 - im*α̈)
+    end
 
     return ċ, c̈, α̇
 end
