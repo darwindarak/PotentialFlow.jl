@@ -113,7 +113,7 @@ Now suppose we want to scale the ramp and shift it
 shifted_ramp = -(ramp >> 2)
 
 plot(T, shifted_ramp.(T), xlabel = "t", ylabel="Smoothed Ramp",
-     legend = :none, linewidth = 2)
+     legend = :none, linewidth = 2, size=(600,300))
 savefig("shifted_ramp.svg"); nothing # hide
 ```
 ```@raw html
@@ -124,7 +124,7 @@ then take its derivative
 ddt_ramp = d_dt(shifted_ramp)
 
 plot(T, ddt_ramp.(T), xlabel = "t", ylabel="Smoothed Ramp",
-     legend = :none, linewidth = 2)
+     legend = :none, linewidth = 2, size = (600, 200))
 savefig("ddt_ramp.svg"); nothing # hide
 ```
 ```@raw html
@@ -137,7 +137,7 @@ ps_ramp = RigidBodyMotions.ColoniusRamp(5)
 composed_ramp = ramp - (ps_ramp >> 2)
 
 plot(T, composed_ramp.(T), xlabel = "t", ylabel="Smoothed Ramp",
-     legend = :none, linewidth = 2)
+     legend = :none, linewidth = 2, size = (600, 300))
 savefig("composed_ramp.svg"); nothing # hide
 ```
 ```@raw html

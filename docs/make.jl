@@ -18,7 +18,7 @@ makedocs(
     strict = true
 )
 
-#=
+
 if "DOCUMENTER_KEY" in keys(ENV)
     deploydocs(
      repo = "github.com/darwindarak/PotentialFlow.jl.git",
@@ -28,4 +28,3 @@ if "DOCUMENTER_KEY" in keys(ENV)
      julia = "0.6"
     )
 end
-=#
