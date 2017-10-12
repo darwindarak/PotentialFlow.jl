@@ -1,21 +1,33 @@
-@recipe function plot(points::Array{P}) where P <: Union{Vortex.Blob, Vortex.Point}
-    z = Elements.position(points)
-    Γ = Elements.circulation.(points)
-    marker_z --> Γ
-    seriestype --> :scatter
-    x := real.(z)
-    y := imag.(z)
-    ()
+@userplot Streamlines
+
+@recipe function f(s::Streamlines, n = 10)
+    elements = s.args[3]
+
+    z = [x + im*y for y in s.args[2], x in s.args[1]]
+    ψ = streamfunction(z, elements)
+
+    @series begin
+        seriestype --> :contour
+        levels := n
+        color := cgrad(getindex.(cgrad(:grays), [0.5, 0.5]));
+        grid --> :none
+
+        s.args[1], s.args[2], ψ
+    end
 end
 
-@recipe function plot(points::Array{P}) where P <: Union{Source.Blob, Source.Point}
+@recipe function plot(points::Array{P}) where P <: Union{Vortex.Point, Vortex.Blob}
     z = Elements.position(points)
-    Γ = Elements.circulation.(points)
-    marker_z --> Γ
-    seriestype --> :scatter
-    x := real.(z)
-    y := imag.(z)
-    ()
+    x = real.(z)
+    y = imag.(z)
+
+    S = map(p -> abs(p.S), points)
+
+    @series begin
+        marker_z --> S
+        seriestype --> :scatter
+        x, y
+    end
 end
 
 @recipe function plot(s::Vortex.Sheet)
