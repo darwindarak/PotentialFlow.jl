@@ -4,7 +4,7 @@
 
 | Documentation | Build Status |
 |:---:|:---:|
-| [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://darwindarak.github.com/VortexModel.jl) | [![Build Status](https://img.shields.io/travis/darwindarak/VortexModel.jl/master.svg?label=linux%2FmacOS)](https://travis-ci.org/darwindarak/VortexModel.jl) [![Build status](https://img.shields.io/appveyor/ci/darwindarak/VortexModel-jl/master.svg?label=windows)](https://ci.appveyor.com/project/darwindarak/vortexmodel-jl/branch/master) [![codecov](https://codecov.io/gh/darwindarak/VortexModel.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/darwindarak/VortexModel.jl) |
+| [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://darwindarak.github.com/PotentialFlow.jl) | [![Build Status](https://img.shields.io/travis/darwindarak/PotentialFlow.jl/master.svg?label=linux)](https://travis-ci.org/darwindarak/PotentialFlow.jl) [![Build status](https://img.shields.io/appveyor/ci/darwindarak/PotentialFlow-jl/master.svg?label=windows)](https://ci.appveyor.com/project/darwindarak/potentialflow-jl/branch/master) [![codecov](https://codecov.io/gh/darwindarak/PotentialFlow.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/darwindarak/PotentialFlow.jl) |
 
 ## Installation
 
@@ -23,4 +23,4 @@ julia> Pkg.update()
 ```
 to get the most recent version of the library and its dependencies.
 
-Examples can be found in the [documentation](https://darwindarak.github.io/VortexModel.jl) and the [Jupyter notebooks](https://github.com/darwindarak/VortexModel.jl/tree/master/examples).
+Examples can be found in the [documentation](https://darwindarak.github.io/PotentialFlow.jl) and the [Jupyter notebooks](https://github.com/darwindarak/PotentialFlow.jl/tree/master/examples).
