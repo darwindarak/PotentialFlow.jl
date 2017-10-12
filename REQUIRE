@@ -6,4 +6,5 @@ Reexport
 MacroTools
 ForwardDiff
 MappedArrays
+Colors
 RecipesBase

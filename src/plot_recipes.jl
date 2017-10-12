@@ -1,3 +1,6 @@
+using RecipesBase
+using Colors
+
 @userplot Streamlines
 
 @recipe function f(s::Streamlines, n = 10)
@@ -9,7 +12,7 @@
     @series begin
         seriestype --> :contour
         levels := n
-        color := cgrad(getindex.(cgrad(:grays), [0.5, 0.5]));
+        color := cgrad(fill(colorant"gray", 2));
         grid --> :none
 
         s.args[1], s.args[2], ψ
