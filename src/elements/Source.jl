@@ -2,7 +2,7 @@ module Source
 
 import ..Points
 import ..Blobs
-import ..Elements: circulation
+import ..Elements: circulation, flux
 
 #== Wrapper for a point source ==#
 
@@ -36,6 +36,7 @@ function Base.show(io::IO, s::Point)
         print(io, "Points.Point($(s.z), $(s.S))")
     end
 end
+flux(p::Point) = imag(p.S)
 circulation(::Point) = 0.0
 
 #== Wrapper for a blob source ==#
@@ -71,5 +72,6 @@ function Base.show(io::IO, s::Blob)
     end
 end
 circulation(::Blob) = 0.0
+flux(b::Blob) = imag(b.S)
 
 end

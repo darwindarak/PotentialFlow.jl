@@ -1,7 +1,7 @@
 module Vortex
 
 import ..Elements
-import ..Elements: circulation, impulse
+import ..Elements: circulation, flux, impulse
 
 import ..Utils
 
@@ -34,8 +34,8 @@ Vortex.Point(1.0 + 0.0im, 2.0)
 const Point = Points.Point{Float64}
 (p::Point)(; z = p.z, Γ = p.S) = Point(z, Γ)
 
-
 circulation(p::Point) = p.S
+flux(::Point) = 0.0
 impulse(p::Point) = -im*p.z*p.S
 
 Base.show(io::IO, s::Point) = print(io, "Vortex.Point($(s.z), $(s.S))")
@@ -66,6 +66,7 @@ const Blob = Blobs.Blob{Float64}
 (b::Blob)(; z = b.z, Γ = b.S, δ = b.δ) = Blob(z, Γ, δ)
 
 circulation(b::Blob) = b.S
+flux(::Blob) = 0.0
 impulse(b::Blob) = -im*b.z*b.S
 Base.show(io::IO, s::Blob) = print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ))")
 
@@ -98,6 +99,7 @@ function Base.show(io::IO, s::Sheet)
 end
 
 circulation(s::Sheet) = s.Ss[end] - s.Ss[1]
+flux(::Sheet) = 0.0
 impulse(s::Sheet) = impulse(s.blobs)
 
 end

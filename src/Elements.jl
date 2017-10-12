@@ -1,6 +1,6 @@
 module Elements
 
-export Element, Singleton, Group, kind, @kind, circulation
+export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction
 
 using ..Properties
 
@@ -60,7 +60,7 @@ julia> Elements.position.(points)
 end
 
 """
-    Vortex.circulation(src)
+    Elements.circulation(src)
 
 Returns the total circulation contained in `src`.
 
@@ -83,6 +83,34 @@ julia> Elements.circulation.(points)
 """
 @property begin
     signature = circulation(src::Source)
+    reduce = (+)
+    stype = Float64
+end
+
+"""
+    Elements.flux(src)
+
+Returns the flux through a unit circle induced by `src`.
+
+# Example
+
+```jldoctest
+julia> points = Source.Point.([1.0im, 2.0im], [1.0, 2.0]);
+
+julia> Elements.flux(points[1])
+1.0
+
+julia> Elements.flux(points)
+3.0
+
+julia> Elements.flux.(points)
+2-element Array{Float64,1}:
+ 1.0
+ 2.0
+```
+"""
+@property begin
+    signature = flux(src::Source)
     reduce = (+)
     stype = Float64
 end
@@ -112,6 +140,12 @@ julia> Elements.impulse(sys)
     signature = impulse(src::Source)
     reduce = (+)
     stype = Complex128
+end
+
+@property begin
+    signature = streamfunction(targ::Target, src::Source)
+    preallocator = allocate_streamfunction
+    stype = Float64
 end
 
 end
