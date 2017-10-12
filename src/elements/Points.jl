@@ -38,25 +38,25 @@ function induce_velocity(z::Complex128, p::Point, t)
 end
 
 function mutually_induce_velocity!(ws₁, ws₂,
-                                   points₁::Vector{Point},
-                                   points₂::Vector{Point}, t)
+                                   points₁::Vector{Point{T₁}},
+                                   points₂::Vector{Point{T₂}}, t) where {T₁, T₂}
     for (s, source) in enumerate(points₁)
         for (t, target) in enumerate(points₂)
             K = cauchy_kernel(target.z - source.z)
-            ws₂[t] += source.Γ*K
-            ws₁[s] -= target.Γ*K
+            ws₂[t] += source.S'*K
+            ws₁[s] -= target.S'*K
         end
     end
     nothing
 end
 
-function self_induce_velocity!(ws, points::Vector{Point}, t)
+function self_induce_velocity!(ws, points::Vector{Point{T}}, t) where T
     N = length(points)
 
     for s in 1:N, t in s+1:N
         K = cauchy_kernel(points[t].z - points[s].z)
-        ws[t] += points[s].Γ*K
-        ws[s] -= points[t].Γ*K
+        ws[t] += points[s].S'*K
+        ws[s] -= points[t].S'*K
     end
     ws
 end

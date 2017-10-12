@@ -50,8 +50,8 @@ function induce_velocity(target::Blob, source::Blob, t)
 end
 
 function mutually_induce_velocity!(ws₁, ws₂,
-                                   blobs₁::Vector{Blob},
-                                   blobs₂::Vector{Blob}, t)
+                                   blobs₁::Vector{Blob{T₁}},
+                                   blobs₂::Vector{Blob{T₂}}, t) where {T₁, T₂}
     for (s, source) in enumerate(blobs₁)
         for (t, target) in enumerate(blobs₂)
             δ = √(0.5(target.δ^2 + source.δ^2))
@@ -63,7 +63,7 @@ function mutually_induce_velocity!(ws₁, ws₂,
     nothing
 end
 
-function self_induce_velocity!(ws, blobs::Vector{Blob}, t)
+function self_induce_velocity!(ws, blobs::Vector{Blob{T}}, t) where T
     N = length(blobs)
 
     for s in 1:N, t in s+1:N
