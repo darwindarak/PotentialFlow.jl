@@ -1,9 +1,8 @@
 using RecipesBase
-using Colors
 
 @userplot Streamlines
 
-@recipe function f(s::Streamlines, n = 10)
+@recipe function f(s::Streamlines)
     elements = s.args[3]
 
     z = [x + im*y for y in s.args[2], x in s.args[1]]
@@ -11,25 +10,48 @@ using Colors
 
     @series begin
         seriestype --> :contour
-        levels := n
-        color := cgrad(fill(colorant"gray", 2));
         grid --> :none
 
         s.args[1], s.args[2], ψ
     end
 end
 
-@recipe function plot(points::Array{P}) where P <: Union{Vortex.Point, Vortex.Blob}
+@recipe function plot(points::Array{P};
+                      source_marker = :xcross,
+                      vortex_marker = :circle) where {P <: Union{Points.Point{T} where T, Blobs.Blob{T} where T}}
     z = Elements.position(points)
     x = real.(z)
     y = imag.(z)
 
-    S = map(p -> abs(p.S), points)
+    sources = Int[]
+    vortices = Int[]
 
-    @series begin
-        marker_z --> S
-        seriestype --> :scatter
-        x, y
+    for (i, p) in enumerate(points)
+        if abs2(real(p.S)) > 0
+            push!(vortices, i)
+        end
+
+        if abs2(imag(p.S)) > 0
+            push!(sources, i)
+        end
+    end
+
+    if !isempty(vortices)
+        @series begin
+            seriestype --> :scatter
+            markershape := vortex_marker
+            marker_z --> Elements.circulation.(points[vortices])
+            x[vortices], y[vortices]
+        end
+    end
+
+    if !isempty(sources)
+        @series begin
+            seriestype --> :scatter
+            markershape := source_marker
+            marker_z --> Elements.flux.(points[sources])
+            x[sources], y[sources]
+        end
     end
 end
 
