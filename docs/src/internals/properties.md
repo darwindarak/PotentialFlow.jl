@@ -1,5 +1,11 @@
 # Handing Pairwise Interactions
 
+```@meta
+DocTestSetup = quote
+	using PotentialFlow
+end
+```
+
 We want users to be able to define their own vortex types, as well as arbitrarily group and nest different vortex elements together.
 For example, suppose the user has defined a new element, `MyVortexType`, then they should be able to do something like
 ```julia
@@ -119,3 +125,69 @@ end
 The `reduce` operation means that it is a property that can be aggregate over a collection of vortex elements.
 In this particular case, it means that the circulation of a group of vortex elements is just the sum of the circulation of each element.
 Another example of this can be seen in the definition of [`rate_of_impulse`](@ref Plates.rate_of_impulse).
+
+### Defining a new property
+
+We'll go through an example of how to define new properties using the `@property` marco.
+Suppose we want to check if a system of elements have branch cuts in their streamfunction, we can simply define the following:
+```jldoctest
+import PotentialFlow.Properties: @property
+
+@property begin
+	signature = continuous_streamfunction(src::Source)
+	stype = Bool
+	reduce = (&, true)
+end
+
+continuous_streamfunction(::Vortex.Point) = true
+continuous_streamfunction(::Vortex.Blob) = true
+continuous_streamfunction(::Source.Point) = false
+continuous_streamfunction(::Source.Blob) = false
+
+vortices = (Vortex.Point.(rand(10), rand(10)), 
+	        Vortex.Blob.(rand(10), rand(10), rand())
+		   )
+
+sources = (Source.Point.(rand(10), rand(10)),
+           Source.Blob.(rand(10), rand(10), rand())
+		  )
+
+mixed = (vortices, sources)
+
+continuous_streamfunction.((vortices, sources, mixed))
+
+# output
+
+(true, false, false)
+```
+Here, the `reduce` operation is a tuple that takes in a binary operation and an initial value.
+When `continuous_streamfunction` is called on a group source, such as an array of elements, it will recursively call `continuous_streamfunction` on each member of the group, and use `&` to combine the results.
+Without the `true` initial value, the `@property` macro will use `zero(stype)`, which in this case, would have been `false`.
+If we did not want the values to be aggregated, but instead wanted to preserve the organization structure of our source elements, we can simply leave out the `reduce` field.
+For instance, if we wanted to know whether the element is a desingularized element or not, it does not make sense to reduce the results.
+```jldoctest
+import PotentialFlow.Properties: @property
+import PotentialFlow: Points, Blobs
+
+@property begin
+	signature = is_desingularized(src::Source)
+	stype = Bool
+end
+
+is_desingularized(::Points.Point) = false
+is_desingularized(::Blobs.Blob) = true
+
+vortices = (Vortex.Point.(rand(2), rand(2)), 
+	        Vortex.Blob.(rand(2), rand(2), rand())
+		   )
+
+sources = (Source.Point.(rand(2), rand(2)),
+           Source.Blob.(rand(2), rand(2), rand())
+		  )
+
+is_desingularized.((vortices, sources))
+
+# output
+
+((Bool[false, false], Bool[true, true]), (Bool[false, false], Bool[true, true]))
+```
