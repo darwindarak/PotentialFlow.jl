@@ -149,7 +149,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Vortex Elements",
     "title": "PotentialFlow.Elements.circulation",
     "category": "Function",
-    "text": "Vortex.circulation(src)\n\nReturns the total circulation contained in src.\n\nExample\n\njulia> points = Vortex.Point.([1.0im, 2.0im], [1.0, 2.0]);\n\njulia> Elements.circulation(points[1])\n1.0\n\njulia> Elements.circulation(points)\n3.0\n\njulia> Elements.circulation.(points)\n2-element Array{Float64,1}:\n 1.0\n 2.0\n\n\n\n"
+    "text": "Elements.circulation(src)\n\nReturns the total circulation contained in src.\n\nExample\n\njulia> points = Vortex.Point.([1.0im, 2.0im], [1.0, 2.0]);\n\njulia> Elements.circulation(points[1])\n1.0\n\njulia> Elements.circulation(points)\n3.0\n\njulia> Elements.circulation.(points)\n2-element Array{Float64,1}:\n 1.0\n 2.0\n\n\n\n"
 },
 
 {
