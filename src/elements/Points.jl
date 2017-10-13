@@ -31,11 +31,14 @@ Elements.kind(::Type{Point{T}}) where T = Singleton
 
 Elements.position(p::Point) = p.z
 
+Elements.streamfunction(z::Complex128, p::Point) = real(-0.5p.S*log(z - p.z)/π)
+
 cauchy_kernel(z) = z != zero(z) ? 0.5im/(π*conj(z)) : zero(z)
 
 function induce_velocity(z::Complex128, p::Point, t)
     p.S'*cauchy_kernel(z - p.z)
 end
+
 
 function mutually_induce_velocity!(ws₁, ws₂,
                                    points₁::Vector{Point{T₁}},

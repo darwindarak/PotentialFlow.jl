@@ -1,21 +1,58 @@
-@recipe function plot(points::Array{P}) where P <: Union{Vortex.Blob, Vortex.Point}
-    z = Elements.position(points)
-    Γ = Elements.circulation.(points)
-    marker_z --> Γ
-    seriestype --> :scatter
-    x := real.(z)
-    y := imag.(z)
-    ()
+using RecipesBase
+
+@userplot Streamlines
+
+@recipe function f(s::Streamlines)
+    elements = s.args[3]
+
+    z = [x + im*y for y in s.args[2], x in s.args[1]]
+    ψ = streamfunction(z, elements)
+
+    @series begin
+        seriestype --> :contour
+        grid --> :none
+
+        s.args[1], s.args[2], ψ
+    end
 end
 
-@recipe function plot(points::Array{P}) where P <: Union{Source.Blob, Source.Point}
+@recipe function plot(points::Array{P};
+                      source_marker = :xcross,
+                      vortex_marker = :circle) where {P <: Union{Points.Point{T} where T, Blobs.Blob{T} where T}}
     z = Elements.position(points)
-    Γ = Elements.circulation.(points)
-    marker_z --> Γ
-    seriestype --> :scatter
-    x := real.(z)
-    y := imag.(z)
-    ()
+    x = real.(z)
+    y = imag.(z)
+
+    sources = Int[]
+    vortices = Int[]
+
+    for (i, p) in enumerate(points)
+        if abs2(real(p.S)) > 0
+            push!(vortices, i)
+        end
+
+        if abs2(imag(p.S)) > 0
+            push!(sources, i)
+        end
+    end
+
+    if !isempty(vortices)
+        @series begin
+            seriestype --> :scatter
+            markershape := vortex_marker
+            marker_z --> Elements.circulation.(points[vortices])
+            x[vortices], y[vortices]
+        end
+    end
+
+    if !isempty(sources)
+        @series begin
+            seriestype --> :scatter
+            markershape := source_marker
+            marker_z --> Elements.flux.(points[sources])
+            x[sources], y[sources]
+        end
+    end
 end
 
 @recipe function plot(s::Vortex.Sheet)

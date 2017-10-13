@@ -32,7 +32,6 @@ import .Plates: Plate
 
 #== Plot Recipes ==#
 
-using RecipesBase
 include("plot_recipes.jl")
 
 end
