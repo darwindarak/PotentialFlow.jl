@@ -28,4 +28,54 @@ end</code></pre><p>By annotating <code>targvel</code> as a <code>Target</code>, 
     signature = circulation(src::Source)
     stype = Float64
     reduce = (+)
-end</code></pre><p>The <code>reduce</code> operation means that it is a property that can be aggregate over a collection of vortex elements. In this particular case, it means that the circulation of a group of vortex elements is just the sum of the circulation of each element. Another example of this can be seen in the definition of <a href="../manual/elements.html#PotentialFlow.Plates.rate_of_impulse"><code>rate_of_impulse</code></a>.</p><footer><hr/><a class="previous" href="../manual/motions.html"><span class="direction">Previous</span><span class="title">Plate Motions</span></a></footer></article></body></html>
+end</code></pre><p>The <code>reduce</code> operation means that it is a property that can be aggregate over a collection of vortex elements. In this particular case, it means that the circulation of a group of vortex elements is just the sum of the circulation of each element. Another example of this can be seen in the definition of <a href="../manual/elements.html#PotentialFlow.Plates.rate_of_impulse"><code>rate_of_impulse</code></a>.</p><h3><a class="nav-anchor" id="Defining-a-new-property-1" href="#Defining-a-new-property-1">Defining a new property</a></h3><p>We&#39;ll go through an example of how to define new properties using the <code>@property</code> marco. Suppose we want to check if a system of elements have branch cuts in their streamfunction, we can simply define the following:</p><pre><code class="language-julia">import PotentialFlow.Properties: @property
+
+@property begin
+	signature = continuous_streamfunction(src::Source)
+	stype = Bool
+	reduce = (&amp;, true)
+end
+
+continuous_streamfunction(::Vortex.Point) = true
+continuous_streamfunction(::Vortex.Blob) = true
+continuous_streamfunction(::Source.Point) = false
+continuous_streamfunction(::Source.Blob) = false
+
+vortices = (Vortex.Point.(rand(10), rand(10)), 
+	        Vortex.Blob.(rand(10), rand(10), rand())
+		   )
+
+sources = (Source.Point.(rand(10), rand(10)),
+           Source.Blob.(rand(10), rand(10), rand())
+		  )
+
+mixed = (vortices, sources)
+
+continuous_streamfunction.((vortices, sources, mixed))
+
+# output
+
+(true, false, false)</code></pre><p>Here, the <code>reduce</code> operation is a tuple that takes in a binary operation and an initial value. When <code>continuous_streamfunction</code> is called on a group source, such as an array of elements, it will recursively call <code>continuous_streamfunction</code> on each member of the group, and use <code>&amp;</code> to combine the results. Without the <code>true</code> initial value, the <code>@property</code> macro will use <code>zero(stype)</code>, which in this case, would have been <code>false</code>. If we did not want the values to be aggregated, but instead wanted to preserve the organization structure of our source elements, we can simply leave out the <code>reduce</code> field. For instance, if we wanted to know whether the element is a desingularized element or not, it does not make sense to reduce the results.</p><pre><code class="language-julia">import PotentialFlow.Properties: @property
+import PotentialFlow: Points, Blobs
+
+@property begin
+	signature = is_desingularized(src::Source)
+	stype = Bool
+end
+
+is_desingularized(::Points.Point) = false
+is_desingularized(::Blobs.Blob) = true
+
+vortices = (Vortex.Point.(rand(2), rand(2)), 
+	        Vortex.Blob.(rand(2), rand(2), rand())
+		   )
+
+sources = (Source.Point.(rand(2), rand(2)),
+           Source.Blob.(rand(2), rand(2), rand())
+		  )
+
+is_desingularized.((vortices, sources))
+
+# output
+
+((Bool[false, false], Bool[true, true]), (Bool[false, false], Bool[true, true]))</code></pre><footer><hr/><a class="previous" href="../manual/motions.html"><span class="direction">Previous</span><span class="title">Plate Motions</span></a></footer></article></body></html>
