@@ -81,6 +81,12 @@ function source_property(signature, stype, reduce_op)
         end
     else
         op = get(reduce_op)
+        if isa(op, Expr) && (op.head == :tuple)
+            init_val = op.args[2]
+            op = op.args[1]
+        else
+            init_val = :(zero($(get(stype))))
+        end
 
         sumvar = gensym(:Σ)
         index = gensym(:i)
@@ -92,7 +98,7 @@ function source_property(signature, stype, reduce_op)
 
         fgroup = quote
             function $fname($(fargs...), ::Type{Elements.Group})
-                $sumvar = zero($(get(stype)))
+                $sumvar = $init_val
                 for $index in eachindex($source_name)
                     $sumvar = $op($sumvar, $iterated_call)
                 end
