@@ -116,8 +116,24 @@
 
         @test_throws ArgumentError @eval (
             @property begin
+            end
+        )
+
+        @test_throws ArgumentError @eval (
+            @property begin
                 signature = ""
             end)
+
+        @test_throws ArgumentError @eval (
+            @property begin
+                signature = f(targ, src)
+            end)
+
+        @eval Elements (@property begin
+                      signature = max_blob_radius(s::Source)
+                      stype = Int
+                      reduce = max
+                      end)
 
         @eval Elements (@property begin
                       signature = induce_count(t::Target, tc::Target, s::Source, sc::Source)
@@ -127,9 +143,11 @@
 
         @eval Vortex.Points begin
             Elements.induce_count(::Complex128, tcount, ::Point, scount) = scount
+            Elements.max_blob_radius(::Point) = 0
         end
         @eval Vortex.Blobs begin
             Elements.induce_count(::Complex128, tcount, ::Blob, scount) = tcount
+            Elements.max_blob_radius(b::Blob) = b.δ
         end
 
         N = rand(1:100)
@@ -139,8 +157,15 @@
         blobs  = Vortex.Blob.(rand(Complex128, N), rand(N), rand())
         bcounts = fill(2, length(blobs))
 
+        sources  = Source.Blob.(rand(Complex128, N), rand(N), rand())
+        bcounts = fill(2, length(blobs))
+
         targets = rand(Complex128, rand(1:100))
         tcounts = fill(3, length(targets))
+
+        @test Elements.max_blob_radius(points) == 0
+        @test Elements.max_blob_radius(blobs) == blobs[1].δ
+        @test Elements.max_blob_radius((points, blobs)) == blobs[1].δ
 
         @test Elements.induce_count(targets[1], tcounts[1], points, pcounts) == length(points)
         @test Elements.induce_count(targets[1], tcounts[1], blobs, bcounts) == 3length(blobs)
