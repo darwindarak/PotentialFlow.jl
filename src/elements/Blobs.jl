@@ -36,12 +36,7 @@ Elements.kind(::Type{Blob{T}}) where T = Singleton
 #== Methods to be extended ==#
 
 Elements.position(b::Blob) = b.z
-
-function Elements.streamfunction(z::Complex128, b::Blob)
-    r² = abs2(z - b.z) + b.δ^2
-    θ = angle(z - b.z)
-    -0.5real(b.S*(0.5log(r²) + im*θ))/π
-end
+Elements.streamfunction(z::Complex128, b::Blob) = real(-0.5b.S*log(z - b.z)/π)
 
 blob_kernel(z, δ) = 0.5im*z/(π*(abs2(z) + δ^2))
 
