@@ -99,7 +99,5 @@ function Base.show(io::IO, s::Sheet)
 end
 
 circulation(s::Sheet) = s.Ss[end] - s.Ss[1]
-flux(::Sheet) = 0.0
-impulse(s::Sheet) = impulse(s.blobs)
 
 end

@@ -1,4 +1,4 @@
-# Vortex Elements
+# Elements
 
 ```@meta
 DocTestSetup = quote
@@ -42,7 +42,7 @@ julia> Elements.impulse(blobs)
 0.41217890550975256 - 0.7325028967929701im
 ```
 Knowing that every element has the same type allows the compiler to perform more aggressive optimizations.
-Tuples are used when we want to mix and match *different* vortex types.
+Tuples are used when we want to mix and match *different* element types.
 For example:
 ```julia
 julia> sys = (points, blobs);
@@ -52,9 +52,9 @@ julia> Elements.impulse(sys)
 ```
 
 This rest of this page documents the data types that represent these elements and some key functions that act on them.
-For more detailed examples, please refer to the [Jupyter notebooks](https://github.com/darwindarak/VortexModel.jl/tree/master/examples).
+For more detailed examples, please refer to the [Jupyter notebooks](https://github.com/darwindarak/PotentialFlow.jl/tree/master/examples).
 
-## Built-in Vortex Types
+## Built-in Types
 
 ```@docs
 Vortex.Point
@@ -65,11 +65,12 @@ Source.Blob
 Plate
 ```
 
-## Vortex Properties
+## Element Properties
 
 ```@docs
 Elements.position
 Elements.circulation
+Elements.flux
 Elements.impulse
 ```
 
