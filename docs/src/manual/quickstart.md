@@ -213,7 +213,7 @@ using PotentialFlow
 using Plots
 clibrary(:colorbrewer)
 srand(1)
-default(colorbar_title=("Γ"), grid = false, ratio = 1, legend = :none, colorbar = :right, markerstrokealpha = 0, markersize = 5)
+default(colorbar_title=("Γ"), grid = false, ratio = 1, legend = :none, colorbar = :right, markerstrokealpha = 0, markersize = 5, size = (600, 400))
 ```
 Now that we compute the velocities of a system of vortex elements, we can march the system forward in time to simulate its behavior.
 As an example, we will simulate of two clusters of vortex blobs merging.
