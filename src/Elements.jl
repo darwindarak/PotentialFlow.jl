@@ -69,16 +69,30 @@ Returns the total circulation contained in `src`.
 ```jldoctest
 julia> points = Vortex.Point.([1.0im, 2.0im], [1.0, 2.0]);
 
+julia> blobs = Vortex.Blob.([1.0im, 2.0im], [1.0, 2.0], 0.1);
+
 julia> Elements.circulation(points[1])
 1.0
 
 julia> Elements.circulation(points)
 3.0
 
+julia> Elements.circulation((points, blobs))
+6.0
+
 julia> Elements.circulation.(points)
 2-element Array{Float64,1}:
  1.0
  2.0
+
+julia> Elements.circulation.((points, blobs))
+(3.0, 3.0)
+
+julia> Elements.circulation(Source.Point(rand(), rand()))
+0.0
+
+julia> Elements.circulation(Source.Blob(rand(), rand(), rand()))
+0.0
 ```
 """
 @property begin
@@ -97,16 +111,27 @@ Returns the flux through a unit circle induced by `src`.
 ```jldoctest
 julia> points = Source.Point.([1.0im, 2.0im], [1.0, 2.0]);
 
+julia> blobs = Source.Blob.([1.0im, 2.0im], [1.0, 2.0], 0.1);
+
 julia> Elements.flux(points[1])
 1.0
 
-julia> Elements.flux(points)
-3.0
+julia> Elements.flux((points, blobs))
+6.0
 
 julia> Elements.flux.(points)
 2-element Array{Float64,1}:
  1.0
  2.0
+
+julia> Elements.flux.((points, blobs))
+(3.0, 3.0)
+
+julia> Elements.flux(Vortex.Point(rand(), rand()))
+0.0
+
+julia> Elements.flux(Vortex.Blob(rand(), rand(), rand()))
+0.0
 ```
 """
 @property begin
