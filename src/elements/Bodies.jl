@@ -67,6 +67,7 @@ mutable struct PowerBody <: Element
 end
 @kind PowerBody Singleton
 
+
 #function deserialize(s::AbstractSerializer, t::Type{Plate})
 #    fields = Tuple(deserialize(s) for i in 1:11)
 #    deserialize(s)
@@ -234,6 +235,18 @@ function streamfunction(ζ::Complex128, b::PowerBody, src, t)
   ψ
 
 end
+
+function streamfunction(ζ::Complex128, b::PowerBody, Winf::Complex128, t)
+  @get b (C, D, α, c)
+
+  W̃inf = Winf*exp(im*α)
+
+  F = W̃inf*C[1]*ζ + conj(W̃inf*C[1])/ζ
+
+  imag(F)
+
+end
+
 
 
 #=
