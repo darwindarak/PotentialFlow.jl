@@ -1,6 +1,7 @@
 module Elements
 
-export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction
+export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction,
+       conftransform, image
 
 using ..Properties
 
@@ -146,6 +147,56 @@ end
     signature = streamfunction(targ::Target, src::Source)
     preallocator = allocate_streamfunction
     stype = Float64
+end
+
+doc"""
+    Elements.conftransform(src,body)
+
+Return the conformally transformed position of `src` via the transform defined
+by `body`. In this context, the position(s) in `src` is interpreted as
+coordinates in the circle plane.
+
+# Example
+
+```jldoctest
+julia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(2.0im, -π, 0.1));
+
+julia> b = PowerBody([1/4,0,1/4],zero(Complex128),0.0)
+
+julia> Elements.conftransform(sys,b)
+(-0.17071067811865476 + 1.0707106781186548im, -0.03383883476483185 + 2.008838834764832im)
+
+```
+"""
+@property begin
+    signature = conftransform(src::Source,b)
+    preallocator = allocate_conftransform
+    stype = Complex128
+end
+
+doc"""
+    Elements.image(src,body)
+
+Return the image position of `src` in the circle-plane representation of `body`.
+In this context, the position(s) in `src` is interpreted as
+coordinates in the circle plane.
+
+# Example
+
+```jldoctest
+julia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(2.0im, -π, 0.1));
+
+julia> b = PowerBody([1/4,0,1/4],zero(Complex128),0.0)
+
+julia> Elements.image(sys,b)
+(0.0 + 1.0im, 0.0 + 0.5im)
+
+```
+"""
+@property begin
+    signature = image(src::Source,b)
+    preallocator = allocate_image
+    stype = Complex128
 end
 
 end

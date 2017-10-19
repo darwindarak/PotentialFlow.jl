@@ -1,10 +1,8 @@
-module Plates
+module Bodies
 
 using DocStringExtensions
 
-export Plate, bound_circulation, bound_circulation!,
-       enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force,
-       RigidBodyMotions
+export PowerBody, RigidBodyMotions, streamfunction
 
 using ..Points
 using ..Blobs
@@ -12,53 +10,62 @@ using ..Blobs
 using ..Elements
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
-                  self_induce_velocity!, allocate_velocity, advect!, reset_velocity!
+                  self_induce_velocity!, allocate_velocity, advect!, reset_velocity!, streamfunction
 
 import ..Utils:@get, MappedVector
+
+
 
 include("bodies/RigidBodyMotions.jl")
 using .RigidBodyMotions
 
-include("plates/chebyshev.jl")
+#=
+export bound_circulation, bound_circulation!,
+       enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force
+=#
 
 """
-    Plate <: Elements.Element
+    PowerBody <: Elements.Element
 
-An infinitely thin, flat plate, represented as a bound vortex sheet
+A two-dimensional body, described by power series mapping
 
 # Constructors
-- `Plate(N, L, c, α)`
+- `PowerBody(C, c, α)`
 """
-mutable struct Plate <: Element
-    "chord length"
-    L::Float64
+mutable struct PowerBody <: Element
+    "power series coefficients, C[1] -> c₁, C[2] -> c₀, etc"
+    C::Vector{Complex128}
     "centroid"
     c::Complex128
-    "centroid velocity"
+    "angle"
     α::Float64
+
+    "number of plotting control points"
+    N::Int
+
+    "control point coordinates in circle space"
+    ζs::Vector{Complex128}
+
+    "control point coordinates in body-fixed space"
+    z̃s::Vector{Complex128}
+
+    "map Jacobian in body-fixed coordinates"
+    dz̃dζs::Vector{Complex128}
+
+    "tangent in body-fixed coordinates"
+    τs::Vector{Complex128}
+
+    "control point coordinates in inertial space"
+    zs::Vector{Complex128}
+
+    "coefficients of power series of |z̃(ζ)|²"
+    D::Vector{Complex128}
 
     "total circulation"
     Γ::Float64
 
-    "number of control points"
-    N::Int
-    "normalized positions (within [-1, 1]) of the control points"
-    ss::Vector{Float64}
-    "control point coordinates"
-    zs::Vector{Complex128}
-    "Chebyshev coefficients of the normal component of velocity induced along the plate by ambient vorticity"
-    A::MappedVector{Float64, Vector{Complex128}, typeof(imag)}
-    "Chebyshev coefficients of the velocity induced along the plate by ambient vorticity"
-    C::Vector{Complex128}
-    "zeroth Chebyshev coefficient associated with body motion"
-    B₀::Float64
-    "first Chebyshev coefficient associated with body motion"
-    B₁::Float64
-
-    "Preplanned discrete Chebyshev transform"
-    dchebt!::Chebyshev.Transform{Complex128, true}
 end
-@kind Plate Singleton
+@kind PowerBody Singleton
 
 #function deserialize(s::AbstractSerializer, t::Type{Plate})
 #    fields = Tuple(deserialize(s) for i in 1:11)
@@ -67,60 +74,182 @@ end
 #    Plate(fields..., dchebt!)
 #end
 
-function Plate(N, L, c, α)
-    ss = Chebyshev.nodes(N)
-    zs = c + 0.5L*ss*exp(im*α)
 
-    C  = zeros(Complex128, N)
-    A = MappedVector(imag, C, 1)
+function PowerBody(C::Vector{Complex128}, c::Complex128, α::Float64)
+    N = 200
+    ζs = circle(N)
+    z̃s = powermap(ζs,C)
+    dz̃dζs = d_powermap(ζs,C)
+    zs = c + z̃s*exp(im*α)
+    τs = zero(ζs)
+    @. τs = im*ζs*dz̃dζs/abs(dz̃dζs)
 
-    dchebt! = Chebyshev.plan_transform!(C)
+    nc = length(C)
+    D = zeros(Complex128,nc+1)
+    Cbig = [C;zeros(Complex128,nc)]
+    for l = 0:nc, j = 1:nc
+      D[l+1] += Cbig[j+l]*conj(Cbig[j])
+    end
+    D[1] *= 0.5
 
-    Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0, dchebt!)
+    PowerBody(C, c, α, N, ζs, z̃s, dz̃dζs, τs, zs, D, 0.0)
 end
 
-Base.length(p::Plate) = p.N
+circle(N) = [exp(im*2π*(i-1)/N) for i in 1:N]
 
-circulation(p::Plate) = p.Γ
+function powermap(ζ::Complex128,C::Vector{Complex128})
+  ζⁿ = ζ
+  z = zero(ζ)
+  for c in C
+    z += c*ζⁿ
+    ζⁿ /= ζ
+  end
+  z
+end
+
+powermap(ζs::Vector{Complex128},C::Vector{Complex128}) = [powermap(ζ,C) for ζ in ζs]
+
+
+function d_powermap(ζ::Complex128,C::Vector{Complex128})
+  dzdζ = C[1]
+  ζⁿ = 1/ζ^2
+  for n in 1:length(C)-2
+    dzdζ -= n*C[n+2]*ζⁿ
+    ζⁿ /= ζ
+  end
+  dzdζ
+end
+
+d_powermap(ζs::Vector{Complex128},C::Vector{Complex128}) = [d_powermap(ζ,C) for ζ in ζs]
+
+jacobian(b::PowerBody) = b.dz̃ds
+
+centroid(b::PowerBody) = b.c
+
+angle(b::PowerBody) = b.α
+
+Base.length(b::PowerBody) = b.N
+circulation(b::PowerBody) = b.Γ
+
+Elements.conftransform(z::Complex128,b::PowerBody) = powermap(z,b.C)
+
+Elements.image(z::Complex128,b::PowerBody) = 1.0/conj(z)
+
+
+Elements.conftransform(s::T,b::PowerBody) where T <: Union{Blob,Point} = Elements.conftransform(s.z,b)
+
+
+Elements.image(s::T,b::PowerBody) where T <: Union{Blob,Point} = Elements.image(s.z,b)
+
+
+function get_image(sources::T, b::PowerBody) where T <: Union{Tuple, AbstractArray}
+    targ = Points.Point[]
+    for source in sources
+        push!(targ,get_image(source,b))
+    end
+    targ
+end
+
+function get_image(src, b::PowerBody)
+    get_image(Elements.unwrap_src(src), b, kind(Elements.unwrap_src(src)))
+end
+
+get_image(src, b::PowerBody, ::Type{Singleton}) = get_image(src,b)
+
+function get_image(src, b::PowerBody, ::Type{Group})
+  targ = Points.Point[]
+  for i in eachindex(src)
+      push!(targ,get_image(src[i], b))
+  end
+  targ
+end
+
+function get_image(src::Union{Blob{T},Point{T}}, b::PowerBody) where T <: Complex
+    Point{T}(Elements.image(src.z,b),src.S)
+end
+
+function get_image(src::Union{Blob{T},Point{T}}, b::PowerBody) where T <: Real
+    Point{T}(Elements.image(src.z,b),-src.S)
+end
+
+function allocate_velocity(::PowerBody)
+    warn("Body kinematics should be initialized manually.  This simply returns a stationary motion")
+    RigidBodyMotion(0.0, 0.0)
+end
+
+function self_induce_velocity!(motion, ::PowerBody, t)
+    motion.ċ, motion.c̈, motion.α̇ = motion.kin(t)
+    motion
+end
+
+function induce_velocity(ζ::Complex128, b::PowerBody, m::RigidBodyMotion, t)
+    @get b (C, D, α, c)
+    self_induce_velocity!(m,b,t);
+
+    @get m (ċ,α̇)
+
+    dz̃dζ = d_powermap(ζ,C)
+
+    c̃̇ = ċ*exp(-im*α)
+
+    ζ⁻ˡ = 1/ζ^2
+    w̃ = c̃̇*conj(C[1])*ζ⁻ˡ + conj(c̃̇)*(dz̃dζ-C[1])
+    for l = 2:length(D)
+        w̃ += im*(l-1)*α̇*D[l]*ζ⁻ˡ
+        ζ⁻ˡ /= ζ
+    end
+
+    w̃/dz̃dζ
+
+end
+
+function streamfunction(ζ::Complex128, b::PowerBody, m::RigidBodyMotion, t)
+  @get b (C, D, α, c)
+  self_induce_velocity!(m,b,t);
+
+  @get m (ċ,α̇)
+
+  z̃ = powermap(ζ,C)
+
+  c̃̇ = ċ*exp(-im*α)
+
+  ζ⁻ˡ = 1/ζ
+  F = -c̃̇*conj(C[1])*ζ⁻ˡ + conj(c̃̇)*(z̃-C[1]*ζ-C[2]) - im*α̇*D[1]
+  for l = 2:length(D)
+      F -= im*α̇*D[l]*ζ⁻ˡ
+      ζ⁻ˡ /= ζ
+  end
+
+  imag(F)
+
+end
+
+function streamfunction(ζ::Complex128, b::PowerBody, src, t)
+
+  srcimg = get_image(src,b)
+  sys = (src,srcimg)
+
+  ψ = streamfunction(ζ,sys)
+
+  ψ
+
+end
+
+
+#=
+
 function impulse(p::Plate)
     @get p (c, B₀, α, Γ, L, A)
     -im*c*Γ - exp(im*α)*π*(0.5L)^2*im*(A[0] - 0.5A[2] - B₀)
 end
 
-function allocate_velocity(::Plate)
-    warn("Plate kinematics should be initialized manually.  This simply returns a stationary motion")
-    RigidBodyMotion(0.0, 0.0)
-end
-function self_induce_velocity!(motion, ::Plate, t)
-    motion.ċ, motion.c̈, motion.α̇ = motion.kin(t)
-    motion
-end
+
+
 
 normal(z, α) = imag(exp(-im*α)*z)
 tangent(z, α) = real(exp(-im*α)*z)
 
-function induce_velocity(z::Complex128, p::Plate, t)
-    @get p (α, L, c, B₀, B₁, Γ, A)
 
-    z̃ = conj(2*(z - c)*exp(-im*α)/L)
-
-    ρ = √(z̃ - 1)*√(z̃ + 1)
-    J = z̃ - ρ
-
-    w = (A[1] + 2Γ/(π*L))
-    w += 2(A[0] - B₀)*J
-    w -= B₁*J^2
-
-    w /= ρ
-
-    Jⁿ = J
-    for n in 1:length(A)-1
-        w -= 2A[n]*Jⁿ
-        Jⁿ *= J
-    end
-
-    0.5im*w*exp(im*α)
-end
 
 function induce_velocity!(ws::Vector, p::Plate, sources::T, t) where T <: Union{Tuple, AbstractArray}
     for source in sources
@@ -281,11 +410,11 @@ julia> Plates.edges(p)
 edges(plate) = plate.zs[end], plate.zs[1]
 
 include("plates/pressure.jl")
+=#
 
-function Base.show(io::IO, p::Plate)
-    lesp, tesp = suction_parameters(p)
-    println(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(round(rad2deg(p.α),2))ᵒ")
-    print(io, "       LESP = $(round(lesp,2)), TESP = $(round(tesp,2))")
+function Base.show(io::IO, b::PowerBody)
+    println(io, "Power series body: C = $(b.C), c = $(b.c), α = $(round(rad2deg(b.α),2))ᵒ")
 end
+
 
 end
