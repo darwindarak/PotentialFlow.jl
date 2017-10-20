@@ -1,0 +1,10 @@
+#
+/bin/bash
+
+julia -e '
+Pkg.checkout("PotentialFlow")
+using PotentialFlow
+using Plots
+using Interact
+pyplot()
+'
