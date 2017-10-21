@@ -31,3 +31,4 @@ to get the most recent version of the library and its dependencies.
 
 The plots in this documentation are generated using [Plots.jl](http://docs.juliaplots.org/latest/).
 You might want to install that too to follow the examples in the [getting started guide](@ref getting-started) or the [Jupyter notebooks](https://github.com/darwindarak/PotentialFlow.jl/tree/master/binder/notebooks).
+The notebooks can also be run online [here](https://beta.mybinder.org/v2/gh/darwindarak/PotentialFlow.jl/master?filepath=binder%2Fnotebooks).

@@ -24,3 +24,4 @@ julia> Pkg.update()
 to get the most recent version of the library and its dependencies.
 
 Examples can be found in the [documentation](https://darwindarak.github.io/PotentialFlow.jl) and the [Jupyter notebooks](https://github.com/darwindarak/PotentialFlow.jl/tree/master/binder/notebooks).
+You can also try the notebooks [here](https://beta.mybinder.org/v2/gh/darwindarak/PotentialFlow.jl/master?filepath=binder%2Fnotebooks).
