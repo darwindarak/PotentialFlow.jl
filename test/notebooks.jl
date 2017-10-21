@@ -1,17 +1,16 @@
 using NBInclude
 
 @testset "Jupyter notebooks" begin
+    notebooks = ["Pitching Plate - K07",
+                 "Point Source Demo",
+                 "Translating Plate - 20°",
+                 "Translating Plate - 60°",
+                 "Vortex Sheet Roll-up"]
 
-    notebook_dir = splitdir(@__FILE__())[1]
+    notebook_dir = joinpath(splitdir(@__FILE__())[1], "../binder/notebooks")
 
-    for (root, dirs, files) in walkdir("$notebook_dir/../examples")
-        if !contains(root, ".ipynb_checkpoints")
-            notebooks = filter(f -> splitext(f)[2] == ".ipynb", files)
-            @testset "$notebook" for notebook in notebooks
-                nbinclude(joinpath(root, notebook))
-                @test true
-            end
-        end
-
+    @testset "$notebook" for notebook in notebooks
+        nbinclude(joinpath(notebook_dir, "$notebook.ipynb"))
+        @test true
     end
 end
