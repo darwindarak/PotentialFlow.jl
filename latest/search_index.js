@@ -21,7 +21,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Installation",
     "category": "section",
-    "text": "This package requires Julia 0.6- and above. It is not a registered package, so it should be installed with:julia> Pkg.clone(\"git@github.com:darwindarak/PotentialFlow.jl.git\")Since it is still under heavy development, you should runjulia> Pkg.test(\"PotentialFlow\") # might take some timeto make sure things are working as intended andjulia> Pkg.update()to get the most recent version of the library and its dependencies.The plots in this documentation are generated using Plots.jl. You might want to install that too to follow the examples in the getting started guide or the Jupyter notebooks."
+    "text": "This package requires Julia 0.6- and above. It is not a registered package, so it should be installed with:julia> Pkg.clone(\"git@github.com:darwindarak/PotentialFlow.jl.git\")Since it is still under heavy development, you should runjulia> Pkg.test(\"PotentialFlow\") # might take some timeto make sure things are working as intended andjulia> Pkg.update()to get the most recent version of the library and its dependencies.The plots in this documentation are generated using Plots.jl. You might want to install that too to follow the examples in the getting started guide or the Jupyter notebooks. The notebooks can also be run online here."
 },
 
 {
