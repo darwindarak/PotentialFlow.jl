@@ -6,3 +6,4 @@ MacroTools
 ForwardDiff
 MappedArrays
 RecipesBase
+PlotUtils

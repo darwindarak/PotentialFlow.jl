@@ -1,4 +1,5 @@
 using RecipesBase
+import PlotUtils: cgrad
 
 @userplot Streamlines
 
@@ -11,6 +12,7 @@ using RecipesBase
     @series begin
         seriestype --> :contour
         grid --> :none
+        color --> cgrad([:grey, :grey])
 
         s.args[1], s.args[2], ψ
     end
