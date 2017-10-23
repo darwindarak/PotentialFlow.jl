@@ -173,7 +173,7 @@ function Elements.streamfunction(z::Complex128, p::Plate)
         ψ -= A[n]*0.5real(J^(n+1)/(n+1) - J^(n-1)/(n-1))
     end
 
-    return ψ
+    return -ψ/4
 end
 
 function advect!(plate₊::Plate, plate₋::Plate, ṗ::RigidBodyMotion, Δt)
