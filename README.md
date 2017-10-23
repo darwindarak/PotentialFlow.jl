@@ -95,5 +95,5 @@ nothing # hide
 ```
 ![Flat plate in freestream](https://darwindarak.github.io/PotentialFlow.jl/latest/translating_plate.svg)
 
-More examples can be found in the [documentation](https://darwindarak.github.io/PotentialFlow.jl) and the [Jupyter notebooks](https://github.com/darwindarak/PotentialFlow.jl/tree/master/binder/notebooks).
-You can also run the notebooks directly in your browser [here](https://beta.mybinder.org/v2/gh/darwindarak/PotentialFlow.jl/master?filepath=binder%2Fnotebooks).
+More examples can be found in the [documentation](https://darwindarak.github.io/PotentialFlow.jl) and the [Jupyter notebooks](https://github.com/darwindarak/PotentialFlow.jl/tree/binder/binder/notebooks).
+You can also run the notebooks directly in your browser [here](https://beta.mybinder.org/v2/gh/darwindarak/PotentialFlow.jl/binder?filepath=binder%2Fnotebooks).
