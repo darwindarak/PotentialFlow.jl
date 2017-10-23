@@ -90,8 +90,6 @@ y = linspace(-0.5, 0.5, 100)
 
 streamlines(x, y, (plate, freestream), legend = false, colorbar = false)
 plot!(plate, linewidth = 2, ratio = 1, size = (600, 300))
-savefig("translating_plate.svg") # hide
-nothing # hide
 ```
 ![Flat plate in freestream](https://darwindarak.github.io/PotentialFlow.jl/latest/translating_plate.svg)
 
