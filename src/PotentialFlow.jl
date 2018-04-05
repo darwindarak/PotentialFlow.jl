@@ -28,7 +28,11 @@ include("elements/Vortex.jl")
 include("elements/Source.jl")
 
 include("elements/Plates.jl")
+include("elements/Bodies.jl")
+
 import .Plates: Plate
+import .Bodies: PowerBody
+
 
 include("elements/Doublets.jl")
 import .Doublets: Doublet
@@ -38,5 +42,6 @@ include("elements/Freestream.jl")
 #== Plot Recipes ==#
 
 include("plot_recipes.jl")
+
 
 end
