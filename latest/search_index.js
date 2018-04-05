@@ -29,7 +29,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Basic Usage",
     "category": "section",
-    "text": "Let's create a point vortex and a point source and probe their associated velocity field:julia> using PotentialFlow\n\njulia> t = 0.0\n0.0\n\njulia> vortex = Vortex.Point(1.0 + 1.0im, π)\nVortex.Point(1.0 + 1.0im, 3.141592653589793)\n\njulia> source = Source.Point(1.0 - 1.0im, -π)\nSource.Point(1.0 - 1.0im, -3.141592653589793)\n\njulia> induce_velocity(0.0im, vortex, t)\n0.25 - 0.25im\n\njulia> induce_velocity(source, vortex, t)\n0.25 - 0.0im\n\njulia> induce_velocity(0.0im, (vortex, source), t)\n0.5 - 0.5im\n\njulia> induce_velocity([0.0im, 1.0im, 1.0], (vortex, source), t)\n3-element Array{Complex{Float64},1}:\n 0.5-0.5im\n 0.1-0.7im\n 0.5-0.5imNote the all positions and velocities are given in complex coordiantes.Now let's move on to something more interesting. We'll create a stationary flat plate (bound vortex sheet) and place it in a freestream. In order to enforce the Kutta condition, we also place a starting vortex at -Inf.using PotentialFlow\nusing Plots\n\nc₀ = 0.0im # initial centroid position\nα = π/9    # angle of attack\nL = 1.0    # chord length\nN = 128    # number of discretization points\n\nċ = 0.0    # translation velocity\nα̇ = 0.0    # rate of rotation\nt = 0.0    # current time\n\nfreestream = Freestream(-1.0)\n\nplate = Plate(N, L, c₀, α)\nmotion = Plates.RigidBodyMotion(ċ, α̇)\nPlates.enforce_no_flow_through!(plate, motion, freestream, 0.0)\n\n# We now want to determine the strength of the starting vortex\n# to satisfy the Kutta condition at the trailing edge of the plate\n_, Γ = Plates.vorticity_flux!(plate, (), Vortex.Point(-Inf, 1.0), t, Inf, 0);\nstarting_vortex = Vortex.Point(-Inf, Γ)\n\n# Plot some streamlines\n\nx = linspace(-2, 1, 100)\ny = linspace(-0.5, 0.5, 100)\n\nstreamlines(x, y, (plate, freestream), legend = false, colorbar = false)\nplot!(plate, linewidth = 2, ratio = 1, size = (600, 300))\nsavefig(\"translating_plate.svg\") # hide\nnothing # hide(Image: Flat plate in freestream)"
+    "text": "Let\'s create a point vortex and a point source and probe their associated velocity field:julia> using PotentialFlow\n\njulia> t = 0.0\n0.0\n\njulia> vortex = Vortex.Point(1.0 + 1.0im, π)\nVortex.Point(1.0 + 1.0im, 3.141592653589793)\n\njulia> source = Source.Point(1.0 - 1.0im, -π)\nSource.Point(1.0 - 1.0im, -3.141592653589793)\n\njulia> induce_velocity(0.0im, vortex, t)\n0.25 - 0.25im\n\njulia> induce_velocity(source, vortex, t)\n0.25 - 0.0im\n\njulia> induce_velocity(0.0im, (vortex, source), t)\n0.5 - 0.5im\n\njulia> induce_velocity([0.0im, 1.0im, 1.0], (vortex, source), t)\n3-element Array{Complex{Float64},1}:\n 0.5-0.5im\n 0.1-0.7im\n 0.5-0.5imNote the all positions and velocities are given in complex coordiantes.Now let\'s move on to something more interesting. We\'ll create a stationary flat plate (bound vortex sheet) and place it in a freestream. In order to enforce the Kutta condition, we also place a starting vortex at -Inf.using PotentialFlow\nusing Plots\n\nc₀ = 0.0im # initial centroid position\nα = π/9    # angle of attack\nL = 1.0    # chord length\nN = 128    # number of discretization points\n\nċ = 0.0    # translation velocity\nα̇ = 0.0    # rate of rotation\nt = 0.0    # current time\n\nfreestream = Freestream(-1.0)\n\nplate = Plate(N, L, c₀, α)\nmotion = Plates.RigidBodyMotion(ċ, α̇)\nPlates.enforce_no_flow_through!(plate, motion, freestream, 0.0)\n\n# We now want to determine the strength of the starting vortex\n# to satisfy the Kutta condition at the trailing edge of the plate\n_, Γ = Plates.vorticity_flux!(plate, (), Vortex.Point(-Inf, 1.0), t, Inf, 0);\nstarting_vortex = Vortex.Point(-Inf, Γ)\n\n# Plot some streamlines\n\nx = linspace(-2, 1, 100)\ny = linspace(-0.5, 0.5, 100)\n\nstreamlines(x, y, (plate, freestream), legend = false, colorbar = false)\nplot!(plate, linewidth = 2, ratio = 1, size = (600, 300))\nsavefig(\"translating_plate.svg\") # hide\nnothing # hide(Image: Flat plate in freestream)"
 },
 
 {
@@ -53,7 +53,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Getting Started",
     "title": "Creating Flow Elements",
     "category": "section",
-    "text": "We start by importing the library and creating a single point vortex with unit circulation located at (1,1):julia> using PotentialFlow\n\njulia> p = Vortex.Point( 1.0 + 1.0im, 1.0 )\nVortex.Point(1.0 + 1.0im, 1.0)By convention, the arguments for element constructors are position(s), circulation/strength(s), followed by any type specific parameters. For example, a vortex blob at the same location as p with a blob radius of 0.1 is created withjulia> Vortex.Blob(1.0 + 1.0im, 1.0, 0.1)\nVortex.Blob(1.0 + 1.0im, 1.0, 0.1)We can use Julia's vectorized dot syntax to construct whole arrays of elements. For example, here we create five point vortices and five point sources:julia> N = 5;\n\njulia> zs = Complex.(randn(N), randn(N));\n\njulia> vortices = Vortex.Point.(zs + 1.5, rand(N))\n5-element Array{PotentialFlow.Points.Point{Float64},1}:\n Vortex.Point(1.7972879845354617 + 0.31111133849833383im, 0.42471785049513144)\n Vortex.Point(1.882395967790608 + 2.2950878238373105im, 0.773223048457377)\n Vortex.Point(0.9023655232717689 - 2.2670863488005306im, 0.2811902322857298)\n Vortex.Point(1.4895547553626243 + 0.5299655761667461im, 0.20947237319807077)\n Vortex.Point(0.660973145611236 + 0.43142152642291204im, 0.25137920979222494)\n\njulia> sources = Source.Point.(zs - 1.5, rand(N))\n5-element Array{PotentialFlow.Points.Point{Complex{Float64}},1}:\n Source.Point(-1.2027120154645383 + 0.31111133849833383im, 0.02037486871266725)\n Source.Point(-1.117604032209392 + 2.2950878238373105im, 0.2877015122756894)\n Source.Point(-2.0976344767282313 - 2.2670863488005306im, 0.859512136087661)\n Source.Point(-1.5104452446373757 + 0.5299655761667461im, 0.07695088688120899)\n Source.Point(-2.339026854388764 + 0.43142152642291204im, 0.6403962459899388)\nWe can mix different vortex types together by grouping them in tuples. For example, a collection of vortex elements consisting of the point vortices and vortex blobs created earlier can be grouped together with:julia> sys = (vortices, sources);note: Note\nThe Unicode characters used in the examples can be entered in the Julia REPL (and most text editors with the appropriate plugins) via tab completion..  For example:Γ: \\Gamma<TAB>\nΔ: \\Delta<TAB>\nẋ: x\\dot<TAB>\n🌀: \\:cyclone:<TAB>We can access properties of any vortex element by directly accessing its fields, for example:julia> p.z\n1.0 + 1.0im\nHowever, it is better practice to use accessor methods, such as:julia> Elements.position(p)\n1.0 + 1.0im\nsince not all element types store their position in a z field but they are all required to implement a Elements.position method (also see Elements.impulse and Elements.position). These accessor methods, combined with the dot syntax, also make it easier to work with properties of arrays and tuples of vortex elements.julia> Elements.circulation(vortices)\n1.939982714228534\n\njulia> Elements.circulation(sources)\n0.0\n\njulia> Elements.circulation(sys)\n1.939982714228534\n\njulia> Elements.circulation.(vortices)\n5-element Array{Float64,1}:\n 0.424718\n 0.773223\n 0.28119\n 0.209472\n 0.251379\n\njulia> Elements.position.(sources)\n5-element Array{Complex{Float64},1}:\n -1.20271+0.311111im\n  -1.1176+2.29509im\n -2.09763-2.26709im\n -1.51045+0.529966im\n -2.33903+0.431422im\n"
+    "text": "We start by importing the library and creating a single point vortex with unit circulation located at (1,1):julia> using PotentialFlow\n\njulia> p = Vortex.Point( 1.0 + 1.0im, 1.0 )\nVortex.Point(1.0 + 1.0im, 1.0)By convention, the arguments for element constructors are position(s), circulation/strength(s), followed by any type specific parameters. For example, a vortex blob at the same location as p with a blob radius of 0.1 is created withjulia> Vortex.Blob(1.0 + 1.0im, 1.0, 0.1)\nVortex.Blob(1.0 + 1.0im, 1.0, 0.1)We can use Julia\'s vectorized dot syntax to construct whole arrays of elements. For example, here we create five point vortices and five point sources:julia> N = 5;\n\njulia> zs = Complex.(randn(N), randn(N));\n\njulia> vortices = Vortex.Point.(zs + 1.5, rand(N))\n5-element Array{PotentialFlow.Points.Point{Float64},1}:\n Vortex.Point(1.7972879845354617 + 0.31111133849833383im, 0.42471785049513144)\n Vortex.Point(1.882395967790608 + 2.2950878238373105im, 0.773223048457377)\n Vortex.Point(0.9023655232717689 - 2.2670863488005306im, 0.2811902322857298)\n Vortex.Point(1.4895547553626243 + 0.5299655761667461im, 0.20947237319807077)\n Vortex.Point(0.660973145611236 + 0.43142152642291204im, 0.25137920979222494)\n\njulia> sources = Source.Point.(zs - 1.5, rand(N))\n5-element Array{PotentialFlow.Points.Point{Complex{Float64}},1}:\n Source.Point(-1.2027120154645383 + 0.31111133849833383im, 0.02037486871266725)\n Source.Point(-1.117604032209392 + 2.2950878238373105im, 0.2877015122756894)\n Source.Point(-2.0976344767282313 - 2.2670863488005306im, 0.859512136087661)\n Source.Point(-1.5104452446373757 + 0.5299655761667461im, 0.07695088688120899)\n Source.Point(-2.339026854388764 + 0.43142152642291204im, 0.6403962459899388)\nWe can mix different vortex types together by grouping them in tuples. For example, a collection of vortex elements consisting of the point vortices and vortex blobs created earlier can be grouped together with:julia> sys = (vortices, sources);note: Note\nThe Unicode characters used in the examples can be entered in the Julia REPL (and most text editors with the appropriate plugins) via tab completion..  For example:Γ: \\Gamma<TAB>\nΔ: \\Delta<TAB>\nẋ: x\\dot<TAB>\n🌀: \\:cyclone:<TAB>We can access properties of any vortex element by directly accessing its fields, for example:julia> p.z\n1.0 + 1.0im\nHowever, it is better practice to use accessor methods, such as:julia> Elements.position(p)\n1.0 + 1.0im\nsince not all element types store their position in a z field but they are all required to implement a Elements.position method (also see Elements.impulse and Elements.position). These accessor methods, combined with the dot syntax, also make it easier to work with properties of arrays and tuples of vortex elements.julia> Elements.circulation(vortices)\n1.939982714228534\n\njulia> Elements.circulation(sources)\n0.0\n\njulia> Elements.circulation(sys)\n1.939982714228534\n\njulia> Elements.circulation.(vortices)\n5-element Array{Float64,1}:\n 0.424718\n 0.773223\n 0.28119\n 0.209472\n 0.251379\n\njulia> Elements.position.(sources)\n5-element Array{Complex{Float64},1}:\n -1.20271+0.311111im\n  -1.1176+2.29509im\n -2.09763-2.26709im\n -1.51045+0.529966im\n -2.33903+0.431422im\n"
 },
 
 {
@@ -92,7 +92,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Vortex.Point",
     "page": "Elements",
     "title": "PotentialFlow.Vortex.Point",
-    "category": "Type",
+    "category": "type",
     "text": "Vortex.Point(z::Complex128, Γ::Float64)\n\nA point vortex located at z with circulation Γ.\n\nA new point vortex can be created from an existing one by treating the existing point vortex as a function and passing in the parameter you want to change as keyword arguments. For example,\n\njulia> p = Vortex.Point(1.0, 1.0)\nVortex.Point(1.0 + 0.0im, 1.0)\n\njulia> p()\nVortex.Point(1.0 + 0.0im, 1.0)\n\njulia> p(Γ = 2.0)\nVortex.Point(1.0 + 0.0im, 2.0)\n\n\n\n"
 },
 
@@ -100,7 +100,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Vortex.Blob",
     "page": "Elements",
     "title": "PotentialFlow.Vortex.Blob",
-    "category": "Type",
+    "category": "type",
     "text": "Vortex.Blob(z::Complex128, Γ::Float64, δ::Float64)\n\nA regularized point vortex located at z with circulation Γ and blob radius δ.\n\nA new vortex blob can be created from an existing one by treating the existing blob as a function and passing in the parameter you want to change as keyword arguments. For example,\n\njulia> b = Vortex.Blob(1.0, 1.0, 0.1)\nVortex.Blob(1.0 + 0.0im, 1.0, 0.1)\n\njulia> b()\nVortex.Blob(1.0 + 0.0im, 1.0, 0.1)\n\njulia> b(Γ = 2.0, δ = 0.01)\nVortex.Blob(1.0 + 0.0im, 2.0, 0.01)\n\n\n\n"
 },
 
@@ -108,7 +108,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Vortex.Sheet",
     "page": "Elements",
     "title": "PotentialFlow.Vortex.Sheet",
-    "category": "Type",
+    "category": "type",
     "text": "Vortex.Sheet <: Elements.Element\n\nA vortex sheet represented by vortex blob control points\n\nFields\n\nblobs: the underlying array of vortex blobs\nSs: the cumulated sum of circulation starting from the first control point\nδ: the blob radius of all the vortex blobs\nzs: a mapped array that accesses the position of each control point\n\nConstructors:\n\nVortex.Sheet(blobs, Γs, δ)\nVortex.Sheet(zs, Γs, δ) where zs is an array of positions for the control points\n\n\n\n"
 },
 
@@ -116,7 +116,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Source.Point",
     "page": "Elements",
     "title": "PotentialFlow.Source.Point",
-    "category": "Type",
+    "category": "type",
     "text": "Source.Point(z::Complex128, S::Float64)\n\nA point source located at z with strength S.\n\nA new point source can be created from an existing one by treating the existing source as a function and passing in the parameter you want to change as keyword arguments. For example,\n\njulia> p = Source.Point(1.0, 1.0)\nSource.Point(1.0 + 0.0im, 1.0)\n\njulia> p()\nSource.Point(1.0 + 0.0im, 1.0)\n\njulia> p(S = 2.0)\nSource.Point(1.0 + 0.0im, 2.0)\n\n\n\n"
 },
 
@@ -124,7 +124,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Source.Blob",
     "page": "Elements",
     "title": "PotentialFlow.Source.Blob",
-    "category": "Type",
+    "category": "type",
     "text": "Source.Blob(z::Complex128, S::Float64, δ::Float64)\n\nA regularized point source located at z with strength S and blob radius δ.\n\nA new blob source can be created from an existing one by treating the existing blob as a function and passing in the parameter you want to change as keyword arguments. For example,\n\njulia> b = Source.Blob(1.0, 1.0, 0.1)\nSource.Blob(1.0 + 0.0im, 1.0, 0.1)\n\njulia> b()\nSource.Blob(1.0 + 0.0im, 1.0, 0.1)\n\njulia> b(S = 2.0, δ = 0.01)\nSource.Blob(1.0 + 0.0im, 2.0, 0.01)\n\n\n\n"
 },
 
@@ -132,7 +132,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Plates.Plate",
     "page": "Elements",
     "title": "PotentialFlow.Plates.Plate",
-    "category": "Type",
+    "category": "type",
     "text": "Plate <: Elements.Element\n\nAn infinitely thin, flat plate, represented as a bound vortex sheet\n\nConstructors\n\nPlate(N, L, c, α)\n\n\n\n"
 },
 
@@ -148,7 +148,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Elements.position",
     "page": "Elements",
     "title": "PotentialFlow.Elements.position",
-    "category": "Function",
+    "category": "function",
     "text": "Elements.position(src::Element)\n\nReturns the complex position of a potential flow element. This is a required method for all Element types.\n\nExample\n\njulia> point = Vortex.Point(1.0 + 0.0im, 1.0);\n\njulia> Elements.position(point)\n1.0 + 0.0im\n\njulia> points = Vortex.Point.([1.0im, 2.0im], 1.0);\n\njulia> Elements.position.(points)\n2-element Array{Complex{Float64},1}:\n 0.0+1.0im\n 0.0+2.0im\n\n\n\n"
 },
 
@@ -156,7 +156,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Elements.circulation",
     "page": "Elements",
     "title": "PotentialFlow.Elements.circulation",
-    "category": "Function",
+    "category": "function",
     "text": "Elements.circulation(src)\n\nReturns the total circulation contained in src.\n\nExample\n\njulia> points = Vortex.Point.([1.0im, 2.0im], [1.0, 2.0]);\n\njulia> blobs = Vortex.Blob.([1.0im, 2.0im], [1.0, 2.0], 0.1);\n\njulia> Elements.circulation(points[1])\n1.0\n\njulia> Elements.circulation(points)\n3.0\n\njulia> Elements.circulation((points, blobs))\n6.0\n\njulia> Elements.circulation.(points)\n2-element Array{Float64,1}:\n 1.0\n 2.0\n\njulia> Elements.circulation.((points, blobs))\n(3.0, 3.0)\n\njulia> Elements.circulation(Source.Point(rand(), rand()))\n0.0\n\njulia> Elements.circulation(Source.Blob(rand(), rand(), rand()))\n0.0\n\n\n\n"
 },
 
@@ -164,7 +164,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Elements.flux",
     "page": "Elements",
     "title": "PotentialFlow.Elements.flux",
-    "category": "Function",
+    "category": "function",
     "text": "Elements.flux(src)\n\nReturns the flux through a unit circle induced by src.\n\nExample\n\njulia> points = Source.Point.([1.0im, 2.0im], [1.0, 2.0]);\n\njulia> blobs = Source.Blob.([1.0im, 2.0im], [1.0, 2.0], 0.1);\n\njulia> Elements.flux(points[1])\n1.0\n\njulia> Elements.flux((points, blobs))\n6.0\n\njulia> Elements.flux.(points)\n2-element Array{Float64,1}:\n 1.0\n 2.0\n\njulia> Elements.flux.((points, blobs))\n(3.0, 3.0)\n\njulia> Elements.flux(Vortex.Point(rand(), rand()))\n0.0\n\njulia> Elements.flux(Vortex.Blob(rand(), rand(), rand()))\n0.0\n\n\n\n"
 },
 
@@ -172,7 +172,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Elements.impulse",
     "page": "Elements",
     "title": "PotentialFlow.Elements.impulse",
-    "category": "Function",
+    "category": "function",
     "text": "Elements.impulse(src)\n\nReturn the aerodynamic impulse of src about (0,0):\n\nP = int boldsymbolx times boldsymbolomegamathrmdA\n\nThis is a required method for all vortex types.\n\nExample\n\njulia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(1.0im, -π, 0.1));\n\njulia> Elements.impulse(sys[1])\n3.141592653589793 + 0.0im\n\njulia> Elements.impulse(sys)\n0.0 + 0.0im\n\n\n\n"
 },
 
@@ -188,7 +188,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Sheets.append_segment!",
     "page": "Elements",
     "title": "PotentialFlow.Sheets.append_segment!",
-    "category": "Function",
+    "category": "function",
     "text": "Sheets.append_segment!(sheet::Sheet, z, Γ)\n\nAppend a new segment with circulation Γ extending from the end of the sheet to z.\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> sheet.blobs[end]\nVortex.Blob(1.0 + 0.0im, 0.5, 0.2)\n\njulia> Sheets.append_segment!(sheet, 1.1, 2.0)\n\njulia> sheet\nVortex Sheet: L ≈ 1.1, Γ = 12.0, δ = 0.2\n\njulia> sheet.blobs[end]\nVortex.Blob(1.1 + 0.0im, 1.0, 0.2)\n\n\n\n"
 },
 
@@ -196,7 +196,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Sheets.truncate!",
     "page": "Elements",
     "title": "PotentialFlow.Sheets.truncate!",
-    "category": "Function",
+    "category": "function",
     "text": "Sheets.truncate!(sheet, n::Int)\n\nRemove segments 0:n from sheet, and return the circulation in those segments.\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> Sheets.truncate!(sheet, 5)\n4.0\n\n\n\n"
 },
 
@@ -204,7 +204,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Sheets.redistribute_points!",
     "page": "Elements",
     "title": "PotentialFlow.Sheets.redistribute_points!",
-    "category": "Function",
+    "category": "function",
     "text": "Sheets.redistribute_points!(sheet, zs, Γs)\n\nReturns the modified sheet with replacement control points at positions zs and strength Γs.\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> sys = (sheet,)\n(Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2,)\n\njulia> Sheets.redistribute_points!(sheet, 0:0.2:2, 0.0:0.5:5)\nVortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2\n\njulia> sys[1]\nVortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2\n\n\n\n"
 },
 
@@ -212,7 +212,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Sheets.remesh",
     "page": "Elements",
     "title": "PotentialFlow.Sheets.remesh",
-    "category": "Function",
+    "category": "function",
     "text": "Sheets.remesh(sheet, Δs::Float64 , params::Tuple = ())\n\nUniformly redistribute the control points of the sheet to have a nominal spacing of Δs. Material quantities that should be redistributed along with the control points can be passed in as elements of params.\n\nReturns the tuple (z₌, Γ₌, L [, p₌]) where\n\nz₌ is an array with the positions of the uniformly distributed points\nΓ₌ is circulation interpolated onto z₌\nL is total length of the sheet\np₌ is a tuple containing the material quantities from params interpolated onto z₌\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> age = collect(10.0:-1:0);\n\njulia> Sheets.remesh(sheet, 0.2, (age, ))\n(Complex{Float64}[0.0+0.0im, 0.25+0.0im, 0.5+0.0im, 0.75+0.0im, 1.0+0.0im], [0.0, 2.5, 5.0, 7.5, 10.0], 1.0, ([10.0, 7.5, 5.0, 2.5, 0.0],))\n\n\n\n"
 },
 
@@ -220,7 +220,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Sheets.remesh!",
     "page": "Elements",
     "title": "PotentialFlow.Sheets.remesh!",
-    "category": "Function",
+    "category": "function",
     "text": "Sheets.remesh!(sheet::Sheet, Δs::Float64, params::Tuple = ())\n\nSame as Sheets.remesh, except sheet is replaced internally by a uniformly interpolated control points. Returns the tuple (sheet, L, p₌) where\n\nsheet is the modified sheet\nL is total length of the sheet\np₌ is a tuple containing the material quantities from params interpolated onto the new control points of sheet\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> age = collect(10.0:-1:0);\n\njulia> Sheets.remesh!(sheet, 0.2, (age,));\n\njulia> Elements.position.(sheet.blobs)\n5-element Array{Complex{Float64},1}:\n  0.0+0.0im\n 0.25+0.0im\n  0.5+0.0im\n 0.75+0.0im\n  1.0+0.0im\n\njulia> age\n5-element Array{Float64,1}:\n 10.0\n  7.5\n  5.0\n  2.5\n  0.0\n\n\n\n"
 },
 
@@ -228,7 +228,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Sheets.split!",
     "page": "Elements",
     "title": "PotentialFlow.Sheets.split!",
-    "category": "Function",
+    "category": "function",
     "text": "Sheets.split!(sheet, n::Int)\n\nRemove segments 0:n from sheet, and return those segments as a new sheet.\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> sheet₋ = Sheets.split!(sheet, 5)\nVortex Sheet: L ≈ 0.4, Γ = 4.0, δ = 0.2\n\njulia> sheet\nVortex Sheet: L ≈ 0.6, Γ = 6.0, δ = 0.2\n\n\n\n"
 },
 
@@ -236,7 +236,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Sheets.filter!",
     "page": "Elements",
     "title": "PotentialFlow.Sheets.filter!",
-    "category": "Function",
+    "category": "function",
     "text": "Sheets.filter!(sheet, Δs, Δf[, params])\n\nRedistribute and filter the control points of a vortex sheet\n\nArguments\n\nsheet: the vortex sheet to be modified\nΔs: the nominal spacing between the uniform points\nΔf: the minimum length scale that the filter should allow to pass through\nparams: an optional tuple of vectors containing material properties\n\nReturns\n\nIf params is passed in, then its vectors will be overwritten by their interpolated values on the new control points, and the function returns the tuple (sheet, params). Otherwise, it returns (sheet, ())\n\n\n\n"
 },
 
@@ -244,7 +244,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Sheets.filter_position!",
     "page": "Elements",
     "title": "PotentialFlow.Sheets.filter_position!",
-    "category": "Function",
+    "category": "function",
     "text": "Sheets.filter_position!(s, Δf, L = arclength(z₌))\n\nFilter out any length scales in s that is smaller than Δf, storing the result back in s. s can be either a vector of complex positions, or a Vortex.Sheet.\n\n\n\n"
 },
 
@@ -252,7 +252,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Sheets.arclength",
     "page": "Elements",
     "title": "PotentialFlow.Sheets.arclength",
-    "category": "Function",
+    "category": "function",
     "text": "Sheets.arclength(s)\n\nCompute the polygonal arc length of s, where s can be either an vector of complex numbers or a Vortex.Sheet.\n\nExample\n\n```jldoctest julia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2) Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> Sheets.arclength(sheet) 1.0\n\n\n\n"
 },
 
@@ -260,7 +260,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Sheets.arclengths",
     "page": "Elements",
     "title": "PotentialFlow.Sheets.arclengths",
-    "category": "Function",
+    "category": "function",
     "text": "Sheets.arclengths(s)\n\nCumulative sum of the polygonal arc length of s, where s can be either an vector of complex numbers or a Vortex.Sheet.\n\nExample\n\njulia> sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)\nVortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2\n\njulia> Sheets.arclengths(sheet)\n11-element Array{Float64,1}:\n 0.0\n 0.1\n 0.2\n 0.3\n 0.4\n 0.5\n 0.6\n 0.7\n 0.8\n 0.9\n 1.0\n\n\n\n"
 },
 
@@ -276,7 +276,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Plates.edges",
     "page": "Elements",
     "title": "PotentialFlow.Plates.edges",
-    "category": "Function",
+    "category": "function",
     "text": "edges(plate)\n\nReturn the coordinates of the leading and trailing edges\n\nExample\n\njulia> p = Plate(128, 1.0, 0, π/4)\nPlate: N = 128, L = 1.0, c = 0.0 + 0.0im, α = 45.0ᵒ\n       LESP = 0.0, TESP = 0.0\n\njulia> Plates.edges(p)\n(0.3535533905932738 + 0.35355339059327373im, -0.3535533905932738 - 0.35355339059327373im)\n\n\n\n"
 },
 
@@ -284,7 +284,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Plates.enforce_no_flow_through!",
     "page": "Elements",
     "title": "PotentialFlow.Plates.enforce_no_flow_through!",
-    "category": "Function",
+    "category": "function",
     "text": "enforce_no_flow_through!(p::Plate, motion, elements, t)\n\nUpdate the plate, p, to enforce the no-flow-through condition given ambient vortex elements, elements, and while moving with kinematics specified by motion.\n\nExample\n\njulia> plate = Plate(128, 2.0, 0.0, π/3)\nPlate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 60.0ᵒ\n       LESP = 0.0, TESP = 0.0\n\njulia> motion = Plates.RigidBodyMotion(1.0, 0.0);\n\njulia> point = Vortex.Point(0.0 + 2im, 1.0);\n\njulia> Plates.enforce_no_flow_through!(plate, motion, point, 0.0)\n\njulia> plate\nPlate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 60.0ᵒ\n       LESP = 1.27, TESP = -1.93\n\n\n\n"
 },
 
@@ -292,7 +292,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Plates.vorticity_flux",
     "page": "Elements",
     "title": "PotentialFlow.Plates.vorticity_flux",
-    "category": "Function",
+    "category": "function",
     "text": "vorticity_flux(p::Plate, v₁, v₂,\n               lesp = 0.0, tesp = 0.0,\n               ∂C₁ = Vector{Complex128}(plate.N),\n               ∂C₂ = Vector{Complex128}(plate.N))\n\nReturn strengths of new vortex elements that satisfies edge suction parameters. For a given edge, if the current suction parameter is less than the criticial suction parameter, then no vorticity is released.  If it is higher, however, vorticity will be released so that the suction parameter equals the critical value.\n\nArguments\n\np: the plate\nv₁, v₂: the vortex elements (with unit circulation) that the vorticity flux is going into\nlesp, tesp: the critical leading and trailing edge suction parameters we want to enforce.  By default, both parameters are set to 0.0 to enforce the Kutta condition on both edges.  We can disable vortex shedding from an edge by setting the its critical suction parameter to Inf\n\nReturns\n\nΓ₁, Γ₂: the strengths that the vortex element should have in order to satisfy the edge suction parameters\n∂C₁, ∂C₂: Chebyshev coefficients of the normal velocity induced by the vortex elements Instead of running enforce_bc! with the new vortex elements, we can use this matrix to directly update the Chebyshev coefficients associated with the bound vortex sheet without recomputing all the velocities.\n\nExample\n\nEnforcing the trailing edge Kutta condition with an point vortex at negative infinity:\n\njulia> plate = Plate(128, 2.0, 0.0, π/6)\nPlate: N = 128, L = 2.0, c = 0.0 + 0.0im, α = 30.0ᵒ\n       LESP = 0.0, TESP = 0.0\n\njulia> motion = Plates.RigidBodyMotion(1.0, 0.0);\n\njulia> Plates.enforce_no_flow_through!(plate, motion, (), 0.0)\n\njulia> point = Vortex.Point(-Inf, 1.0);\n\njulia> _, Γ, _, _ = Plates.vorticity_flux(plate, (), point, 0.0, Inf);\n\njulia> Γ # should equal -πULsin(α) = -π\n-3.1415926535897927\n\n\n\n"
 },
 
@@ -300,7 +300,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Plates.vorticity_flux!",
     "page": "Elements",
     "title": "PotentialFlow.Plates.vorticity_flux!",
-    "category": "Function",
+    "category": "function",
     "text": "vorticity_flux!(p::Plate, v₁, v₂,\n                lesp = 0.0, tesp = 0.0,\n                ∂C₁ = Vector{Complex128}(plate.N),\n                ∂C₂ = Vector{Complex128}(plate.N))\n\nIn-place version of vorticity_flux, except instead of just returning the possible changes in plate Chebyshev coefficients, we modify plate.C with those changes so that no-flow-through is enforced in the presence of v₁ and v₂ with strengths that satisfy the suction parameters.\n\n\n\n"
 },
 
@@ -308,7 +308,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Plates.bound_circulation",
     "page": "Elements",
     "title": "PotentialFlow.Plates.bound_circulation",
-    "category": "Function",
+    "category": "function",
     "text": "bound_circulation(plate[, s])\n\nCompute the bound circulation between the trailing edge of the plate to s.\n\ns can be either a single normalized arc length coordinate (between -1 and 1), or a whole array of coordinates.\n\n\n\n"
 },
 
@@ -316,15 +316,15 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Plates.bound_circulation!",
     "page": "Elements",
     "title": "PotentialFlow.Plates.bound_circulation!",
-    "category": "Function",
-    "text": "bound_circulation!(Γs, plate[, ss])\n\nCompute the bound circulation between the trailing edge of the plate to ss, then store it in Γs.\n\nIf an array, ss, with normalized arc length coordinates is omitted, then the circulation will be computed at the plate's Chebyshev nodes.\n\n\n\n"
+    "category": "function",
+    "text": "bound_circulation!(Γs, plate[, ss])\n\nCompute the bound circulation between the trailing edge of the plate to ss, then store it in Γs.\n\nIf an array, ss, with normalized arc length coordinates is omitted, then the circulation will be computed at the plate\'s Chebyshev nodes.\n\n\n\n"
 },
 
 {
     "location": "manual/elements.html#PotentialFlow.Plates.rate_of_impulse",
     "page": "Elements",
     "title": "PotentialFlow.Plates.rate_of_impulse",
-    "category": "Function",
+    "category": "function",
     "text": "rate_of_impulse(plate, motion, elements::Source, velocities::Source)\n\nCompute the rate of change of impulse of a vortex element and its image relative to a plate.\n\nNote that this is not just the rate of impulse of the vortex element itself, but also includes the rate of impulse of the bound vortex sheet generated in response to the vortex element.\n\n\n\n"
 },
 
@@ -332,7 +332,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Plates.force",
     "page": "Elements",
     "title": "PotentialFlow.Plates.force",
-    "category": "Function",
+    "category": "function",
     "text": "force(plate, motion, elements, velocities, newelements = ())\n\nCompute the force on plate, given its motion and the state of the ambient vorticity.\n\nArguments\n\nplate: the plate\nmotion: a structure that contains the velocity, acceleration, and angular velocity of the plate.\nelements: vortex elements representing the ambient vorticity\nvelocities: the velocities of the vortex elements\nnewelements: an optional argument listing vortex elements that are just added to the flow field (it can be an element that is contained in elements)\nΔt: this is only required if newelements is not empty, we assume that the new vortex elements are created over the span of Δt\n\nReturns\n\nF: the force excerted on the plate in complex coordinates\n\n\n\n"
 },
 
@@ -340,8 +340,8 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/elements.html#PotentialFlow.Plates.surface_pressure",
     "page": "Elements",
     "title": "PotentialFlow.Plates.surface_pressure",
-    "category": "Function",
-    "text": "surface_pressure(plate, motion, te_sys, Γs₋, Δt)\n\nCompute the pressure difference across the plate along Chebyshev nodes.\n\nnote: Note\nThe pressure difference across the bound vortex sheet is given by:    p_-^+\n  = -rho left frac12(boldsymbolv^+ + boldsymbolv^-)\n               - boldsymbolv_b\n         right\n         cdot ( boldsymbolgamma times boldsymbolhatn)\n    +rho fracmathrmdGammamathrmdtwhere rho is the fluid density, boldsymbolv^pm is the velocity on either side of the plate, boldsymbolv_b is the local velocity of the plate, boldsymbolgamma is the bound vortex sheet strength, and Gamma is the integrated circulation. We will compute fracmathrmdGammamathrmdt using finite differences.  So we will need the circulation along the plate from a previous time-step in order to compute the current pressure distribution.  We assume that value of circulation at the trailing edge of the plate is equal the the net circulation of all the vorticity that has been shed from the trailing edge.\n\nArguments\n\nplate: we assume that the Plate structure that is passed in already enforces the no-flow-through condition\nmotion: the motion of the plate used to compute boldsymbolv_b\nte_sys: the system of vortex elements representing the vorticity shed from the trailing edge of the plate\nΓs₋: the circulation along the plate's Chebyshev nodes, this should be equivalent to calling Vortex.circulation(te_sys) .+ Vortex.bound_circulation(plate) from a previous time-step.\nΔt: time-step used to compute fracmathrmdGammamathrmdt using finite differences\n\nReturns\n\nΔp: the pressure difference across the plate along Chebyshev nodes\nΓs₊: the circulation along the plate at the current time-step (this value is used in computing the current Δp and can be used as the Γs₋ for computing pressure differences at the next time-step)\n\n\n\n"
+    "category": "function",
+    "text": "surface_pressure(plate, motion, te_sys, Γs₋, Δt)\n\nCompute the pressure difference across the plate along Chebyshev nodes.\n\nnote: Note\nThe pressure difference across the bound vortex sheet is given by:    p_-^+\n  = -rho left frac12(boldsymbolv^+ + boldsymbolv^-)\n               - boldsymbolv_b\n         right\n         cdot ( boldsymbolgamma times boldsymbolhatn)\n    +rho fracmathrmdGammamathrmdtwhere rho is the fluid density, boldsymbolv^pm is the velocity on either side of the plate, boldsymbolv_b is the local velocity of the plate, boldsymbolgamma is the bound vortex sheet strength, and Gamma is the integrated circulation. We will compute fracmathrmdGammamathrmdt using finite differences.  So we will need the circulation along the plate from a previous time-step in order to compute the current pressure distribution.  We assume that value of circulation at the trailing edge of the plate is equal the the net circulation of all the vorticity that has been shed from the trailing edge.\n\nArguments\n\nplate: we assume that the Plate structure that is passed in already enforces the no-flow-through condition\nmotion: the motion of the plate used to compute boldsymbolv_b\nte_sys: the system of vortex elements representing the vorticity shed from the trailing edge of the plate\nΓs₋: the circulation along the plate\'s Chebyshev nodes, this should be equivalent to calling Vortex.circulation(te_sys) .+ Vortex.bound_circulation(plate) from a previous time-step.\nΔt: time-step used to compute fracmathrmdGammamathrmdt using finite differences\n\nReturns\n\nΔp: the pressure difference across the plate along Chebyshev nodes\nΓs₊: the circulation along the plate at the current time-step (this value is used in computing the current Δp and can be used as the Γs₋ for computing pressure differences at the next time-step)\n\n\n\n"
 },
 
 {
@@ -388,7 +388,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/velocities.html#PotentialFlow.Motions.allocate_velocity",
     "page": "Computing Velocities",
     "title": "PotentialFlow.Motions.allocate_velocity",
-    "category": "Function",
+    "category": "function",
     "text": "allocate_velocity(srcs)\n\nAllocate arrays of Complex128 to match the structure of srcs\n\nExample\n\njulia> points = Vortex.Point.(rand(Complex128, 2), rand(2));\n\njulia> blobs  = Vortex.Blob.(rand(Complex128, 3), rand(3), rand(3));\n\njulia> allocate_velocity(points)\n2-element Array{Complex{Float64},1}:\n 0.0+0.0im\n 0.0+0.0im\n\njulia> allocate_velocity((points, blobs))\n(Complex{Float64}[0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im])\n\n\n\n"
 },
 
@@ -396,7 +396,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/velocities.html#PotentialFlow.Motions.reset_velocity!",
     "page": "Computing Velocities",
     "title": "PotentialFlow.Motions.reset_velocity!",
-    "category": "Function",
+    "category": "function",
     "text": "reset_velocity!(vels[, srcs])\n\nSet all velocities in vels to zero\n\nIf srcs is provided, then the arrays in vels are resized their source counterpart, if necessary.\n\nExample\n\njulia> ẋs = (rand(Complex128, 1), rand(Complex128, 1))\n(Complex{Float64}[0.236033+0.346517im], Complex{Float64}[0.312707+0.00790928im])\n\njulia> points = Vortex.Point.(rand(Complex128, 2), rand(2));\n\njulia> blobs  = Vortex.Blob.(rand(Complex128, 3), rand(3), rand(3));\n\njulia> reset_velocity!(ẋs, (points, blobs));\n\njulia> ẋs\n(Complex{Float64}[0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im])\n\n\n\n"
 },
 
@@ -404,7 +404,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/velocities.html#PotentialFlow.Motions.induce_velocity",
     "page": "Computing Velocities",
     "title": "PotentialFlow.Motions.induce_velocity",
-    "category": "Function",
+    "category": "function",
     "text": "induce_velocity(target, element, time)\n\nCompute the velocity induced by element on target\n\ntarget can be:\n\na Complex128\na subtype of Vortex.PointSource\nan array or tuple of vortex elements\n\nwhile the element can be:\n\nany subtype of Vortex.Element\nan array or tuple of vortex elements\n\nExample\n\njulia> z = rand(Complex128)\n0.23603334566204692 + 0.34651701419196046im\n\njulia> point = Vortex.Point(z, rand());\n\njulia> srcs = Vortex.Point.(rand(Complex128, 10), rand(10));\n\njulia> induce_velocity(z, srcs[1], 0.0)\n0.08722212007570912 + 0.14002850279102955im\n\njulia> induce_velocity(point, srcs[1], 0.0)\n0.08722212007570912 + 0.14002850279102955im\n\njulia> induce_velocity(z, srcs, 0.0)\n-0.4453372874427177 - 0.10592646656959151im\n\njulia> induce_velocity(point, srcs, 0.0)\n-0.4453372874427177 - 0.10592646656959151im\n\n\n\n"
 },
 
@@ -412,7 +412,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/velocities.html#PotentialFlow.Motions.induce_velocity!",
     "page": "Computing Velocities",
     "title": "PotentialFlow.Motions.induce_velocity!",
-    "category": "Function",
+    "category": "function",
     "text": "induce_velocity!(vels, target, element, time)\n\nCompute the velocity induced by element on target and store the result in vels\n\nvels should be the output of a call to allocate_velocity, target can be an array or tuple of vortex elements, while the element can be:\n\nany subtype of Vortex.Element\nan array or tuple of vortex elements\n\nExample\n\njulia> cluster₁ = Vortex.Point.(rand(Complex128, 5), rand(5));\n\njulia> cluster₂ = Vortex.Point.(rand(Complex128, 5), rand(5));\n\njulia> targets = (cluster₁, cluster₂);\n\njulia> sources = Vortex.Blob.(rand(Complex128), rand(10), 0.1);\n\njulia> ẋs = allocate_velocity(targets);\n\njulia> induce_velocity!(ẋs, targets, sources, 0.0)\n(Complex{Float64}[-1.28772-1.82158im, 1.9386-1.64147im, -1.56438+1.57158im, -0.626254+0.375842im, -0.806568-0.213201im], Complex{Float64}[-0.583672-2.26031im, -0.329778-1.43388im, 0.426927+1.55352im, -0.93755+0.241361im, -1.08949-0.35598im])\n\n\n\n"
 },
 
@@ -420,7 +420,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/velocities.html#PotentialFlow.Motions.self_induce_velocity!",
     "page": "Computing Velocities",
     "title": "PotentialFlow.Motions.self_induce_velocity!",
-    "category": "Function",
+    "category": "function",
     "text": "self_induce_velocity!(vels, elements, time)\n\nCompute the self induced velocity of one or more vortex elements\n\nThis involves a recursive call to self_induce_velocity! and pairwise calls to mutually_induce_velocity!.\n\nExample\n\njulia> points = Vortex.Point.([-1, 1], 1.0)\n2-element Array{PotentialFlow.Points.Point{Float64},1}:\n Vortex.Point(-1.0 + 0.0im, 1.0)\n Vortex.Point(1.0 + 0.0im, 1.0)\n\njulia> vels = allocate_velocity(points)\n2-element Array{Complex{Float64},1}:\n 0.0+0.0im\n 0.0+0.0im\n\njulia> self_induce_velocity!(vels, points, 0.0) # should be ±0.25im/π\n2-element Array{Complex{Float64},1}:\n 0.0-0.0795775im\n 0.0+0.0795775im\n\n\n\n"
 },
 
@@ -428,7 +428,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/velocities.html#PotentialFlow.Motions.mutually_induce_velocity!",
     "page": "Computing Velocities",
     "title": "PotentialFlow.Motions.mutually_induce_velocity!",
-    "category": "Function",
+    "category": "function",
     "text": "mutually_induce_velocity!(vs₁, vs₂, e₁, e₂, t)\n\nCompute the mutually induced velocities between e₁ and e₂ at time t and store the results in vs₁ and vs₂\n\nThe default implementation simply calls induce_velocity! twice.  This method is meant to be overwritten to take advantage of symmetries in certain pairwise vortex interations.  For example, the velocity kernel for a point vortex is antisymmetric, so in computing the mutually induced velocities of two arrays of point vortices, we can half the number of calls to the velocity kernel.\n\n\n\n"
 },
 
@@ -436,7 +436,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/velocities.html#PotentialFlow.Motions.advect!",
     "page": "Computing Velocities",
     "title": "PotentialFlow.Motions.advect!",
-    "category": "Function",
+    "category": "function",
     "text": "advect!(srcs₊, srcs₋, vels, Δt)\n\nMoves the elements in srcs₋ by their corresponding velocity in vels over the interval Δt and store the results in src₊.\n\nsrcs₋ and srcs₊ can be either a array of vortex elements or a tuple.\n\nExample\n\njulia> points₋ = [Vortex.Point(x + 0im, 1.0) for x in 1:5];\n\njulia> points₊ = Vector{Vortex.Point}(5);\n\njulia> vels = [ y*im for y in 1.0:5 ];\n\njulia> advect!(points₊, points₋, vels, 1e-2);\n\njulia> points₊\n5-element Array{PotentialFlow.Points.Point{Float64},1}:\n Vortex.Point(1.0 + 0.01im, 1.0)\n Vortex.Point(2.0 + 0.02im, 1.0)\n Vortex.Point(3.0 + 0.03im, 1.0)\n Vortex.Point(4.0 + 0.04im, 1.0)\n Vortex.Point(5.0 + 0.05im, 1.0)\n\n\n\n"
 },
 
@@ -444,7 +444,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/velocities.html#PotentialFlow.Motions.advect",
     "page": "Computing Velocities",
     "title": "PotentialFlow.Motions.advect",
-    "category": "Function",
+    "category": "function",
     "text": "advect(src::Element, velocity::Complex128, Δt)\n\nReturn a new element that represents src advected by velocity over Δt.\n\nIf this method is implemented by any type T where kind(T) is a Singleton, then an array of type AbstractArray{T} can be passed in the first two arguments of advect!. Note that this method is usually only defined for singleton elements\n\nExample\n\njulia> point = Vortex.Point(1.0 + 0.0, 1.0);\n\njulia> advect(point, 1.0im, 1e-2)\nVortex.Point(1.0 + 0.01im, 1.0)\n\n\n\n"
 },
 
@@ -501,7 +501,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Enforcing No-Flow-Through",
     "title": "Vortex Sheet Strength",
     "category": "section",
-    "text": "The plate is represented with a bound vortex sheet that constantly adjusts its circulation to enforce no-flow-through on its surface. We can show that the distribution of circulation, gamma, is governed by the following integral equation:<details>\n<summary></summary>\nThe no-flow-through condition requires that the component of fluid velocity normal to the sheet must be equal to the normal velocity of the sheet itself, i.e.\n$$\n\\begin{align*}\n    \\unormal \\cdot \\vec{u}(\\vec{x}_s)\n& = \\unormal \\cdot \\left[ \\dot{\\vec{c}} + \\dot{\\alpha} \\cross (\\vec{x}_s - \\vec{c}) \\right] \\\\\n& = \\left(\\unormal \\cdot \\vec{c}\\right) + \\dot{\\alpha} l\n\\end{align*}\n$$\nwhere\n\n- $\\vec{u}$ is the fluid velocity\n- $\\vec{x}_s$ is a position on the plate\n- $\\unormal$ is a unit vector normal to the plate\n- $l \\in [ -L/2, L/2 ] $ is distance between $\\vec{x}_s$ from the plate centroid\n\nWe can decompose the velocity field at any point in the fluid into contributions from the bound vortex sheet, $\\vec{u}_s$, and the free vorticity in the ambient fluid, $\\vec{u}_A$:\n$$\n\\vec{u}(\\vec{x}) = \\vec{u}_s(\\vec{x}) + \\vec{u}_A(\\vec{x}),\n$$\nso the no-flow-through condition can be written as:\n$$\n\\unormal \\cdot \\vec{u}_s(\\vec{x}) = \\left(\\unormal \\cdot \\vec{c}\\right) + \\dot{\\alpha} l - \\unormal \\cdot \\vec{u}_A(\\vec{x}).\n$$\n\nThe velocity field induced by a vortex sheet, $\\vec{u}_x(\\vec{x})$, is given by\n$$\n\\vec{u}_s(\\vec{x}) = \\frac{1}{2\\pi}\n\\int_\\mathcal{C} \\gamma(l) \\,\\uvec{k} \\cross\n\\frac{\\vec{x} - \\vec{x}_s(l)}{\\abs{\\vec{x} - \\vec{x}_s(l)}^2}\n\\d{l}\n$$\nwhere\n\n- $\\gamma$ is the strength of the sheet\n- $\\mathcal{C}$ is the curve occupied by the sheet\n- $\\uvec{k}$ is the unit vector point out of the plane.\n\nThe position along the vortex sheet can be expressed as\n$$\n\\vec{x}_s(l) = \\vec{c} + l\\utangent\n$$\nwhere $\\utangent$ is the unit tangent along the sheet.\nSimilarly, since we are interested in evaluating the velocity along the sheet, we can write\n$$\n\\vec{x}(l) = \\vec{c} + \\lambda\\utangent.\n$$\nWe can then write self-induced velocity of the bound vortex sheet as\n$$\n\\vec{u}_s(\\lambda) = \\frac{\\unormal}{2\\pi}\n\\int_{-\\frac{L}{2}}^\\frac{L}{2} \\frac{\\gamma(l)}{\\lambda - l}\n\\d{l}.\n$$\nSubstituting this expression back into the no-flow-through condition, we get\n</p>\n</details>beginequation\nfrac12pi\nint_-L2^L2 fracgamma(lambda)l - lambda\ndlambda\n= unormal cdot vecdotc\n+ dotalpha l\n- unormal cdot vecu_A(l)\nlabeleqintegral-equation\nendequationThe solution to this integral equation can be found in [Muskhelishvili]. If the velocity induced by ambient vorticity on the plate can be expanded into a Chebyshev series:unormal cdot vecu_Al(s) = sum_n = 0 A_n T_n(s)and Gamma_A is the total circulation in the ambient fluid, then the solution to eqrefeqintegral-equation can be written as:<details>\n<summary> </summary>\nTo make it easier to work with Chebyshev series, we will apply a change of variables $s := \\frac{2l}{L}$ so that the integral above goes from $-1$ to $1$:\n$$\n\\frac{1}{2\\pi}\n\\int_{-1}^1 \\frac{\\gamma(s)}{\\sigma - s}\n\\d{s}\n= \\unormal \\cdot \\vec{\\dot{c}}\n+ \\frac{\\dot{\\alpha}L}{2} \\sigma\n- \\unormal \\cdot \\vec{u}_A(\\sigma)\n$$\nFrom <a href=\"#footnote-Muskhelishvili\">[Muskhelishvili]</a>, we have that if\n$$\n\\frac{1}{\\pi\\im} \\int \\frac{\\varphi(t)}{t - t_0} \\d{t} = f(t_0)\n$$\nthen\n$$\n\\varphi(t_0) = \\frac{1}{\\pi\\im\\sqrt{t_0 - 1}\\sqrt{t_0 + 1}}\n\\int \\frac{\\sqrt{t - 1}\\sqrt{t + 1}}{t - t_0} f(t) \\d{t}\n+\n\\frac{P(t_0)}{\\sqrt{t_0 - 1}\\sqrt{t_0 + 1}}\n$$\nwhere $P$ is an arbitrary polynomial that must be chosen to satisfy far-field boundary conditions.\n\nIn our case, we have $\\varphi := \\im \\gamma$ and\n$$\nf := 2\\sum_{n = 0}^\\infty A_n T_n(\\sigma) - 2\\unormal \\cdot \\vec{\\dot{c}} - \\dot{\\alpha}L \\sigma\n$$\nso\n$$\n\\gamma(\\sigma)\n=\n\\frac{-2}{\\pi\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}\n\\int_{-1}^1 \\frac{\\sqrt{1 - s}\\sqrt{1 + s}}{s - \\sigma}\n\\left(\n\\sum_{n = 0}^\\infty A_n T_n(s) - \\unormal \\cdot \\vec{\\dot{c}} - \\frac{\\dot{\\alpha}L}{2} s\n\\right) \\d{s}\n+\n\\frac{P(t_0)}{\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}\n$$\n\nThe integral above is made of terms with the form\n$$\n\\pint_{-1}^1\n\\frac{\\sqrt{1 - s}\\sqrt{1 + s}}{s - \\sigma} T_n(s)\n\\d{s}\n$$\nwhich we can simplify using the properties of Chebyshev polynomials into\n$$\n\\pint_{-1}^1\n\\frac{\\sqrt{1 - s}\\sqrt{1 + s}}{s - \\sigma} T_n(s)\n\\d{s}\n=\n\\begin{cases}\n-\\pi T_1(\\sigma) & n = 0 \\\\\n-\\frac{\\pi}{2} T_2(\\sigma) & n = 1 \\\\\n-\\frac{\\pi}{2} \\left[T_{n+1}(\\sigma) - T_{n-1}(\\sigma)\\right] & n \\ge 2\n\\end{cases}.\n$$\nThis gives us\n$$\n\\gamma(\\sigma)\n=\n\\frac{-2}{\\pi\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}\n\\left\\{\n-\\pi A_0 \\sigma\n-\\frac{\\pi}{2} A_1\n+\\sum_{n = 1}^\\infty -\\frac{\\pi}{2}A_n \\left[T_{n+1}(\\sigma) - T_{n-1}(\\sigma)\\right]\n+ \\pi \\left(\\unormal \\cdot \\vec{\\dot{c}}\\right)\\sigma\n+ \\frac{\\pi}{2}T_2(\\sigma)\\frac{\\dot{\\alpha}L}{2}\n\\right\\}\n+\n\\frac{P(t_0)}{\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}.\n$$\n\nWe can find $P$ by satisfying Kelvin's circulation theorem.\nThis means that the amount of circulation contained in the bound vortex sheet should the negative of the circulation contained in the ambient vorticity, i.e.\n$$\n\\Gamma_s := \\int_{-\\frac{L}{2}}^{\\frac{L}{2}} \\gamma \\d{l} = -\\Gamma_A\n$$\n\nAgain, we use properties of Chebyshev polynomials to reduce the integral to\n$$\n\\begin{align*}\n\\frac{L}{2}\\int_{-1}^1 \\frac{P(s)}{\\sqrt{1 - s}\\sqrt{1 + s}} \\d{s} & = -\\Gamma_A,\n\\end{align*}\n$$\nwhich means that\n$$\nP = -\\frac{2\\Gamma_A}{L\\pi}.\n$$\n\nSo the final expression for the bound circulation is:\n</details>beginequation\ngammal(s) =\nfrac-frac2Gamma_ALpi + 2(A_0 - unormal cdot vecdotc) T_1(s) + (A_1 - fracdotalphaL2)T_2(s)sqrt1 - s^2 - 2sqrt1 - s^2sum_n = 2^infty A_n U_n-1(s)\nlabeleqgamma\nendequationnote: Note\nThis might look more similar to results from thin-airfoil theory if we rewrite the Chebyshev polynomials using trigonometric functions:gammal(theta) =\nfrac-frac2Gamma_ALpi + 2(A_0 - unormal cdot vecdotc) costheta + (A_1 - fracdotalphaL2)cos(2theta)sintheta - 2sum_n = 2^infty A_n sin(ntheta)The key difference is that we are free to relax the Kutta condition at the trailing edge."
+    "text": "The plate is represented with a bound vortex sheet that constantly adjusts its circulation to enforce no-flow-through on its surface. We can show that the distribution of circulation, gamma, is governed by the following integral equation:<details>\n<summary></summary>\nThe no-flow-through condition requires that the component of fluid velocity normal to the sheet must be equal to the normal velocity of the sheet itself, i.e.\n$$\n\\begin{align*}\n    \\unormal \\cdot \\vec{u}(\\vec{x}_s)\n& = \\unormal \\cdot \\left[ \\dot{\\vec{c}} + \\dot{\\alpha} \\cross (\\vec{x}_s - \\vec{c}) \\right] \\\\\n& = \\left(\\unormal \\cdot \\vec{c}\\right) + \\dot{\\alpha} l\n\\end{align*}\n$$\nwhere\n\n- $\\vec{u}$ is the fluid velocity\n- $\\vec{x}_s$ is a position on the plate\n- $\\unormal$ is a unit vector normal to the plate\n- $l \\in [ -L/2, L/2 ] $ is distance between $\\vec{x}_s$ from the plate centroid\n\nWe can decompose the velocity field at any point in the fluid into contributions from the bound vortex sheet, $\\vec{u}_s$, and the free vorticity in the ambient fluid, $\\vec{u}_A$:\n$$\n\\vec{u}(\\vec{x}) = \\vec{u}_s(\\vec{x}) + \\vec{u}_A(\\vec{x}),\n$$\nso the no-flow-through condition can be written as:\n$$\n\\unormal \\cdot \\vec{u}_s(\\vec{x}) = \\left(\\unormal \\cdot \\vec{c}\\right) + \\dot{\\alpha} l - \\unormal \\cdot \\vec{u}_A(\\vec{x}).\n$$\n\nThe velocity field induced by a vortex sheet, $\\vec{u}_x(\\vec{x})$, is given by\n$$\n\\vec{u}_s(\\vec{x}) = \\frac{1}{2\\pi}\n\\int_\\mathcal{C} \\gamma(l) \\,\\uvec{k} \\cross\n\\frac{\\vec{x} - \\vec{x}_s(l)}{\\abs{\\vec{x} - \\vec{x}_s(l)}^2}\n\\d{l}\n$$\nwhere\n\n- $\\gamma$ is the strength of the sheet\n- $\\mathcal{C}$ is the curve occupied by the sheet\n- $\\uvec{k}$ is the unit vector point out of the plane.\n\nThe position along the vortex sheet can be expressed as\n$$\n\\vec{x}_s(l) = \\vec{c} + l\\utangent\n$$\nwhere $\\utangent$ is the unit tangent along the sheet.\nSimilarly, since we are interested in evaluating the velocity along the sheet, we can write\n$$\n\\vec{x}(l) = \\vec{c} + \\lambda\\utangent.\n$$\nWe can then write self-induced velocity of the bound vortex sheet as\n$$\n\\vec{u}_s(\\lambda) = \\frac{\\unormal}{2\\pi}\n\\int_{-\\frac{L}{2}}^\\frac{L}{2} \\frac{\\gamma(l)}{\\lambda - l}\n\\d{l}.\n$$\nSubstituting this expression back into the no-flow-through condition, we get\n</p>\n</details>beginequation\nfrac12pi\nint_-L2^L2 fracgamma(lambda)l - lambda\ndlambda\n= unormal cdot vecdotc\n+ dotalpha l\n- unormal cdot vecu_A(l)\nlabeleqintegral-equation\nendequationThe solution to this integral equation can be found in [Muskhelishvili]. If the velocity induced by ambient vorticity on the plate can be expanded into a Chebyshev series:unormal cdot vecu_Al(s) = sum_n = 0 A_n T_n(s)and Gamma_A is the total circulation in the ambient fluid, then the solution to eqrefeqintegral-equation can be written as:<details>\n<summary> </summary>\nTo make it easier to work with Chebyshev series, we will apply a change of variables $s := \\frac{2l}{L}$ so that the integral above goes from $-1$ to $1$:\n$$\n\\frac{1}{2\\pi}\n\\int_{-1}^1 \\frac{\\gamma(s)}{\\sigma - s}\n\\d{s}\n= \\unormal \\cdot \\vec{\\dot{c}}\n+ \\frac{\\dot{\\alpha}L}{2} \\sigma\n- \\unormal \\cdot \\vec{u}_A(\\sigma)\n$$\nFrom <a href=\"#footnote-Muskhelishvili\">[Muskhelishvili]</a>, we have that if\n$$\n\\frac{1}{\\pi\\im} \\int \\frac{\\varphi(t)}{t - t_0} \\d{t} = f(t_0)\n$$\nthen\n$$\n\\varphi(t_0) = \\frac{1}{\\pi\\im\\sqrt{t_0 - 1}\\sqrt{t_0 + 1}}\n\\int \\frac{\\sqrt{t - 1}\\sqrt{t + 1}}{t - t_0} f(t) \\d{t}\n+\n\\frac{P(t_0)}{\\sqrt{t_0 - 1}\\sqrt{t_0 + 1}}\n$$\nwhere $P$ is an arbitrary polynomial that must be chosen to satisfy far-field boundary conditions.\n\nIn our case, we have $\\varphi := \\im \\gamma$ and\n$$\nf := 2\\sum_{n = 0}^\\infty A_n T_n(\\sigma) - 2\\unormal \\cdot \\vec{\\dot{c}} - \\dot{\\alpha}L \\sigma\n$$\nso\n$$\n\\gamma(\\sigma)\n=\n\\frac{-2}{\\pi\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}\n\\int_{-1}^1 \\frac{\\sqrt{1 - s}\\sqrt{1 + s}}{s - \\sigma}\n\\left(\n\\sum_{n = 0}^\\infty A_n T_n(s) - \\unormal \\cdot \\vec{\\dot{c}} - \\frac{\\dot{\\alpha}L}{2} s\n\\right) \\d{s}\n+\n\\frac{P(t_0)}{\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}\n$$\n\nThe integral above is made of terms with the form\n$$\n\\pint_{-1}^1\n\\frac{\\sqrt{1 - s}\\sqrt{1 + s}}{s - \\sigma} T_n(s)\n\\d{s}\n$$\nwhich we can simplify using the properties of Chebyshev polynomials into\n$$\n\\pint_{-1}^1\n\\frac{\\sqrt{1 - s}\\sqrt{1 + s}}{s - \\sigma} T_n(s)\n\\d{s}\n=\n\\begin{cases}\n-\\pi T_1(\\sigma) & n = 0 \\\\\n-\\frac{\\pi}{2} T_2(\\sigma) & n = 1 \\\\\n-\\frac{\\pi}{2} \\left[T_{n+1}(\\sigma) - T_{n-1}(\\sigma)\\right] & n \\ge 2\n\\end{cases}.\n$$\nThis gives us\n$$\n\\gamma(\\sigma)\n=\n\\frac{-2}{\\pi\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}\n\\left\\{\n-\\pi A_0 \\sigma\n-\\frac{\\pi}{2} A_1\n+\\sum_{n = 1}^\\infty -\\frac{\\pi}{2}A_n \\left[T_{n+1}(\\sigma) - T_{n-1}(\\sigma)\\right]\n+ \\pi \\left(\\unormal \\cdot \\vec{\\dot{c}}\\right)\\sigma\n+ \\frac{\\pi}{2}T_2(\\sigma)\\frac{\\dot{\\alpha}L}{2}\n\\right\\}\n+\n\\frac{P(t_0)}{\\sqrt{1 - \\sigma}\\sqrt{1 + \\sigma}}.\n$$\n\nWe can find $P$ by satisfying Kelvin\'s circulation theorem.\nThis means that the amount of circulation contained in the bound vortex sheet should the negative of the circulation contained in the ambient vorticity, i.e.\n$$\n\\Gamma_s := \\int_{-\\frac{L}{2}}^{\\frac{L}{2}} \\gamma \\d{l} = -\\Gamma_A\n$$\n\nAgain, we use properties of Chebyshev polynomials to reduce the integral to\n$$\n\\begin{align*}\n\\frac{L}{2}\\int_{-1}^1 \\frac{P(s)}{\\sqrt{1 - s}\\sqrt{1 + s}} \\d{s} & = -\\Gamma_A,\n\\end{align*}\n$$\nwhich means that\n$$\nP = -\\frac{2\\Gamma_A}{L\\pi}.\n$$\n\nSo the final expression for the bound circulation is:\n</details>beginequation\ngammal(s) =\nfrac-frac2Gamma_ALpi + 2(A_0 - unormal cdot vecdotc) T_1(s) + (A_1 - fracdotalphaL2)T_2(s)sqrt1 - s^2 - 2sqrt1 - s^2sum_n = 2^infty A_n U_n-1(s)\nlabeleqgamma\nendequationnote: Note\nThis might look more similar to results from thin-airfoil theory if we rewrite the Chebyshev polynomials using trigonometric functions:gammal(theta) =\nfrac-frac2Gamma_ALpi + 2(A_0 - unormal cdot vecdotc) costheta + (A_1 - fracdotalphaL2)cos(2theta)sintheta - 2sum_n = 2^infty A_n sin(ntheta)The key difference is that we are free to relax the Kutta condition at the trailing edge."
 },
 
 {
@@ -525,7 +525,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Plate Motions",
     "title": "Plate Motions",
     "category": "section",
-    "text": "CurrentModule = Plates.RigidBodyMotions\nDocTestSetup  = quote\n    using PotentialFlow\n    srand(1)\nendThe motion of a plate is specified through two data types:RigidBodyMotion is the type that should be used to represent the plate's velocity.  For example, in advect!(plate₊, plate₋, platevel, Δt), platevel is of type RigidBodyMotion. It contains the most current values (ċ, c̈, α̇) (the plate's centroid velocity and acceleration, and angular velocity, respectively), as well as a Kinematics type.\nKinematics is an abstract type representing a function that takes in a time and returns (ċ, c̈, α̇)"
+    "text": "CurrentModule = Plates.RigidBodyMotions\nDocTestSetup  = quote\n    using PotentialFlow\n    srand(1)\nendThe motion of a plate is specified through two data types:RigidBodyMotion is the type that should be used to represent the plate\'s velocity.  For example, in advect!(plate₊, plate₋, platevel, Δt), platevel is of type RigidBodyMotion. It contains the most current values (ċ, c̈, α̇) (the plate\'s centroid velocity and acceleration, and angular velocity, respectively), as well as a Kinematics type.\nKinematics is an abstract type representing a function that takes in a time and returns (ċ, c̈, α̇)"
 },
 
 {
@@ -541,7 +541,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Plate Motions",
     "title": "Kinematics",
     "category": "section",
-    "text": "The Kinematics type is just an abstract type for functions that take in time and return the (ċ, c̈, α̇) triple.  Let's create a MyMotion type that describes a horizontally translating plate that also sinusoidally pitches about its centroid.import PotentialFlow.Plates.RigidBodyMotions: Kinematics\n\nstruct MyMotion <: Kinematics\n    U₀::Complex128\n    ω::Float64\nend\n\n(m::MyMotion)(t) = (m.U₀, 0.0im, sin(m.ω*t))\n\nsinusoid = MyMotion(1.0, π/4)\n\n# output\n\nMyMotion(1.0 + 0.0im, 0.7853981633974483)We can then evaluate sinusoid at different timesjulia> sinusoid.([0.0, 1.0, 2.0])\n3-element Array{Tuple{Complex{Float64},Complex{Float64},Float64},1}:\n (1.0+0.0im, 0.0+0.0im, 0.0)\n (1.0+0.0im, 0.0+0.0im, 0.707107)\n (1.0+0.0im, 0.0+0.0im, 1.0)"
+    "text": "The Kinematics type is just an abstract type for functions that take in time and return the (ċ, c̈, α̇) triple.  Let\'s create a MyMotion type that describes a horizontally translating plate that also sinusoidally pitches about its centroid.import PotentialFlow.Plates.RigidBodyMotions: Kinematics\n\nstruct MyMotion <: Kinematics\n    U₀::Complex128\n    ω::Float64\nend\n\n(m::MyMotion)(t) = (m.U₀, 0.0im, sin(m.ω*t))\n\nsinusoid = MyMotion(1.0, π/4)\n\n# output\n\nMyMotion(1.0 + 0.0im, 0.7853981633974483)We can then evaluate sinusoid at different timesjulia> sinusoid.([0.0, 1.0, 2.0])\n3-element Array{Tuple{Complex{Float64},Complex{Float64},Float64},1}:\n (1.0+0.0im, 0.0+0.0im, 0.0)\n (1.0+0.0im, 0.0+0.0im, 0.707107)\n (1.0+0.0im, 0.0+0.0im, 1.0)"
 },
 
 {
@@ -549,7 +549,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Plate Motions",
     "title": "Profiles",
     "category": "section",
-    "text": "To make defining complex kinematics a little eaiser, the library also provides a Profile type, an abstract type for real-valued functions of time. Before going into how to define new profiles, we'll first show an example of why we might want to represent functions as a type. We start off with a predefined profile, a smooth ramp:using Plots\nusing PotentialFlow.Plates.RigidBodyMotions\n\nramp = RigidBodyMotions.EldredgeRamp(6)\n\nT = linspace(-1, 4, 200)\nplot(T, ramp.(T), xlabel = \"t\", ylabel=\"Smoothed Ramp\",\n     legend = :none, linewidth = 2)\n\nsavefig(\"ramp.svg\"); nothing # hide<object data=\"ramp.svg\" type=\"image/svg+xml\"></object>Now suppose we want to scale the ramp and shift itshifted_ramp = -(ramp >> 2)\n\nplot(T, shifted_ramp.(T), xlabel = \"t\", ylabel=\"Smoothed Ramp\",\n     legend = :none, linewidth = 2, size=(600,300))\nsavefig(\"shifted_ramp.svg\"); nothing # hide<object data=\"shifted_ramp.svg\" type=\"image/svg+xml\"></object>then take its derivativeddt_ramp = d_dt(shifted_ramp)\n\nplot(T, ddt_ramp.(T), xlabel = \"t\", ylabel=\"Smoothed Ramp\",\n     legend = :none, linewidth = 2, size = (600, 200))\nsavefig(\"ddt_ramp.svg\"); nothing # hide<object data=\"ddt_ramp.svg\" type=\"image/svg+xml\"></object>We see that wrapping these functions in a type allows us to operate on them as if they values, making it easier to compose multiple motions together:ps_ramp = RigidBodyMotions.ColoniusRamp(5)\ncomposed_ramp = ramp - (ps_ramp >> 2)\n\nplot(T, composed_ramp.(T), xlabel = \"t\", ylabel=\"Smoothed Ramp\",\n     legend = :none, linewidth = 2, size = (600, 300))\nsavefig(\"composed_ramp.svg\"); nothing # hide<object data=\"composed_ramp.svg\" type=\"image/svg+xml\"></object>"
+    "text": "To make defining complex kinematics a little eaiser, the library also provides a Profile type, an abstract type for real-valued functions of time. Before going into how to define new profiles, we\'ll first show an example of why we might want to represent functions as a type. We start off with a predefined profile, a smooth ramp:using Plots\nusing PotentialFlow.Plates.RigidBodyMotions\n\nramp = RigidBodyMotions.EldredgeRamp(6)\n\nT = linspace(-1, 4, 200)\nplot(T, ramp.(T), xlabel = \"t\", ylabel=\"Smoothed Ramp\",\n     legend = :none, linewidth = 2)\n\nsavefig(\"ramp.svg\"); nothing # hide<object data=\"ramp.svg\" type=\"image/svg+xml\"></object>Now suppose we want to scale the ramp and shift itshifted_ramp = -(ramp >> 2)\n\nplot(T, shifted_ramp.(T), xlabel = \"t\", ylabel=\"Smoothed Ramp\",\n     legend = :none, linewidth = 2, size=(600,300))\nsavefig(\"shifted_ramp.svg\"); nothing # hide<object data=\"shifted_ramp.svg\" type=\"image/svg+xml\"></object>then take its derivativeddt_ramp = d_dt(shifted_ramp)\n\nplot(T, ddt_ramp.(T), xlabel = \"t\", ylabel=\"Smoothed Ramp\",\n     legend = :none, linewidth = 2, size = (600, 200))\nsavefig(\"ddt_ramp.svg\"); nothing # hide<object data=\"ddt_ramp.svg\" type=\"image/svg+xml\"></object>We see that wrapping these functions in a type allows us to operate on them as if they values, making it easier to compose multiple motions together:ps_ramp = RigidBodyMotions.ColoniusRamp(5)\ncomposed_ramp = ramp - (ps_ramp >> 2)\n\nplot(T, composed_ramp.(T), xlabel = \"t\", ylabel=\"Smoothed Ramp\",\n     legend = :none, linewidth = 2, size = (600, 300))\nsavefig(\"composed_ramp.svg\"); nothing # hide<object data=\"composed_ramp.svg\" type=\"image/svg+xml\"></object>"
 },
 
 {
@@ -564,7 +564,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/motions.html#PotentialFlow.Plates.RigidBodyMotions.Kinematics",
     "page": "Plate Motions",
     "title": "PotentialFlow.Plates.RigidBodyMotions.Kinematics",
-    "category": "Type",
+    "category": "type",
     "text": "An abstract type for types that takes in time and returns (ċ, c̈, α̇).\n\n\n\n"
 },
 
@@ -572,15 +572,15 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/motions.html#PotentialFlow.Plates.RigidBodyMotions.RigidBodyMotion",
     "page": "Plate Motions",
     "title": "PotentialFlow.Plates.RigidBodyMotions.RigidBodyMotion",
-    "category": "Type",
-    "text": "RigidBodyMotion\n\nA type to store the plate's current kinematics\n\nFields\n\nċ: current centroid velocity\nc̈: current centroid acceleration\nα̇: current angular velocity\nkin: a Kinematics structure\n\nThe first three fields are meant as a cache of the current kinematics while the kin field can be used to find the plate kinematics at any time.\n\n\n\n"
+    "category": "type",
+    "text": "RigidBodyMotion\n\nA type to store the plate\'s current kinematics\n\nFields\n\nċ: current centroid velocity\nc̈: current centroid acceleration\nα̇: current angular velocity\nkin: a Kinematics structure\n\nThe first three fields are meant as a cache of the current kinematics while the kin field can be used to find the plate kinematics at any time.\n\n\n\n"
 },
 
 {
     "location": "manual/motions.html#PotentialFlow.Plates.RigidBodyMotions.d_dt-Tuple{PotentialFlow.Plates.RigidBodyMotions.Profile}",
     "page": "Plate Motions",
     "title": "PotentialFlow.Plates.RigidBodyMotions.d_dt",
-    "category": "Method",
+    "category": "method",
     "text": "d_dt(p::Profile)\n\nTake the time derivative of p and return it as a new profile.\n\nExample\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> s.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 1.0\n 0.707107\n\njulia> c = Plates.RigidBodyMotions.d_dt(s)\nd/dt (Sinusoid (ω = 3.14))\n\njulia> c.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n  3.14159\n  1.92367e-16\n -2.22144\n\n\n\n"
 },
 
@@ -588,7 +588,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/motions.html#PotentialFlow.Plates.RigidBodyMotions.Pitchup",
     "page": "Plate Motions",
     "title": "PotentialFlow.Plates.RigidBodyMotions.Pitchup",
-    "category": "Type",
+    "category": "type",
     "text": "Pitchup <: Kinematics\n\nKinematics describing a pitchup motion (horizontal translation with rotation)\n\nConstructors\n\nFields\n\nU₀\nFreestream velocity\na\nAxis of rotation, relative to the plate centroid\nK\nNon-dimensional pitch rate K = dotalpha_0fracc2U_0\nα₀\nInitial angle of attack\nt₀\nNominal start of pitch up\nΔα\nTotal pitching angle\nα\nα̇\nα̈\n\n\n\n"
 },
 
@@ -596,7 +596,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/motions.html#PotentialFlow.Plates.RigidBodyMotions.Profile",
     "page": "Plate Motions",
     "title": "PotentialFlow.Plates.RigidBodyMotions.Profile",
-    "category": "Type",
+    "category": "type",
     "text": "An abstract type for real-valued functions of time.\n\n\n\n"
 },
 
@@ -604,7 +604,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/motions.html#Base.:*-Tuple{Number,PotentialFlow.Plates.RigidBodyMotions.Profile}",
     "page": "Plate Motions",
     "title": "Base.:*",
-    "category": "Method",
+    "category": "method",
     "text": "s::Number * p::Profile\n\nReturns a scaled profile with (s*p)(t) = s*p(t)\n\nExample\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> 2s\n2 × (Sinusoid (ω = 3.14))\n\njulia> (2s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 2.0\n 1.41421\n\n\n\n"
 },
 
@@ -612,7 +612,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/motions.html#Base.:+-Tuple{PotentialFlow.Plates.RigidBodyMotions.Profile,PotentialFlow.Plates.RigidBodyMotions.AddedProfiles}",
     "page": "Plate Motions",
     "title": "Base.:+",
-    "category": "Method",
+    "category": "method",
     "text": "p₁::Profile + p₂::Profile\n\nAdd the profiles so that (p₁ + p₂)(t) = p₁(t) + p₂(t).\n\nExamples\n\njulia> ramp₁ = Plates.RigidBodyMotions.EldredgeRamp(5)\nlogcosh ramp (aₛ = 5.0)\n\njulia> ramp₂ = Plates.RigidBodyMotions.ColoniusRamp(5)\npower series ramp (n = 5.0)\n\njulia> ramp₁ + ramp₂\nAddedProfiles:\n  logcosh ramp (aₛ = 5.0)\n  power series ramp (n = 5.0)\n\n\njulia> ramp₁ + (ramp₂ + ramp₁) == ramp₁ + ramp₂ + ramp₁\ntrue\n\n\n\n\n"
 },
 
@@ -620,7 +620,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/motions.html#Base.:--Tuple{PotentialFlow.Plates.RigidBodyMotions.Profile}",
     "page": "Plate Motions",
     "title": "Base.:-",
-    "category": "Method",
+    "category": "method",
     "text": "-(p₁::Profile, p₂::Profile)\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> 2s\n2 × (Sinusoid (ω = 3.14))\n\njulia> (2s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 2.0\n 1.41421\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π);\n\njulia> s.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 1.0\n 0.707107\n\njulia> (-s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n -0.0\n -1.0\n -0.707107\n\njulia> (s - s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 0.0\n 0.0\n\n\n\n"
 },
 
@@ -628,7 +628,7 @@ var documenterSearchIndex = {"docs": [
     "location": "manual/motions.html#Base.:>>-Tuple{PotentialFlow.Plates.RigidBodyMotions.Profile,Number}",
     "page": "Plate Motions",
     "title": "Base.:>>",
-    "category": "Method",
+    "category": "method",
     "text": "p::Profile >> Δt::Number\n\nShift the profile in time so that (p >> Δt)(t) = p(t - Δt)\n\nExample\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π);\n\njulia> s >> 0.5\nSinusoid (ω = 3.14) >> 0.5\n\njulia> (s >> 0.5).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n -1.0\n  0.0\n  0.707107\n\njulia> (s << 0.5).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n  1.0\n  1.22465e-16\n -0.707107\n\n\n\n"
 },
 
@@ -661,7 +661,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Handing Pairwise Interactions",
     "title": "Handing Pairwise Interactions",
     "category": "section",
-    "text": "DocTestSetup = quote\n	using PotentialFlow\nendWe want users to be able to define their own vortex types, as well as arbitrarily group and nest different vortex elements together. For example, suppose the user has defined a new element, MyVortexType, then they should be able to do something likemyvortices = MyVortexType.(...)\npoints = Vortex.Point.(...)\nsheet = Vortex.Sheet(...)\n\nsystem = (myvortices, (points, sheet))\nvelocities = allocate_velocity(system)\n\nself_induce_velocity!(velocities, system)But how would myvortices know how to induce velocities on points, sheet, or the tuple (points, sheet)? It would be asking a lot for the user to have to define all possible pairwise interactions between their new vortex type and all other built-in types. Instead, the user should only have to define induce_velocity between MyVortexType and a complex point, leaving library to simply just apply induce_velocity recursively to all ther targets. But how would the library know if a vortex element is actually a collection of more primitive types that should be recursed over? For example, while it is obvious that Vector{Vortex.Point} should be treated as a collection of point vortices, it has no prior knowledge of how MyVortexType is defined. It might be something like Vortex.Blob, which cannot recursed into, or it can be more like Vortex.Sheet, which is just a wrapper around Vector{Vortex.Blob}. The following section describes how the library handles this problem using Tim Holy's trait trick."
+    "text": "DocTestSetup = quote\n	using PotentialFlow\nendWe want users to be able to define their own vortex types, as well as arbitrarily group and nest different vortex elements together. For example, suppose the user has defined a new element, MyVortexType, then they should be able to do something likemyvortices = MyVortexType.(...)\npoints = Vortex.Point.(...)\nsheet = Vortex.Sheet(...)\n\nsystem = (myvortices, (points, sheet))\nvelocities = allocate_velocity(system)\n\nself_induce_velocity!(velocities, system)But how would myvortices know how to induce velocities on points, sheet, or the tuple (points, sheet)? It would be asking a lot for the user to have to define all possible pairwise interactions between their new vortex type and all other built-in types. Instead, the user should only have to define induce_velocity between MyVortexType and a complex point, leaving library to simply just apply induce_velocity recursively to all ther targets. But how would the library know if a vortex element is actually a collection of more primitive types that should be recursed over? For example, while it is obvious that Vector{Vortex.Point} should be treated as a collection of point vortices, it has no prior knowledge of how MyVortexType is defined. It might be something like Vortex.Blob, which cannot recursed into, or it can be more like Vortex.Sheet, which is just a wrapper around Vector{Vortex.Blob}. The following section describes how the library handles this problem using Tim Holy\'s trait trick."
 },
 
 {
@@ -669,7 +669,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Handing Pairwise Interactions",
     "title": "Traits: Singleton vs. Group",
     "category": "section",
-    "text": "Let's trace through how the library currently handles a call likeinduce_velocity(target::V1, source::V2)If the user has explicitly defined induce_velocity between the vortex types V1 and V2, then Julia will call that method. Otherwise, this call will be turned intoinduce_velocity(unwrap_targ(target), unwrap_src(source),\n                kind(unwrap_targ(target)), kind(unwrap_src(source)))There are two different things going on here:unwrap_targ and unwrap_src: There are some vortex types that are essentually wrappers around more primitive types. For example, Vortex.Sheet is a wrapper around Vector{Vortex.Blob}, with some extra information to maintain connectivity between the blobs. Instead of having to redefine all the required functions for Vortex.Sheet, we simply define the function Vortex.unwrap(s::Sheet) = s.blobs. Then whenever the library encounters a Vortex.Sheet, it will know to unwrap it and treat it as an array of Vortex.Blob. By default, unwrap_targ(v) = v and unwrap_src(v) = v.\nkind: This is a trait function takes a vortex element and returns either Type{Singleton} or Type{Group}. A vortex with trait Type{Singleton} tells the library that it should be treated as a single entity, and should not be recursed into. Alternatively, an element with Type{Group} trait tells that library that this element is indexable and should be iterated through.There are four possible (target,source) trait combinations:induce_velocity(uw_target, uw_source, ::Type{Singleton}, ::Type{Singleton})\ninduce_velocity(uw_target, uw_source, ::Type{Group}, ::Type{Singleton})\ninduce_velocity(uw_target, uw_source, ::Type{Singleton}, ::Type{Group})\ninduce_velocity(uw_target, uw_source, ::Type{Group}, ::Type{Group})but we only have to handle three cases:(::Type{Singleton}, ::Type{Singleton}): The fact that the call chain got to this point at all means, that there is no specialized induce_velocity defined between uw_target and uw_source, otherwise Julia's dispatch system would have call that one instead (see the induce_velocity definitions in Plates.jl). Since all vortex types are required to define induced_velocity on a point, this call is turned into\ninduce_velocity(Vortex.position(uw_target), uw_soruce)\n(::Type{Singleton}, ::Type{Group}): In this case, we iterate through i in 1:length(uw_source) and sum up the the results of induce_velocity(uw_target, uw_source[i])\n(::Type{Group}, ::Any): Since the output is no longer a scalar value, we first preallocate the output with allocate_velocity(uw_target), then iteratively apply induce_velocity over all the elements of uw_target. Once the target has been expanded all the way to Singleton types, then we are back to the (target, source) kind being either (::Type{Singleton}, ::Type{Group}) or (::Type{Singleton}, ::Type{Singleton}), which can be handled by the two cases listed above.Ultimately, this whole setup is just a way to allow induce_velocity to be called recursively on arbitrary groupings of vortex elements. However, velocity is not the only property that can be computed this way. Other quantities, such as acceleration, circulation, etcs., can all be be computed using the same framework. Instead of writing essentially the same code for all of them, we can use the @property macro"
+    "text": "Let\'s trace through how the library currently handles a call likeinduce_velocity(target::V1, source::V2)If the user has explicitly defined induce_velocity between the vortex types V1 and V2, then Julia will call that method. Otherwise, this call will be turned intoinduce_velocity(unwrap_targ(target), unwrap_src(source),\n                kind(unwrap_targ(target)), kind(unwrap_src(source)))There are two different things going on here:unwrap_targ and unwrap_src: There are some vortex types that are essentually wrappers around more primitive types. For example, Vortex.Sheet is a wrapper around Vector{Vortex.Blob}, with some extra information to maintain connectivity between the blobs. Instead of having to redefine all the required functions for Vortex.Sheet, we simply define the function Vortex.unwrap(s::Sheet) = s.blobs. Then whenever the library encounters a Vortex.Sheet, it will know to unwrap it and treat it as an array of Vortex.Blob. By default, unwrap_targ(v) = v and unwrap_src(v) = v.\nkind: This is a trait function takes a vortex element and returns either Type{Singleton} or Type{Group}. A vortex with trait Type{Singleton} tells the library that it should be treated as a single entity, and should not be recursed into. Alternatively, an element with Type{Group} trait tells that library that this element is indexable and should be iterated through.There are four possible (target,source) trait combinations:induce_velocity(uw_target, uw_source, ::Type{Singleton}, ::Type{Singleton})\ninduce_velocity(uw_target, uw_source, ::Type{Group}, ::Type{Singleton})\ninduce_velocity(uw_target, uw_source, ::Type{Singleton}, ::Type{Group})\ninduce_velocity(uw_target, uw_source, ::Type{Group}, ::Type{Group})but we only have to handle three cases:(::Type{Singleton}, ::Type{Singleton}): The fact that the call chain got to this point at all means, that there is no specialized induce_velocity defined between uw_target and uw_source, otherwise Julia\'s dispatch system would have call that one instead (see the induce_velocity definitions in Plates.jl). Since all vortex types are required to define induced_velocity on a point, this call is turned into\ninduce_velocity(Vortex.position(uw_target), uw_soruce)\n(::Type{Singleton}, ::Type{Group}): In this case, we iterate through i in 1:length(uw_source) and sum up the the results of induce_velocity(uw_target, uw_source[i])\n(::Type{Group}, ::Any): Since the output is no longer a scalar value, we first preallocate the output with allocate_velocity(uw_target), then iteratively apply induce_velocity over all the elements of uw_target. Once the target has been expanded all the way to Singleton types, then we are back to the (target, source) kind being either (::Type{Singleton}, ::Type{Group}) or (::Type{Singleton}, ::Type{Singleton}), which can be handled by the two cases listed above.Ultimately, this whole setup is just a way to allow induce_velocity to be called recursively on arbitrary groupings of vortex elements. However, velocity is not the only property that can be computed this way. Other quantities, such as acceleration, circulation, etcs., can all be be computed using the same framework. Instead of writing essentially the same code for all of them, we can use the @property macro"
 },
 
 {
@@ -685,7 +685,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Handing Pairwise Interactions",
     "title": "Defining a new property",
     "category": "section",
-    "text": "We'll go through an example of how to define new properties using the @property marco. Suppose we want to check if a system of elements have branch cuts in their streamfunction, we can simply define the following:import PotentialFlow.Properties: @property\n\n@property begin\n	signature = continuous_streamfunction(src::Source)\n	stype = Bool\n	reduce = (&, true)\nend\n\ncontinuous_streamfunction(::Vortex.Point) = true\ncontinuous_streamfunction(::Vortex.Blob) = true\ncontinuous_streamfunction(::Source.Point) = false\ncontinuous_streamfunction(::Source.Blob) = false\n\nvortices = (Vortex.Point.(rand(10), rand(10)), \n	        Vortex.Blob.(rand(10), rand(10), rand())\n		   )\n\nsources = (Source.Point.(rand(10), rand(10)),\n           Source.Blob.(rand(10), rand(10), rand())\n		  )\n\nmixed = (vortices, sources)\n\ncontinuous_streamfunction.((vortices, sources, mixed))\n\n# output\n\n(true, false, false)Here, the reduce operation is a tuple that takes in a binary operation and an initial value. When continuous_streamfunction is called on a group source, such as an array of elements, it will recursively call continuous_streamfunction on each member of the group, and use & to combine the results. Without the true initial value, the @property macro will use zero(stype), which in this case, would have been false. If we did not want the values to be aggregated, but instead wanted to preserve the organization structure of our source elements, we can simply leave out the reduce field. For instance, if we wanted to know whether the element is a desingularized element or not, it does not make sense to reduce the results.import PotentialFlow.Properties: @property\nimport PotentialFlow: Points, Blobs\n\n@property begin\n	signature = is_desingularized(src::Source)\n	stype = Bool\nend\n\nis_desingularized(::Points.Point) = false\nis_desingularized(::Blobs.Blob) = true\n\nvortices = (Vortex.Point.(rand(2), rand(2)), \n	        Vortex.Blob.(rand(2), rand(2), rand())\n		   )\n\nsources = (Source.Point.(rand(2), rand(2)),\n           Source.Blob.(rand(2), rand(2), rand())\n		  )\n\nis_desingularized.((vortices, sources))\n\n# output\n\n((Bool[false, false], Bool[true, true]), (Bool[false, false], Bool[true, true]))"
+    "text": "We\'ll go through an example of how to define new properties using the @property marco. Suppose we want to check if a system of elements have branch cuts in their streamfunction, we can simply define the following:import PotentialFlow.Properties: @property\n\n@property begin\n	signature = continuous_streamfunction(src::Source)\n	stype = Bool\n	reduce = (&, true)\nend\n\ncontinuous_streamfunction(::Vortex.Point) = true\ncontinuous_streamfunction(::Vortex.Blob) = true\ncontinuous_streamfunction(::Source.Point) = false\ncontinuous_streamfunction(::Source.Blob) = false\n\nvortices = (Vortex.Point.(rand(10), rand(10)), \n	        Vortex.Blob.(rand(10), rand(10), rand())\n		   )\n\nsources = (Source.Point.(rand(10), rand(10)),\n           Source.Blob.(rand(10), rand(10), rand())\n		  )\n\nmixed = (vortices, sources)\n\ncontinuous_streamfunction.((vortices, sources, mixed))\n\n# output\n\n(true, false, false)Here, the reduce operation is a tuple that takes in a binary operation and an initial value. When continuous_streamfunction is called on a group source, such as an array of elements, it will recursively call continuous_streamfunction on each member of the group, and use & to combine the results. Without the true initial value, the @property macro will use zero(stype), which in this case, would have been false. If we did not want the values to be aggregated, but instead wanted to preserve the organization structure of our source elements, we can simply leave out the reduce field. For instance, if we wanted to know whether the element is a desingularized element or not, it does not make sense to reduce the results.import PotentialFlow.Properties: @property\nimport PotentialFlow: Points, Blobs\n\n@property begin\n	signature = is_desingularized(src::Source)\n	stype = Bool\nend\n\nis_desingularized(::Points.Point) = false\nis_desingularized(::Blobs.Blob) = true\n\nvortices = (Vortex.Point.(rand(2), rand(2)), \n	        Vortex.Blob.(rand(2), rand(2), rand())\n		   )\n\nsources = (Source.Point.(rand(2), rand(2)),\n           Source.Blob.(rand(2), rand(2), rand())\n		  )\n\nis_desingularized.((vortices, sources))\n\n# output\n\n((Bool[false, false], Bool[true, true]), (Bool[false, false], Bool[true, true]))"
 },
 
 ]}
