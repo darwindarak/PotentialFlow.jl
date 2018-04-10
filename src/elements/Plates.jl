@@ -10,14 +10,15 @@ using ..Points
 using ..Blobs
 
 using ..Elements
+using ..RigidBodyMotions
+
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
                   self_induce_velocity!, allocate_velocity, advect!, reset_velocity!
 
 import ..Utils:@get, MappedVector
 
-include("bodies/RigidBodyMotions.jl")
-using .RigidBodyMotions
+#include("bodies/RigidBodyMotions.jl")
 
 include("plates/chebyshev.jl")
 

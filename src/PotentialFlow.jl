@@ -9,6 +9,8 @@ include("Utils.jl")
 
 include("Elements.jl")
 include("Motions.jl")
+include("RigidBodyMotions.jl")
+
 
 @reexport using .Elements
 @reexport using .Motions
@@ -30,8 +32,9 @@ include("elements/Source.jl")
 include("elements/Plates.jl")
 include("elements/Bodies.jl")
 
+
 import .Plates: Plate
-import .Bodies: PowerBody
+#import .Bodies: MappedBody
 
 
 include("elements/Doublets.jl")

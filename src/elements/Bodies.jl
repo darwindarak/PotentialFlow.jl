@@ -1,13 +1,16 @@
 module Bodies
 
 using DocStringExtensions
+using SchwarzChristoffel
 
-export PowerBody, RigidBodyMotions, streamfunction
+export RigidBodyMotions, streamfunction
 
 using ..Points
 using ..Blobs
 
 using ..Elements
+using ..RigidBodyMotions
+
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
                   self_induce_velocity!, allocate_velocity, advect!, reset_velocity!, streamfunction
@@ -15,57 +18,10 @@ import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, 
 import ..Utils:@get, MappedVector
 
 
+#Map = Union{}
 
-include("bodies/RigidBodyMotions.jl")
-using .RigidBodyMotions
 
-#=
-export bound_circulation, bound_circulation!,
-       enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force
-=#
-
-"""
-    PowerBody <: Elements.Element
-
-A two-dimensional body, described by power series mapping
-
-# Constructors
-- `PowerBody(C, c, α)`
-"""
-mutable struct PowerBody <: Element
-    "power series coefficients, C[1] -> c₁, C[2] -> c₀, etc"
-    C::Vector{Complex128}
-    "centroid"
-    c::Complex128
-    "angle"
-    α::Float64
-
-    "number of plotting control points"
-    N::Int
-
-    "control point coordinates in circle space"
-    ζs::Vector{Complex128}
-
-    "control point coordinates in body-fixed space"
-    z̃s::Vector{Complex128}
-
-    "map Jacobian in body-fixed coordinates"
-    dz̃dζs::Vector{Complex128}
-
-    "tangent in body-fixed coordinates"
-    τs::Vector{Complex128}
-
-    "control point coordinates in inertial space"
-    zs::Vector{Complex128}
-
-    "coefficients of power series of |z̃(ζ)|²"
-    D::Vector{Complex128}
-
-    "total circulation"
-    Γ::Float64
-
-end
-@kind PowerBody Singleton
+#@kind PowerMap Singleton
 
 
 #function deserialize(s::AbstractSerializer, t::Type{Plate})
@@ -76,61 +32,10 @@ end
 #end
 
 
-function PowerBody(C::Vector{Complex128}, c::Complex128, α::Float64)
-    N = 200
-    ζs = circle(N)
-    z̃s = powermap(ζs,C)
-    dz̃dζs = d_powermap(ζs,C)
-    zs = c + z̃s*exp(im*α)
-    τs = zero(ζs)
-    @. τs = im*ζs*dz̃dζs/abs(dz̃dζs)
-
-    nc = length(C)
-    D = zeros(Complex128,nc+1)
-    Cbig = [C;zeros(Complex128,nc)]
-    for l = 0:nc, j = 1:nc
-      D[l+1] += Cbig[j+l]*conj(Cbig[j])
-    end
-    D[1] *= 0.5
-
-    PowerBody(C, c, α, N, ζs, z̃s, dz̃dζs, τs, zs, D, 0.0)
-end
-
-circle(N) = [exp(im*2π*(i-1)/N) for i in 1:N]
-
-function powermap(ζ::Complex128,C::Vector{Complex128})
-  ζⁿ = ζ
-  z = zero(ζ)
-  for c in C
-    z += c*ζⁿ
-    ζⁿ /= ζ
-  end
-  z
-end
-
-powermap(ζs::Vector{Complex128},C::Vector{Complex128}) = [powermap(ζ,C) for ζ in ζs]
 
 
-function d_powermap(ζ::Complex128,C::Vector{Complex128})
-  dzdζ = C[1]
-  ζⁿ = 1/ζ^2
-  for n in 1:length(C)-2
-    dzdζ -= n*C[n+2]*ζⁿ
-    ζⁿ /= ζ
-  end
-  dzdζ
-end
 
-d_powermap(ζs::Vector{Complex128},C::Vector{Complex128}) = [d_powermap(ζ,C) for ζ in ζs]
-
-jacobian(b::PowerBody) = b.dz̃ds
-
-centroid(b::PowerBody) = b.c
-
-angle(b::PowerBody) = b.α
-
-Base.length(b::PowerBody) = b.N
-circulation(b::PowerBody) = b.Γ
+#= stuff to contemplate adding back in
 
 Elements.conftransform(z::Complex128,b::PowerBody) = powermap(z,b.C)
 
@@ -246,6 +151,8 @@ function streamfunction(ζ::Complex128, b::PowerBody, Winf::Complex128, t)
   imag(F)
 
 end
+
+=#
 
 
 
@@ -425,9 +332,7 @@ edges(plate) = plate.zs[end], plate.zs[1]
 include("plates/pressure.jl")
 =#
 
-function Base.show(io::IO, b::PowerBody)
-    println(io, "Power series body: C = $(b.C), c = $(b.c), α = $(round(rad2deg(b.α),2))ᵒ")
-end
+
 
 
 end
