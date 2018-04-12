@@ -3,8 +3,7 @@ module Plates
 using DocStringExtensions
 
 export Plate, bound_circulation, bound_circulation!,
-       enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force,
-       RigidBodyMotions
+       enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force
 
 using ..Points
 using ..Blobs
@@ -17,8 +16,6 @@ import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, 
                   self_induce_velocity!, allocate_velocity, advect!, reset_velocity!
 
 import ..Utils:@get, MappedVector
-
-#include("bodies/RigidBodyMotions.jl")
 
 include("plates/chebyshev.jl")
 

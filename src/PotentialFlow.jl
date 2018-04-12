@@ -14,13 +14,14 @@ include("RigidBodyMotions.jl")
 
 @reexport using .Elements
 @reexport using .Motions
+@reexport using .RigidBodyMotions
 
 include("TimeMarching.jl")
 @reexport using .TimeMarching
 
 #== Some Built-in Potential Flow Elements ==#
 
-export Vortex, Source, Sheets, Plates, Plate, Freestream, Doublet
+export Vortex, Source, Sheets, Plates, Plate, Freestream, Doublet, Bodies
 
 include("elements/Points.jl")
 include("elements/Blobs.jl")
@@ -34,7 +35,7 @@ include("elements/Bodies.jl")
 
 
 import .Plates: Plate
-#import .Bodies: MappedBody
+import .Bodies: ConformalBody
 
 
 include("elements/Doublets.jl")
