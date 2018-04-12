@@ -117,6 +117,7 @@ function induce_velocity(z::Complex128, p::Plate, t)
         Jⁿ *= J
     end
 
+      # note that this provides u+iv (JDE)
     0.5im*w*exp(im*α)
 end
 

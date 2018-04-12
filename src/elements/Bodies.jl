@@ -125,7 +125,7 @@ function self_induce_velocity!(motion, ::ConformalBody, t)
 end
 
 function induce_velocity(ζ::Complex128, b::ConformalBody, t)
-    @get b (m, minv, dm, c, α, ċ, α̇)
+    @get b (m, minv, dm, c, α, ċ, α̇, img)
     @get m (ps,)
     @get ps (ccoeff,dcoeff)
 
@@ -141,15 +141,20 @@ function induce_velocity(ζ::Complex128, b::ConformalBody, t)
         w̃ += im*(l-1)*α̇*dcoeff[l]*ζ⁻ˡ
         ζ⁻ˡ /= ζ
     end
+    w̃ = conj(w̃)
 
-    return w̃*exp(-im*α)/dz̃
+    w̃ += induce_velocity(ζ,img,t)
+
+    # need to return the velocity u+iv, not the usual conjugate velocity
+    # Also, this is the velocity in the circle plane, not physical plane
+    return w̃*exp(im*α)
 
 end
 
 include("bodies/boundary_conditions.jl")
 
 function Elements.streamfunction(ζ::Complex128, b::ConformalBody)
-  @get b (m, minv, c, α, ċ, α̇)
+  @get b (m, minv, c, α, ċ, α̇, img)
   @get m (ps,)
   @get ps (ccoeff,dcoeff)
 
@@ -165,20 +170,11 @@ function Elements.streamfunction(ζ::Complex128, b::ConformalBody)
       ζ⁻ˡ /= ζ
   end
 
-  return imag(F) + streamfunction(ζ,b.img)
+  return imag(F) + streamfunction(ζ,img)
 
 end
 
-# function Elements.streamfunction(ζ::Complex128, b::ConformalBody, src, t)
-#
-#   srcimg = get_image(src,b)
-#   sys = (src,srcimg)
-#
-#   ψ = streamfunction(ζ,sys)
-#
-#   return ψ
-#
-# end
+
 
 
 
