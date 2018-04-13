@@ -17,7 +17,7 @@ import SchwarzChristoffel: Polygon, ConformalMap, PowerMap
 
 import ..Utils:@get, MappedVector
 
-export ConformalBody,Polygon,enforce_no_flow_through!
+export ConformalBody,Polygon,enforce_no_flow_through!,normal,tangent
 
 
 mutable struct ConformalBody <: Element
@@ -106,12 +106,72 @@ rigid_transform(z̃::Union{Complex128,Vector{Complex128}},
 
 Base.length(b::ConformalBody) = b.m.N
 
-Elements.conftransform(z::Complex128,b::ConformalBody) = b.m(z)
+"""
+    normal(ζ::Complex128,v::Complex128,b::ConformalBody) -> Float64
+
+Returns the normal component of the complex vector `v` in the physical plane at
+a point on the surface of body `b`. This surface point is specified by its
+pre-image `ζ` on the unit circle.
+
+# Example
+
+```jldoctest
+julia> p = Polygon([-1.0,1.0,1.0,-1.0],[-1.0,-1.0,1.0,1.0]);
+
+julia> b = ConformalBody(p);
+
+julia> Bodies.normal(exp(im*0),exp(im*π/4),b)
+0.7071067811865472
+```
+"""
+function normal(ζ::Complex128,v::Complex128,b::ConformalBody)
+  dz, ddz = b.dm(ζ)
+  real(v*conj(ζ*dz)/abs(dz))
+end
+
+"""
+    tangent(ζ::Complex128,v::Complex128,b::ConformalBody) -> Float64
+
+Returns the (counter-clockwise) tangent component of the complex vector `v`
+in the physical plane at a point on the surface of body `b`. This surface point
+is specified by its pre-image `ζ` on the unit circle.
+
+# Example
+
+```jldoctest
+julia> p = Polygon([-1.0,1.0,1.0,-1.0],[-1.0,-1.0,1.0,1.0]);
+
+julia> b = ConformalBody(p);
+
+julia> Bodies.tangent(exp(im*0),exp(im*π/4),b)
+0.7071067811865472
+```
+"""
+function tangent(ζ::Complex128,v::Complex128,b::ConformalBody)
+  dz, ddz = b.dm(ζ)
+  imag(v*conj(ζ*dz)/abs(dz))
+end
+
+function allocate_conftransform(::ConformalBody)
+    nothing
+end
+
+Elements.conftransform(ζ::Complex128,b::ConformalBody) = b.m(ζ)
 
 Elements.conftransform(s::T,b::ConformalBody) where T <: Union{Blob,Point} =
                 Elements.conftransform(s.z,b)
 
+function allocate_jacobian(::ConformalBody)
+    nothing
+end
 
+function Elements.jacobian(ζ::Complex128,b::ConformalBody)
+  dz, ddz = b.dm(ζ)
+  return dz
+end
+
+Elements.jacobian(s::T,b::ConformalBody) where T <: Union{Blob,Point} =
+                Elements.jacobian(s.z,b)
 
 
 function allocate_velocity(::ConformalBody)
