@@ -74,15 +74,17 @@ end
     ()
 end
 
-# @recipe function plot(b::PowerBody)
-#     z = [b.zs; b.zs[1]]
-#     linecolor --> :black
-#     fillrange --> 0
-#     fillcolor --> :black
-#     x := real.(z)
-#     y := imag.(z)
-#     ()
-# end
+@recipe function plot(b::ConformalBody)
+    z = [b.z; b.z[1]]
+    linecolor --> :black
+    fillrange --> 0
+    fillcolor --> :black
+    ratio --> 1
+    legend --> :none
+    x := real.(z)
+    y := imag.(z)
+    ()
+end
 
 const VortexSystem = NTuple{N, Union{Element, Tuple, Array{V} where {V <: Element}}} where N
 function RecipesBase.RecipesBase.apply_recipe(plotattributes::Dict{Symbol, Any}, sys::VortexSystem)
