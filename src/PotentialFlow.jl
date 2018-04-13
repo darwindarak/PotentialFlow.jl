@@ -8,8 +8,8 @@ include("Properties.jl")
 include("Utils.jl")
 
 include("Elements.jl")
-include("Motions.jl")
 include("RigidBodyMotions.jl")
+include("Motions.jl")
 
 
 @reexport using .Elements

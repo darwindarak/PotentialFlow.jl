@@ -13,7 +13,7 @@ using ..RigidBodyMotions
 
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
-                  self_induce_velocity!, allocate_velocity, advect!, reset_velocity!
+                  self_induce_velocity!, allocate_velocity, advect!
 
 import ..Utils:@get, MappedVector
 
@@ -153,11 +153,7 @@ function _singular_velocity!(ws, p, src, t, ::Type{Group})
 end
 
 induce_velocity!(m::RigidBodyMotion, target::Plate, source, t) = m
-function reset_velocity!(m::RigidBodyMotion, src)
-    m.ċ = m.c̈ = zero(Complex128)
-    m.α̇ = zero(Complex128)
-    m
-end
+
 
 function Elements.streamfunction(z::Complex128, p::Plate)
     @get p (N, L, c, α, Γ, A, B₀, B₁)

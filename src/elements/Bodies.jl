@@ -12,7 +12,7 @@ using ..RigidBodyMotions
 
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
-                  self_induce_velocity!, allocate_velocity, advect!, reset_velocity!, streamfunction
+                  self_induce_velocity!, allocate_velocity, advect!, streamfunction
 import SchwarzChristoffel: Polygon, ConformalMap, PowerMap
 
 import ..Utils:@get, MappedVector
@@ -34,7 +34,7 @@ mutable struct ConformalBody <: Element
     "orientation angle (in radians)"
     α::Float64
     "control points in inertial coordinates in physical plane"
-    z::Vector{Complex128}
+    zs::Vector{Complex128}
     "translational velocity"
     ċ::Complex128
     "angular velocity"
@@ -185,6 +185,7 @@ function self_induce_velocity!(motion, ::ConformalBody, t)
 end
 
 function induce_velocity(ζ::Complex128, b::ConformalBody, t)
+  # Also, this is the velocity in the circle plane, not physical plane
     @get b (m, minv, dm, c, α, ċ, α̇, img)
     @get m (ps,)
     @get ps (ccoeff,dcoeff)
@@ -201,13 +202,31 @@ function induce_velocity(ζ::Complex128, b::ConformalBody, t)
         w̃ += im*(l-1)*α̇*dcoeff[l]*ζ⁻ˡ
         ζ⁻ˡ /= ζ
     end
+    # need to return the velocity u+iv, not the usual conjugate velocity
     w̃ = conj(w̃)
 
+    # add the influence of images
     w̃ += induce_velocity(ζ,img,t)
 
-    # need to return the velocity u+iv, not the usual conjugate velocity
-    # Also, this is the velocity in the circle plane, not physical plane
-    return w̃*exp(im*α)
+    return w̃
+
+end
+
+function induce_velocity(target::T,b::ConformalBody, t) where T <: Union{Blob,Point}
+  # Here we apply Routh correction and adjust velocity relative to body. Note that
+  # all singularity positions are interpreted in circle plane
+  @get b (m, minv, dm, c, α, ċ, α̇, img)
+
+  w̃ = induce_velocity(target.z,b,t)
+
+  z̃ = m(target.z)
+  dz̃, ddz̃ = dm(target.z)
+  c̃̇ = ċ*exp(-im*α)
+  w̃ += target.S*conj(ddz̃)/(4π*im*conj(dz̃))
+  w̃ /=conj(dz̃)
+  w̃ -= c̃̇ + im*α̇*z̃
+
+  return w̃/dz̃
 
 end
 
@@ -234,8 +253,60 @@ function Elements.streamfunction(ζ::Complex128, b::ConformalBody)
 
 end
 
+###
 
+function induce_velocity!(ws::Vector, b::ConformalBody, sources::T, t) where T <: Union{Tuple, AbstractArray}
+    for source in sources
+        induce_velocity!(ws, b, source, t)
+    end
+    ws
+end
+function induce_velocity(b::ConformalBody, src, t)
+    out = allocate_velocity(b.zs)
+    induce_velocity!(out, b, src, t)
+end
 
+function induce_velocity!(ws::Vector, b::ConformalBody, src, t)
+    _singular_velocity!(ws, b, Elements.unwrap(src), t,
+                        kind(Elements.unwrap_src(src)))
+end
+
+function _singular_velocity!(ws, b, src::Blob{T}, t, ::Type{Singleton}) where T
+    induce_velocity!(ws, b.zs, Point{T}(src.z, src.S), t)
+end
+
+function _singular_velocity!(ws, b, src, t, ::Type{Singleton})
+    induce_velocity!(ws, b.zs, src, t)
+end
+
+function _singular_velocity!(ws, b, src, t, ::Type{Group})
+    for i in eachindex(src)
+        induce_velocity!(ws, b, src[i], t)
+    end
+    ws
+end
+
+induce_velocity!(m::RigidBodyMotion, target::ConformalBody, source, t) = m
+
+function advect!(body₊::ConformalBody, body₋::ConformalBody, ṗ::RigidBodyMotion, Δt)
+    if body₊ != body₋
+        body₊.m    = body₋.m
+        body₊.minv    = body₋.minv
+        body₊.dm   = body₋.dm
+        if length(body₊.zs) != length(body₋.zs)
+            resize!(body₊.zs, length(body₋.zs))
+        end
+        body₊.zs   .= body₋.zs
+    end
+    body₊.c = body₋.c + ṗ.ċ*Δt
+    body₊.α = body₋.α + ṗ.α̇*Δt
+
+    @get body₊ (m, c, α)
+
+    @. body₊.zs = rigid_transform(m.z,Complex128(c),α)
+
+    return body₊
+end
 
 
 #= stuff to contemplate adding back in
@@ -274,70 +345,9 @@ tangent(z, α) = real(exp(-im*α)*z)
 
 
 
-function induce_velocity!(ws::Vector, p::Plate, sources::T, t) where T <: Union{Tuple, AbstractArray}
-    for source in sources
-        induce_velocity!(ws, p, source, t)
-    end
-    ws
-end
-function induce_velocity(p::Plate, src, t)
-    out = allocate_velocity(p.zs)
-    induce_velocity!(out, p, src, t)
-end
 
-function induce_velocity!(ws::Vector, p::Plate, src, t)
-    _singular_velocity!(ws, p, Elements.unwrap(src), t,
-                        kind(Elements.unwrap_src(src)))
-end
 
-function _singular_velocity!(ws, p, src::Blob{T}, t, ::Type{Singleton}) where T
-    induce_velocity!(ws, p.zs, Point{T}(src.z, src.S), t)
-end
 
-function _singular_velocity!(ws, p, src, t, ::Type{Singleton})
-    induce_velocity!(ws, p.zs, src, t)
-end
-
-function _singular_velocity!(ws, p, src, t, ::Type{Group})
-    for i in eachindex(src)
-        induce_velocity!(ws, p, src[i], t)
-    end
-    ws
-end
-
-induce_velocity!(m::RigidBodyMotion, target::Plate, source, t) = m
-function reset_velocity!(m::RigidBodyMotion, src)
-    m.ċ = m.c̈ = zero(Complex128)
-    m.α̇ = zero(Complex128)
-    m
-end
-
-function advect!(plate₊::Plate, plate₋::Plate, ṗ::RigidBodyMotion, Δt)
-    if plate₊ != plate₋
-        plate₊.L    = plate₋.L
-        plate₊.Γ    = plate₋.Γ
-        plate₊.B₀   = plate₋.B₀
-        plate₊.B₁   = plate₋.B₁
-        if plate₊.N != plate₋.N
-            plate₊.N    = plate₋.N
-            resize!(plate₊.ss, plate₊.N)
-            resize!(plate₊.zs, plate₊.N)
-            resize!(plate₊.C, plate₊.N)
-        end
-        plate₊.ss   .= plate₋.ss
-        plate₊.zs   .= plate₋.zs
-        plate₊.C    .= plate₋.C
-        plate₊.dchebt! = plate₋.dchebt!
-    end
-    plate₊.c = plate₋.c + ṗ.ċ*Δt
-    plate₊.α = plate₋.α + ṗ.α̇*Δt
-
-    @get plate₊ (c, L, α)
-
-    @. plate₊.zs = c + 0.5L*exp(im*α)*plate₊.ss
-
-    plate₊
-end
 
 """
     unit_impulse(src, plate::Plate)

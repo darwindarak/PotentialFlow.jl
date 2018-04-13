@@ -75,7 +75,7 @@ end
 end
 
 @recipe function plot(b::ConformalBody)
-    z = [b.z; b.z[1]]
+    z = [b.zs; b.zs[1]]
     linecolor --> :black
     fillrange --> 0
     fillcolor --> :black
