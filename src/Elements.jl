@@ -1,7 +1,7 @@
 module Elements
 
 export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction,
-       conftransform, image
+       conftransform, inverse_conftransform, jacobian, image
 
 using ..Properties
 
@@ -197,6 +197,31 @@ julia> Elements.conftransform(sys,b)
     preallocator = allocate_conftransform
     stype = Complex128
 end
+
+doc"""
+    Elements.inverse_conftransform(src,body)
+
+Return the inverse conformally transformed position of `src` via the transform defined
+by `body`. In this context, the position(s) in `src` is interpreted as
+coordinates in the physical plane.
+
+# Example
+
+```jldoctest
+julia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(2.0im, -π, 0.1));
+
+julia> b = ConformalBody([1/4,0,1/4]);
+
+julia> Elements.inverse_conftransform(sys,b)
+(0.0 + 0.0im, 0.0 + 0.375im)
+```
+"""
+@property begin
+    signature = inverse_conftransform(src::Source,b)
+    preallocator = allocate_inv_conftransform
+    stype = Complex128
+end
+
 
 doc"""
     Elements.jacobian(src,body)

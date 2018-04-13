@@ -156,10 +156,19 @@ function allocate_conftransform(::ConformalBody)
     nothing
 end
 
-Elements.conftransform(ζ::Complex128,b::ConformalBody) = b.m(ζ)
+Elements.conftransform(ζ::Complex128,b::ConformalBody) = b.c + b.m(ζ)*exp(im*b.α)
 
 Elements.conftransform(s::T,b::ConformalBody) where T <: Union{Blob,Point} =
-                Elements.conftransform(s.z,b)
+                T(Elements.conftransform(s.z,b),s.S)
+
+function allocate_inv_conftransform(::ConformalBody)
+    nothing
+end
+
+Elements.inverse_conftransform(z::Complex128,b::ConformalBody) = b.minv((z-b.c)*exp(-im*b.α))
+
+Elements.inverse_conftransform(s::T,b::ConformalBody) where T <: Union{Blob,Point} =
+                T(Elements.inverse_conftransform(s.z,b),s.S)
 
 function allocate_jacobian(::ConformalBody)
     nothing
