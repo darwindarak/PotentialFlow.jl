@@ -105,6 +105,15 @@ Plates.force
 Plates.surface_pressure
 ```
 
+## Methods on Conformally-Mapped Bodies
+
+```@docs
+Bodies.enforce_no_flow_through!
+Bodies.normal
+Bodies.tangent
+Bodies.transform_velocity!
+```
+
 ## Index
 
 ```@index
