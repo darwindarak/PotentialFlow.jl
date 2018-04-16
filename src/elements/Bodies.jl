@@ -228,15 +228,47 @@ function induce_velocity(target::T,b::ConformalBody, t) where T <: Union{Blob,Po
 
   w̃ = induce_velocity(target.z,b,t)
 
-  z̃ = m(target.z)
-  dz̃, ddz̃ = dm(target.z)
-  c̃̇ = ċ*exp(-im*α)
-  w̃ += target.S*conj(ddz̃)/(4π*im*conj(dz̃))
-  w̃ /=conj(dz̃)
-  w̃ -= c̃̇ + im*α̇*z̃
+  # Only make Routh correction here. Do the other adjustments only after
+  # the other parts of velocity have been assembled
+  #z̃ = m(target.z)
+  #dz̃, ddz̃ = dm(target.z)
+  #c̃̇ = ċ*exp(-im*α)
+  #w̃ += target.S*conj(ddz̃)/(4π*im*conj(dz̃))
+  #w̃ /=conj(dz̃)
+  #w̃ -= c̃̇ + im*α̇*z̃
 
-  return w̃/dz̃
+  #return w̃/dz̃
+  return w̃
 
+end
+
+function transform_velocity!(wout,win,targets::T,b::ConformalBody) where T <: Union{Tuple,AbstractArray}
+  for (i,target) in enumerate(targets)
+    wout[i] = transform_velocity(win[i],target,b)
+  end
+  wout
+end
+
+function transform_velocity!(wout,win,targets::T,b::ConformalBody) where T <: Tuple
+  for (i,target) in enumerate(targets)
+    transform_velocity!(wout[i],win[i],target,b)
+  end
+  wout
+end
+
+function transform_velocity(win,targ::T,b::ConformalBody) where T <: Union{Blob,Point}
+  wout = win
+  z̃ = b.m(targ.z)
+  dz̃, ddz̃ = b.dm(targ.z)
+  wout += targ.S*conj(ddz̃)/(4π*im*conj(dz̃))
+  wout /= conj(dz̃)
+  wout -= b.ċ + im*b.α̇*z̃
+  wout /= dz̃
+  wout
+end
+
+function transform_velocity!(wout,win,targ::ConformalBody,b::ConformalBody)
+    wout = win
 end
 
 include("bodies/boundary_conditions.jl")
