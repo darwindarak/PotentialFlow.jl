@@ -17,7 +17,8 @@ import SchwarzChristoffel: Polygon, ConformalMap, PowerMap
 
 import ..Utils:@get, MappedVector
 
-export ConformalBody,Polygon,enforce_no_flow_through!,normal,tangent,transform_velocity!
+export ConformalBody,Polygon,enforce_no_flow_through!,normal,tangent,
+          transform_velocity!,transform_velocity
 
 
 mutable struct ConformalBody <: Element
@@ -107,11 +108,12 @@ rigid_transform(z̃::Union{Complex128,Vector{Complex128}},
 Base.length(b::ConformalBody) = b.m.N
 
 """
-    normal(ζ::Complex128,v::Complex128,b::ConformalBody) -> Float64
+    normal(ζ,v,b::ConformalBody)
 
-Returns the normal component of the complex vector `v` in the physical plane at
-a point on the surface of body `b`. This surface point is specified by its
-pre-image `ζ` on the unit circle.
+Returns the normal component of the complex vector(s) `v` in the physical plane
+at a point(s) on the surface of body `b`. Each surface point
+is specified by its pre-image `ζ` on the unit circle. `v` and `ζ` can be arrays
+of points.
 
 # Example
 
@@ -125,16 +127,20 @@ julia> Bodies.normal(exp(im*0),exp(im*π/4),b)
 ```
 """
 function normal(ζ::Complex128,v::Complex128,b::ConformalBody)
-  dz, ddz = b.dm(ζ)
-  real(v*conj(ζ*dz)/abs(dz))
+  dz̃, ddz̃ = b.dm(ζ)
+  real(v*conj(ζ*dz̃*exp(im*b.α))/abs(dz̃))
 end
 
-"""
-    tangent(ζ::Complex128,v::Complex128,b::ConformalBody) -> Float64
+normal(ζ::Vector{Complex128},v::Vector{Complex128},b::ConformalBody) =
+        map((x,y) -> normal(x,y,b),ζ,v)
 
-Returns the (counter-clockwise) tangent component of the complex vector `v`
-in the physical plane at a point on the surface of body `b`. This surface point
-is specified by its pre-image `ζ` on the unit circle.
+"""
+    tangent(ζ,v,b::ConformalBody)
+
+Returns the (counter-clockwise) tangent component of the complex vector(s) `v`
+in the physical plane at a point(s) on the surface of body `b`. Each surface point
+is specified by its pre-image `ζ` on the unit circle. `v` and `ζ` can be arrays
+of points.
 
 # Example
 
@@ -148,9 +154,12 @@ julia> Bodies.tangent(exp(im*0),exp(im*π/4),b)
 ```
 """
 function tangent(ζ::Complex128,v::Complex128,b::ConformalBody)
-  dz, ddz = b.dm(ζ)
-  imag(v*conj(ζ*dz)/abs(dz))
+  dz̃, ddz̃ = b.dm(ζ)
+  imag(v*conj(ζ*dz̃*exp(im*b.α))/abs(dz̃))
 end
+
+tangent(ζ::Vector{Complex128},v::Vector{Complex128},b::ConformalBody) =
+        map((x,y) -> tangent(x,y,b),ζ,v)
 
 function allocate_conftransform(::ConformalBody)
     nothing
@@ -263,6 +272,31 @@ julia> Bodies.transform_velocity!(ẋ, ẋ, sys, body)
   α̇ = 0.0
   Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.785969im, 0.0-0.785969im])
 ```
+
+    transform_velocity(win, target::Complex128, body::ConformalBody)
+
+Returns the velocity in the physical plane from the velocity `win` in the circle plane.
+
+```jldoctest
+julia> a1 = 1; b1 = 0.1; ccoeff = Complex128[0.5(a1+b1),0,0.5(a1-b1)];
+
+julia> body = Bodies.ConformalBody(ccoeff,0.0+0.0im,π/4);
+
+julia> motion = RigidBodyMotion(1,0);
+
+julia> points = Vortex.Point.([-2, 2], 1.0);
+
+julia> Bodies.enforce_no_flow_through!(body, motion, points, 0);
+
+julia> sys = (body,points);
+
+julia> ζ = exp(-im*π/4);
+
+julia> w̃ = induce_velocity(ζ,sys,0);
+
+julia> w = Bodies.transform_velocity(w̃,ζ,b)
+-0.3981545255647751 - 0.02362029449846252im
+```
 """
 function transform_velocity!(wout,win,targets::T,b::ConformalBody) where T <: Union{Tuple,AbstractArray}
   for (i,target) in enumerate(targets)
@@ -288,6 +322,17 @@ function transform_velocity(win,targ::T,b::ConformalBody) where T <: Union{Blob,
   wout /= dz̃
   wout
 end
+
+
+function transform_velocity(win,ζ::Complex128,b::ConformalBody)
+  wout = win
+  z̃ = b.m(ζ)
+  dz̃, ddz̃ = b.dm(ζ)
+  wout /= conj(dz̃*exp(im*b.α))
+end
+
+transform_velocity(win,ζ::Vector{Complex128},b::ConformalBody) =
+      map((x,y) -> transform_velocity(x,y,b),win,ζ)
 
 function transform_velocity!(wout,win,targ::ConformalBody,b::ConformalBody)
     wout = win
