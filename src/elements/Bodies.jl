@@ -13,12 +13,12 @@ using ..RigidBodyMotions
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
                   self_induce_velocity!, allocate_velocity, advect!, streamfunction
-import SchwarzChristoffel: Polygon, ConformalMap, PowerMap
+import SchwarzChristoffel: Polygon, ConformalMap, PowerMap, addedmass
 
 import ..Utils:@get, MappedVector
 
 export ConformalBody,Polygon,enforce_no_flow_through!,normal,tangent,
-          transform_velocity!,transform_velocity
+          transform_velocity!,transform_velocity,unit_impulse,addedmass
 
 
 mutable struct ConformalBody <: Element
@@ -160,6 +160,10 @@ end
 
 tangent(ζ::Vector{Complex128},v::Vector{Complex128},b::ConformalBody) =
         map((x,y) -> tangent(x,y,b),ζ,v)
+
+addedmass(b::ConformalBody) = addedmass(b.m)
+
+####
 
 function allocate_conftransform(::ConformalBody)
     nothing
@@ -416,6 +420,36 @@ function advect!(body₊::ConformalBody, body₋::ConformalBody, ṗ::RigidBodyM
     return body₊
 end
 
+
+function Elements.impulse(body::ConformalBody)
+
+  @get body (m,α,ċ,α̇,img)
+  ċ̃ = ċ*exp(-im*α)
+
+  impv = addedmass(body)[2:3,:]*[α̇;real(ċ);imag(ċ)]
+
+  imp = impv[1]+im*impv[2]
+  for (i,v) in enumerate(img)
+    imp -= im*m.ps.ccoeff[1]*v.S*(v.z-m(v.z)-image(v.z,body))
+  end
+
+  return imp*exp(im*α)
+
+end
+
+"""
+    unit_impulse(src, body::ConformalBody)
+
+Compute the impulse per unit circulation of `src` and its associated bound
+vortex sheet on the conformally mapped `body` (its image vortex)
+`src` can be either a `Complex128` or a subtype of `Vortex.PointSource`.
+In both cases, the position associated with `src` is interpreted in the
+circle plane of the conformal map.
+"""
+unit_impulse(ζ::Complex128, body::ConformalBody) =
+          -im*body.m.ps.ccoeff[1]*(ζ - Elements.image(ζ))
+
+unit_impulse(src, body::ConformalBody) = unit_impulse(Elements.position(src), body)
 
 #= stuff to contemplate adding back in
 
