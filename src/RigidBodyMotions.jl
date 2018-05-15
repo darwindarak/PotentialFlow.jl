@@ -51,6 +51,11 @@ function show(io::IO, m::RigidBodyMotion)
     print(io, "  $(m.kin)")
 end
 
+#=
+Kinematics
+=#
+
+
 struct Constant{C <: Complex, A <: Real} <: Kinematics
     ċ::C
     α̇::A
@@ -113,6 +118,59 @@ function (p::Pitchup)(t)
     return ċ, c̈, α̇
 end
 
+"""
+    OscilHeave <: Kinematics
+
+Kinematics describing an oscillatory heaving (i.e. plunging) motion (vertical
+  sinusoidal translation)
+
+# Constructors
+# Fields
+$(FIELDS)
+"""
+struct OscilHeave <: Kinematics
+    "Freestream velocity"
+    U₀::Float64
+
+    "Reduced frequency ``K = \\frac{\\Omega c}{2U_0}``"
+    K::Float64
+
+    "Phase lag"
+    ϕ::Float64
+
+    "Angle of attack"
+    α₀::Float64
+
+    "Amplitude of translational heave relative to chord"
+    A::Float64
+
+    Y::Profile
+    Ẏ::Profile
+    Ÿ::Profile
+end
+
+function OscilHeave(U₀, K, ϕ, α₀, A)
+    p = A*(Sinusoid(2K) >> ϕ)
+    ṗ = d_dt(p)
+    p̈ = d_dt(ṗ)
+    OscilHeave(U₀, K, ϕ, α₀, A, p, ṗ, p̈)
+end
+
+function (p::OscilHeave)(t)
+    α = p.α₀
+    α̇ = 0.0
+    α̈ = 0.0
+
+    # c will be update in the integration
+    ċ = p.U₀ + im*p.Ẏ(t)
+    c̈ = im*p.Ÿ(t)
+
+    return ċ, c̈, α̇
+end
+
+#=
+Profiles
+=#
 
 struct DerivativeProfile{P} <: Profile
     p::P

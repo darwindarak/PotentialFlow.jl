@@ -1,4 +1,5 @@
 using RecipesBase
+using ColorTypes
 import PlotUtils: cgrad
 
 @userplot Streamlines
@@ -6,15 +7,54 @@ import PlotUtils: cgrad
 @recipe function f(s::Streamlines)
     elements = s.args[3]
 
-    z = [x + im*y for y in s.args[2], x in s.args[1]]
-    ψ = streamfunction(z, elements)
+    if ConformalBody in typeof.(elements)
 
-    @series begin
-        seriestype --> :contour
-        grid --> :none
-        seriescolor --> cgrad([:grey, :grey])
+        b = elements[findfirst(isa.(elements,PotentialFlow.ConformalBody))]
+        ζ = [r*exp(im*θ) for θ in s.args[2], r in s.args[1]]
+        ψ = streamfunction(ζ,elements)
+        Z = conftransform(ζ,b)
+        vmin = minimum(ψ)
+        vmax = maximum(ψ)
+        vmean = vmax-vmin
+        vfact = 1
+        n = 31
+        vmin = vmean+vfact*(vmin-vmean)
+        vmax = vmean+vfact*(vmax-vmean)
+        v = linspace(vmin,vmax,n)
+        if (sign(vmin) != sign(vmax))
+            v = v .- v[abs.(v).==minimum(abs.(v))];
+        end
+        @series begin
+          seriestype --> :contour
+            grid --> :none
+            ratio --> 1
+            linewidth --> 1
+            seriescolor --> [:black, :black]
+            levels --> v
+            real.(Z), imag.(Z), ψ
+        end
 
-        s.args[1], s.args[2], ψ
+        z = [b.zs; b.zs[1]]
+        @series begin
+          linecolor --> RGBA{Float64}(151/255,180/255,118/255,1.0)
+          fillrange --> 0
+          fillcolor --> RGBA{Float64}(151/255,180/255,118/255,1.0)
+          ratio --> 1
+          legend --> :none
+          real.(z), imag.(z)
+        end
+
+    else
+      z = [x + im*y for y in s.args[2], x in s.args[1]]
+      ψ = streamfunction(z, elements)
+
+      @series begin
+          seriestype --> :contour
+            grid --> :none
+            seriescolor --> cgrad([:grey, :grey])
+
+            s.args[1], s.args[2], ψ
+      end
     end
 end
 
@@ -74,11 +114,13 @@ end
     ()
 end
 
-@recipe function plot(b::PowerBody)
+@recipe function plot(b::ConformalBody)
     z = [b.zs; b.zs[1]]
     linecolor --> :black
     fillrange --> 0
     fillcolor --> :black
+    ratio --> 1
+    legend --> :none
     x := real.(z)
     y := imag.(z)
     ()

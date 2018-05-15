@@ -6,7 +6,7 @@ using PotentialFlow
 srand(1)
 end
 ```
-The library currently has four built-in potential flow elements:
+The library currently has these built-in potential flow elements:
 
 - [`Vortex.Point`](@ref)
 - [`Vortex.Blob`](@ref)
@@ -14,6 +14,7 @@ The library currently has four built-in potential flow elements:
 - [`Source.Point`](@ref)
 - [`Source.Blob`](@ref)
 - [`Plate`](@ref) (at the moment, there can only be one plate in the fluid at at time)
+- [`Bodies.ConformalBody`](@ref)
 
 Most functions in the library that act on elements can take either a single element, or a collection of elements.
 These collections can be represented as an array or a tuple.
@@ -63,6 +64,7 @@ Vortex.Sheet
 Source.Point
 Source.Blob
 Plate
+Bodies.ConformalBody
 ```
 
 ## Element Properties
@@ -101,6 +103,15 @@ Plates.bound_circulation!
 Plates.rate_of_impulse
 Plates.force
 Plates.surface_pressure
+```
+
+## Methods on Conformally-Mapped Bodies
+
+```@docs
+Bodies.enforce_no_flow_through!
+Bodies.normal
+Bodies.tangent
+Bodies.transform_velocity!
 ```
 
 ## Index
