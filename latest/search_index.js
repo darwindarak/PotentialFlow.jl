@@ -85,7 +85,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Elements",
     "title": "Elements",
     "category": "section",
-    "text": "DocTestSetup = quote\nusing PotentialFlow\nsrand(1)\nendThe library currently has four built-in potential flow elements:Vortex.Point\nVortex.Blob\nVortex.Sheet\nSource.Point\nSource.Blob\nPlate (at the moment, there can only be one plate in the fluid at at time)Most functions in the library that act on elements can take either a single element, or a collection of elements. These collections can be represented as an array or a tuple. Arrays should be used when the elements are the same type, for example:julia> points = Vortex.Point.(rand(Complex128, 5), rand(5))\n5-element Array{PotentialFlow.Points.Point{Float64},1}:\n Vortex.Point(0.23603334566204692 + 0.34651701419196046im, 0.5557510873245723)\n Vortex.Point(0.3127069683360675 + 0.00790928339056074im, 0.43710797460962514)\n Vortex.Point(0.4886128300795012 + 0.21096820215853596im, 0.42471785049513144)\n Vortex.Point(0.951916339835734 + 0.9999046588986136im, 0.773223048457377)\n Vortex.Point(0.25166218303197185 + 0.9866663668987996im, 0.2811902322857298)\n\njulia> Elements.impulse(points)\n1.3362266530178137 - 1.2821936908564113im\n\njulia> blobs = [Vortex.Blob(rand(Complex128), rand(), 0.1) for i in 1:5]\n5-element Array{PotentialFlow.Blobs.Blob{Float64},1}:\n Vortex.Blob(0.20947237319807077 + 0.25137920979222494im, 0.02037486871266725, 0.1)\n Vortex.Blob(0.2877015122756894 + 0.859512136087661im, 0.07695088688120899, 0.1)\n Vortex.Blob(0.6403962459899388 + 0.8735441302706854im, 0.27858242002877853, 0.1)\n Vortex.Blob(0.7513126327861701 + 0.6448833539420931im, 0.07782644396003469, 0.1)\n Vortex.Blob(0.8481854810000327 + 0.0856351682044918im, 0.5532055454580578, 0.1)\n\njulia> Elements.impulse(blobs)\n0.41217890550975256 - 0.7325028967929701imKnowing that every element has the same type allows the compiler to perform more aggressive optimizations. Tuples are used when we want to mix and match different element types. For example:julia> sys = (points, blobs);\n\njulia> Elements.impulse(sys)\n1.7484055585275664 - 2.0146965876493814imThis rest of this page documents the data types that represent these elements and some key functions that act on them. For more detailed examples, please refer to the Jupyter notebooks."
+    "text": "DocTestSetup = quote\nusing PotentialFlow\nsrand(1)\nendThe library currently has these built-in potential flow elements:Vortex.Point\nVortex.Blob\nVortex.Sheet\nSource.Point\nSource.Blob\nPlate (at the moment, there can only be one plate in the fluid at at time)\nBodies.ConformalBodyMost functions in the library that act on elements can take either a single element, or a collection of elements. These collections can be represented as an array or a tuple. Arrays should be used when the elements are the same type, for example:julia> points = Vortex.Point.(rand(Complex128, 5), rand(5))\n5-element Array{PotentialFlow.Points.Point{Float64},1}:\n Vortex.Point(0.23603334566204692 + 0.34651701419196046im, 0.5557510873245723)\n Vortex.Point(0.3127069683360675 + 0.00790928339056074im, 0.43710797460962514)\n Vortex.Point(0.4886128300795012 + 0.21096820215853596im, 0.42471785049513144)\n Vortex.Point(0.951916339835734 + 0.9999046588986136im, 0.773223048457377)\n Vortex.Point(0.25166218303197185 + 0.9866663668987996im, 0.2811902322857298)\n\njulia> Elements.impulse(points)\n1.3362266530178137 - 1.2821936908564113im\n\njulia> blobs = [Vortex.Blob(rand(Complex128), rand(), 0.1) for i in 1:5]\n5-element Array{PotentialFlow.Blobs.Blob{Float64},1}:\n Vortex.Blob(0.20947237319807077 + 0.25137920979222494im, 0.02037486871266725, 0.1)\n Vortex.Blob(0.2877015122756894 + 0.859512136087661im, 0.07695088688120899, 0.1)\n Vortex.Blob(0.6403962459899388 + 0.8735441302706854im, 0.27858242002877853, 0.1)\n Vortex.Blob(0.7513126327861701 + 0.6448833539420931im, 0.07782644396003469, 0.1)\n Vortex.Blob(0.8481854810000327 + 0.0856351682044918im, 0.5532055454580578, 0.1)\n\njulia> Elements.impulse(blobs)\n0.41217890550975256 - 0.7325028967929701imKnowing that every element has the same type allows the compiler to perform more aggressive optimizations. Tuples are used when we want to mix and match different element types. For example:julia> sys = (points, blobs);\n\njulia> Elements.impulse(sys)\n1.7484055585275664 - 2.0146965876493814imThis rest of this page documents the data types that represent these elements and some key functions that act on them. For more detailed examples, please refer to the Jupyter notebooks."
 },
 
 {
@@ -137,11 +137,19 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "manual/elements.html#PotentialFlow.Bodies.ConformalBody",
+    "page": "Elements",
+    "title": "PotentialFlow.Bodies.ConformalBody",
+    "category": "type",
+    "text": "ConformalBody <: Elements.Element\n\nGenerates a body from a conformal map. This might be a Schwarz-Christoffel map, in which case the constructor is supplied a polygon, or it might be a power- series map, in which case the constructor is given a set of complex coefficients.\n\nExample\n\njulia> p = Bodies.Polygon([-1.0,0.2,1.0,-1.0],[-1.0,-1.0,0.5,1.0])\nPolygon with 4 vertices at\n             (-1.0,-1.0) (0.2,-1.0) (1.0,0.5) (-1.0,1.0)\n             interior angles/π = [0.5, 0.656, 0.422, 0.422]\n\njulia> Bodies.ConformalBody(p)\nBody generated by: Schwarz-Christoffel map of unit circle to exterior of polygon with 4 vertices\n\n  centroid at 0.0 + 0.0im\n  angle 0.0\n\njulia> a1 = 1; b1 = 0.1; ccoeff = Complex128[0.5(a1+b1),0,0.5(a1-b1)];\n\njulia> Bodies.ConformalBody(ccoeff,Complex128(1.0),π/4)\nBody generated by: Power series map\n\n  centroid at 1.0 + 0.0im\n  angle 0.7854\n\n\n\n"
+},
+
+{
     "location": "manual/elements.html#Built-in-Types-1",
     "page": "Elements",
     "title": "Built-in Types",
     "category": "section",
-    "text": "Vortex.Point\nVortex.Blob\nVortex.Sheet\nSource.Point\nSource.Blob\nPlate"
+    "text": "Vortex.Point\nVortex.Blob\nVortex.Sheet\nSource.Point\nSource.Blob\nPlate\nBodies.ConformalBody"
 },
 
 {
@@ -353,6 +361,46 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "manual/elements.html#PotentialFlow.Bodies.enforce_no_flow_through!",
+    "page": "Elements",
+    "title": "PotentialFlow.Bodies.enforce_no_flow_through!",
+    "category": "function",
+    "text": "enforce_no_flow_through!(b::ConformalBody, motion, elements, t)\n\nUpdate the body, b, to enforce the no-flow-through condition given ambient vortex elements, elements, and while moving with kinematics specified by motion.\n\nExample\n\njulia> p = Bodies.Polygon([-1.0,0.2,1.0,-1.0],[-1.0,-1.0,0.5,1.0])\nPolygon with 4 vertices at\n             (-1.0,-1.0) (0.2,-1.0) (1.0,0.5) (-1.0,1.0)\n             interior angles/π = [0.5, 0.656, 0.422, 0.422]\n\njulia> b = Bodies.ConformalBody(p)\nBody generated by: Schwarz-Christoffel map of unit circle to exterior of polygon with 4 vertices\n\n  centroid at 0.0 + 0.0im\n  angle 0.0\n\njulia> motion = RigidBodyMotion(1.0, 0.0);\n\njulia> point = Vortex.Point(0.0 + 2im, 1.0);\n\njulia> Bodies.enforce_no_flow_through!(b, motion, point, 0.0)\n\njulia> b.img\n1-element Array{PotentialFlow.Points.Point,1}:\n Vortex.Point(0.0 + 0.5im, -1.0)\n\n\n\n"
+},
+
+{
+    "location": "manual/elements.html#PotentialFlow.Bodies.normal",
+    "page": "Elements",
+    "title": "PotentialFlow.Bodies.normal",
+    "category": "function",
+    "text": "normal(ζ,v,b::ConformalBody)\n\nReturns the normal component of the complex vector(s) v in the physical plane at a point(s) on the surface of body b. Each surface point is specified by its pre-image ζ on the unit circle. v and ζ can be arrays of points.\n\nExample\n\njulia> p = Bodies.Polygon([-1.0,1.0,1.0,-1.0],[-1.0,-1.0,1.0,1.0]);\n\njulia> b = Bodies.ConformalBody(p);\n\njulia> Bodies.normal(exp(im*0),exp(im*π/4),b)\n0.7071067811865472\n\n\n\n"
+},
+
+{
+    "location": "manual/elements.html#PotentialFlow.Bodies.tangent",
+    "page": "Elements",
+    "title": "PotentialFlow.Bodies.tangent",
+    "category": "function",
+    "text": "tangent(ζ,v,b::ConformalBody)\n\nReturns the (counter-clockwise) tangent component of the complex vector(s) v in the physical plane at a point(s) on the surface of body b. Each surface point is specified by its pre-image ζ on the unit circle. v and ζ can be arrays of points.\n\nExample\n\njulia> p = Bodies.Polygon([-1.0,1.0,1.0,-1.0],[-1.0,-1.0,1.0,1.0]);\n\njulia> b = Bodies.ConformalBody(p);\n\njulia> Bodies.tangent(exp(im*0),exp(im*π/4),b)\n0.7071067811865478\n\n\n\n"
+},
+
+{
+    "location": "manual/elements.html#PotentialFlow.Bodies.transform_velocity!",
+    "page": "Elements",
+    "title": "PotentialFlow.Bodies.transform_velocity!",
+    "category": "function",
+    "text": "transform_velocity!(wout, win, targets, body::ConformalBody)\n\nTransforms the velocity win in the circle plane of a conformal mapping to a velocity wout that can actually be used to transport the pre-images of elements in targets in this circle plane. This transformation applies the Routh correction and subtracts the relative motion of the body.\n\nExample\n\njulia> a1 = 1; b1 = 0.1; ccoeff = Complex128[0.5(a1+b1),0,0.5(a1-b1)];\n\njulia> body = Bodies.ConformalBody(ccoeff);\n\njulia> motion = RigidBodyMotion(0,0);\n\njulia> points = Vortex.Point.([-2, 2], 1.0);\n\njulia> Bodies.enforce_no_flow_through!(body, motion, points, 0);\n\njulia> sys = (body,points);\n\njulia> ẋ = (motion, allocate_velocity(points));\n\njulia> self_induce_velocity!(ẋ, sys, 0)\n(Rigid Body Motion:\n  ċ = 0.0 + 0.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 0.0\n  Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.129977im, 0.0-0.129977im])\n\njulia> Bodies.transform_velocity!(ẋ, ẋ, sys, body)\n(Rigid Body Motion:\n  ċ = 0.0 + 0.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 0.0\n  Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.785969im, 0.0-0.785969im])\n\ntransform_velocity(win, target::Complex128, body::ConformalBody)\n\nReturns the velocity in the physical plane from the velocity win in the circle plane.\n\njulia> a1 = 1; b1 = 0.1; ccoeff = Complex128[0.5(a1+b1),0,0.5(a1-b1)];\n\njulia> body = Bodies.ConformalBody(ccoeff,0.0+0.0im,π/4);\n\njulia> motion = RigidBodyMotion(1,0);\n\njulia> points = Vortex.Point.([-2, 2], 1.0);\n\njulia> Bodies.enforce_no_flow_through!(body, motion, points, 0);\n\njulia> sys = (body,points);\n\njulia> ζ = exp(-im*π/4);\n\njulia> w̃ = induce_velocity(ζ,sys,0);\n\njulia> w = Bodies.transform_velocity(w̃,ζ,body)\n0.7497272298496697 - 0.3058889412948484im\n\n\n\n"
+},
+
+{
+    "location": "manual/elements.html#Methods-on-Conformally-Mapped-Bodies-1",
+    "page": "Elements",
+    "title": "Methods on Conformally-Mapped Bodies",
+    "category": "section",
+    "text": "Bodies.enforce_no_flow_through!\nBodies.normal\nBodies.tangent\nBodies.transform_velocity!"
+},
+
+{
     "location": "manual/elements.html#Index-1",
     "page": "Elements",
     "title": "Index",
@@ -561,47 +609,55 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "manual/motions.html#PotentialFlow.Plates.RigidBodyMotions.Kinematics",
+    "location": "manual/motions.html#PotentialFlow.RigidBodyMotions.Kinematics",
     "page": "Plate Motions",
-    "title": "PotentialFlow.Plates.RigidBodyMotions.Kinematics",
+    "title": "PotentialFlow.RigidBodyMotions.Kinematics",
     "category": "type",
     "text": "An abstract type for types that takes in time and returns (ċ, c̈, α̇).\n\n\n\n"
 },
 
 {
-    "location": "manual/motions.html#PotentialFlow.Plates.RigidBodyMotions.RigidBodyMotion",
+    "location": "manual/motions.html#PotentialFlow.RigidBodyMotions.RigidBodyMotion",
     "page": "Plate Motions",
-    "title": "PotentialFlow.Plates.RigidBodyMotions.RigidBodyMotion",
+    "title": "PotentialFlow.RigidBodyMotions.RigidBodyMotion",
     "category": "type",
     "text": "RigidBodyMotion\n\nA type to store the plate\'s current kinematics\n\nFields\n\nċ: current centroid velocity\nc̈: current centroid acceleration\nα̇: current angular velocity\nkin: a Kinematics structure\n\nThe first three fields are meant as a cache of the current kinematics while the kin field can be used to find the plate kinematics at any time.\n\n\n\n"
 },
 
 {
-    "location": "manual/motions.html#PotentialFlow.Plates.RigidBodyMotions.d_dt-Tuple{PotentialFlow.Plates.RigidBodyMotions.Profile}",
+    "location": "manual/motions.html#PotentialFlow.RigidBodyMotions.d_dt-Tuple{PotentialFlow.RigidBodyMotions.Profile}",
     "page": "Plate Motions",
-    "title": "PotentialFlow.Plates.RigidBodyMotions.d_dt",
+    "title": "PotentialFlow.RigidBodyMotions.d_dt",
     "category": "method",
     "text": "d_dt(p::Profile)\n\nTake the time derivative of p and return it as a new profile.\n\nExample\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> s.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 1.0\n 0.707107\n\njulia> c = Plates.RigidBodyMotions.d_dt(s)\nd/dt (Sinusoid (ω = 3.14))\n\njulia> c.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n  3.14159\n  1.92367e-16\n -2.22144\n\n\n\n"
 },
 
 {
-    "location": "manual/motions.html#PotentialFlow.Plates.RigidBodyMotions.Pitchup",
+    "location": "manual/motions.html#PotentialFlow.RigidBodyMotions.OscilHeave",
     "page": "Plate Motions",
-    "title": "PotentialFlow.Plates.RigidBodyMotions.Pitchup",
+    "title": "PotentialFlow.RigidBodyMotions.OscilHeave",
+    "category": "type",
+    "text": "OscilHeave <: Kinematics\n\nKinematics describing an oscillatory heaving (i.e. plunging) motion (vertical   sinusoidal translation)\n\nConstructors\n\nFields\n\nU₀\nFreestream velocity\nK\nReduced frequency K = fracOmega c2U_0\nϕ\nPhase lag\nα₀\nAngle of attack\nA\nAmplitude of translational heave relative to chord\nY\nẎ\nŸ\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#PotentialFlow.RigidBodyMotions.Pitchup",
+    "page": "Plate Motions",
+    "title": "PotentialFlow.RigidBodyMotions.Pitchup",
     "category": "type",
     "text": "Pitchup <: Kinematics\n\nKinematics describing a pitchup motion (horizontal translation with rotation)\n\nConstructors\n\nFields\n\nU₀\nFreestream velocity\na\nAxis of rotation, relative to the plate centroid\nK\nNon-dimensional pitch rate K = dotalpha_0fracc2U_0\nα₀\nInitial angle of attack\nt₀\nNominal start of pitch up\nΔα\nTotal pitching angle\nα\nα̇\nα̈\n\n\n\n"
 },
 
 {
-    "location": "manual/motions.html#PotentialFlow.Plates.RigidBodyMotions.Profile",
+    "location": "manual/motions.html#PotentialFlow.RigidBodyMotions.Profile",
     "page": "Plate Motions",
-    "title": "PotentialFlow.Plates.RigidBodyMotions.Profile",
+    "title": "PotentialFlow.RigidBodyMotions.Profile",
     "category": "type",
     "text": "An abstract type for real-valued functions of time.\n\n\n\n"
 },
 
 {
-    "location": "manual/motions.html#Base.:*-Tuple{Number,PotentialFlow.Plates.RigidBodyMotions.Profile}",
+    "location": "manual/motions.html#Base.:*-Tuple{Number,PotentialFlow.RigidBodyMotions.Profile}",
     "page": "Plate Motions",
     "title": "Base.:*",
     "category": "method",
@@ -609,7 +665,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "manual/motions.html#Base.:+-Tuple{PotentialFlow.Plates.RigidBodyMotions.Profile,PotentialFlow.Plates.RigidBodyMotions.AddedProfiles}",
+    "location": "manual/motions.html#Base.:+-Tuple{PotentialFlow.RigidBodyMotions.Profile,PotentialFlow.RigidBodyMotions.AddedProfiles}",
     "page": "Plate Motions",
     "title": "Base.:+",
     "category": "method",
@@ -617,7 +673,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "manual/motions.html#Base.:--Tuple{PotentialFlow.Plates.RigidBodyMotions.Profile}",
+    "location": "manual/motions.html#Base.:--Tuple{PotentialFlow.RigidBodyMotions.Profile}",
     "page": "Plate Motions",
     "title": "Base.:-",
     "category": "method",
@@ -625,7 +681,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "manual/motions.html#Base.:>>-Tuple{PotentialFlow.Plates.RigidBodyMotions.Profile,Number}",
+    "location": "manual/motions.html#Base.:>>-Tuple{PotentialFlow.RigidBodyMotions.Profile,Number}",
     "page": "Plate Motions",
     "title": "Base.:>>",
     "category": "method",
