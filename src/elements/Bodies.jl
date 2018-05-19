@@ -1,7 +1,6 @@
 module Bodies
 
 using DocStringExtensions
-using SchwarzChristoffel
 
 
 using ..Points
@@ -13,7 +12,7 @@ using ..RigidBodyMotions
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
                   self_induce_velocity!, allocate_velocity, advect!, streamfunction
-import SchwarzChristoffel: Polygon, ConformalMap, PowerMap, addedmass
+import SchwarzChristoffel: Polygon, ExteriorMap, ConformalMap, PowerMap, addedmass, InverseMap, DerivativeMap
 
 import ..Utils:@get, MappedVector
 

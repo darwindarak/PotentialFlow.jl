@@ -2,6 +2,10 @@ using RecipesBase
 using ColorTypes
 import PlotUtils: cgrad
 
+const mygreen = RGBA{Float64}(151/255,180/255,118/255,1)
+const mygreen2 = RGBA{Float64}(113/255,161/255,103/255,1)
+const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
+
 @userplot Streamlines
 
 @recipe function f(s::Streamlines)
@@ -13,6 +17,8 @@ import PlotUtils: cgrad
         ζ = [r*exp(im*θ) for θ in s.args[2], r in s.args[1]]
         ψ = streamfunction(ζ,elements)
         Z = conftransform(ζ,b)
+
+        # Determine an automatic range of contour levels
         vmin = minimum(ψ)
         vmax = maximum(ψ)
         vmean = vmax-vmin
@@ -24,24 +30,16 @@ import PlotUtils: cgrad
         if (sign(vmin) != sign(vmax))
             v = v .- v[abs.(v).==minimum(abs.(v))];
         end
+
         @series begin
           seriestype --> :contour
             grid --> :none
             ratio --> 1
             linewidth --> 1
+            legend --> :none
             seriescolor --> [:black, :black]
             levels --> v
             real.(Z), imag.(Z), ψ
-        end
-
-        z = [b.zs; b.zs[1]]
-        @series begin
-          linecolor --> RGBA{Float64}(151/255,180/255,118/255,1.0)
-          fillrange --> 0
-          fillcolor --> RGBA{Float64}(151/255,180/255,118/255,1.0)
-          ratio --> 1
-          legend --> :none
-          real.(z), imag.(z)
         end
 
     else
@@ -116,9 +114,9 @@ end
 
 @recipe function plot(b::ConformalBody)
     z = [b.zs; b.zs[1]]
-    linecolor --> :black
+    linecolor --> mygreen
     fillrange --> 0
-    fillcolor --> :black
+    fillcolor --> mygreen
     ratio --> 1
     legend --> :none
     x := real.(z)

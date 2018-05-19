@@ -33,6 +33,7 @@ include("elements/Source.jl")
 include("elements/Plates.jl")
 include("elements/Bodies.jl")
 
+@reexport using SchwarzChristoffel
 
 import .Plates: Plate
 import .Bodies: ConformalBody
