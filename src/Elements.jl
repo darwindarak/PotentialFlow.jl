@@ -1,7 +1,7 @@
 module Elements
 
 export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction,
-       conftransform, image
+       conftransform, inverse_conftransform, jacobian, image
 
 using ..Properties
 
@@ -186,11 +186,10 @@ coordinates in the circle plane.
 ```jldoctest
 julia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(2.0im, -π, 0.1));
 
-julia> b = PowerBody([1/4,0,1/4],zero(Complex128),0.0)
+julia> b = ConformalBody([1/4,0,1/4]);
 
 julia> Elements.conftransform(sys,b)
-(-0.17071067811865476 + 1.0707106781186548im, -0.03383883476483185 + 2.008838834764832im)
-
+(0.0 + 0.0im, 0.0 + 0.375im)
 ```
 """
 @property begin
@@ -198,6 +197,57 @@ julia> Elements.conftransform(sys,b)
     preallocator = allocate_conftransform
     stype = Complex128
 end
+
+doc"""
+    Elements.inverse_conftransform(src,body)
+
+Return the inverse conformally transformed position of `src` via the transform defined
+by `body`. In this context, the position(s) in `src` is interpreted as
+coordinates in the physical plane.
+
+# Example
+
+```jldoctest
+julia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(2.0im, -π, 0.1));
+
+julia> b = ConformalBody([1/4,0,1/4]);
+
+julia> Elements.inverse_conftransform(sys,b)
+(0.0 + 0.0im, 0.0 + 0.375im)
+```
+"""
+@property begin
+    signature = inverse_conftransform(src::Source,b)
+    preallocator = allocate_inv_conftransform
+    stype = Complex128
+end
+
+
+doc"""
+    Elements.jacobian(src,body)
+
+Return the Jacobian of the conformal transform at the position of `src` via the transform defined
+by `body`. In this context, the position(s) in `src` is interpreted as
+coordinates in the circle plane.
+
+# Example
+
+```jldoctest
+julia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(2.0im, -π, 0.1));
+
+julia> b = ConformalBody([1/4,0,1/4]);
+
+julia> Elements.jacobian(sys,b)
+(0.5 + 0.0im, 0.0 + 0.5im)
+
+```
+"""
+@property begin
+    signature = jacobian(src::Source,b)
+    preallocator = allocate_jacobian
+    stype = Complex128
+end
+
 
 doc"""
     Elements.image(src,body)

@@ -1,4 +1,5 @@
 @testset "Plate" begin
+
     @testset "Singular Interactions" begin
         N = 100
         zs = rand(Complex128, N)
@@ -34,7 +35,10 @@
         @test Plates.Chebyshev.firstkind(plate.C, plate.ss) ≈ exp(-im*plate.α).*vel_p
     end
     @testset "Bound Circulation" begin
+      import PotentialFlow.Utils:centraldiff
+
         include("utils/circle_plane.jl")
+
 
         c = rand(Complex128)
         ċ = rand(Complex128)
@@ -81,7 +85,7 @@
         Γs = Plates.bound_circulation(plate, ss)
         @test Γs[ceil(Int,length(ss)/2)] ≈ Plates.bound_circulation(plate)[ceil(Int,length(plate)/2)]
 
-        @test norm(γs - gradient(Γs, step(ss)))/length(ss) < 1e-3
+        @test norm(γs - centraldiff(Γs,step(ss)))/length(ss) < 1e-3
     end
 
     @testset "Induced Velocities" begin

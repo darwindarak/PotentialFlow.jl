@@ -3,21 +3,19 @@ module Plates
 using DocStringExtensions
 
 export Plate, bound_circulation, bound_circulation!,
-       enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force,
-       RigidBodyMotions
+       enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force
 
 using ..Points
 using ..Blobs
 
 using ..Elements
+using ..RigidBodyMotions
+
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
-                  self_induce_velocity!, allocate_velocity, advect!, reset_velocity!
+                  self_induce_velocity!, allocate_velocity, advect!
 
 import ..Utils:@get, MappedVector
-
-include("bodies/RigidBodyMotions.jl")
-using .RigidBodyMotions
 
 include("plates/chebyshev.jl")
 
@@ -119,6 +117,7 @@ function induce_velocity(z::Complex128, p::Plate, t)
         Jⁿ *= J
     end
 
+      # note that this provides u+iv (JDE)
     0.5im*w*exp(im*α)
 end
 
@@ -154,11 +153,7 @@ function _singular_velocity!(ws, p, src, t, ::Type{Group})
 end
 
 induce_velocity!(m::RigidBodyMotion, target::Plate, source, t) = m
-function reset_velocity!(m::RigidBodyMotion, src)
-    m.ċ = m.c̈ = zero(Complex128)
-    m.α̇ = zero(Complex128)
-    m
-end
+
 
 function Elements.streamfunction(z::Complex128, p::Plate)
     @get p (N, L, c, α, Γ, A, B₀, B₁)

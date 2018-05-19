@@ -7,6 +7,7 @@ export induce_velocity, induce_velocity!, allocate_velocity,
 
 using ..Properties
 using ..Elements
+using ..RigidBodyMotions
 
 
 """
@@ -228,6 +229,12 @@ function reset_velocity!(group::T, src) where {T <: Tuple}
         reset_velocity!(group[i], src[i])
     end
     group
+end
+
+function reset_velocity!(m::RigidBodyMotion, src)
+    m.ċ = m.c̈ = zero(Complex128)
+    m.α̇ = zero(Complex128)
+    m
 end
 
 """

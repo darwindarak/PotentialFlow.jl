@@ -1,4 +1,5 @@
 @testset "Time Marching" begin
+    import PotentialFlow.Utils: centraldiff
     T = [1e-1, 1e-2, 1e-3]
 
     f! = (ẋ, x, t) -> ẋ .= [-x[2], x[1]]
@@ -17,7 +18,7 @@
             norm(x₋ - [cos(5)-2sin(5),2cos(5)+sin(5)])
         end
 
-        @test minimum(gradient(log.(err))./gradient(log.(T))) > 0.9
+        @test minimum(centraldiff(log.(err))./centraldiff(log.(T))) > 0.9
     end
 
     @testset "RK4" begin
@@ -33,6 +34,6 @@
             norm(x₋ - [cos(5)-2sin(5),2cos(5)+sin(5)])
         end
 
-        @test minimum(gradient(log.(err))./gradient(log.(T))) > 3.9
+        @test minimum(centraldiff(log.(err))./centraldiff(log.(T))) > 3.9
     end
 end

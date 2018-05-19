@@ -1,20 +1,58 @@
 using RecipesBase
+using ColorTypes
 import PlotUtils: cgrad
+
+const mygreen = RGBA{Float64}(151/255,180/255,118/255,1)
+const mygreen2 = RGBA{Float64}(113/255,161/255,103/255,1)
+const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
 
 @userplot Streamlines
 
 @recipe function f(s::Streamlines)
     elements = s.args[3]
 
-    z = [x + im*y for y in s.args[2], x in s.args[1]]
-    ψ = streamfunction(z, elements)
+    if ConformalBody in typeof.(elements)
 
-    @series begin
-        seriestype --> :contour
-        grid --> :none
-        seriescolor --> cgrad([:grey, :grey])
+        b = elements[findfirst(isa.(elements,PotentialFlow.ConformalBody))]
+        ζ = [r*exp(im*θ) for θ in s.args[2], r in s.args[1]]
+        ψ = streamfunction(ζ,elements)
+        Z = conftransform(ζ,b)
 
-        s.args[1], s.args[2], ψ
+        # Determine an automatic range of contour levels
+        vmin = minimum(ψ)
+        vmax = maximum(ψ)
+        vmean = vmax-vmin
+        vfact = 1
+        n = 31
+        vmin = vmean+vfact*(vmin-vmean)
+        vmax = vmean+vfact*(vmax-vmean)
+        v = linspace(vmin,vmax,n)
+        if (sign(vmin) != sign(vmax))
+            v = v .- v[abs.(v).==minimum(abs.(v))];
+        end
+
+        @series begin
+          seriestype --> :contour
+            grid --> :none
+            ratio --> 1
+            linewidth --> 1
+            legend --> :none
+            seriescolor --> [:black, :black]
+            levels --> v
+            real.(Z), imag.(Z), ψ
+        end
+
+    else
+      z = [x + im*y for y in s.args[2], x in s.args[1]]
+      ψ = streamfunction(z, elements)
+
+      @series begin
+          seriestype --> :contour
+            grid --> :none
+            seriescolor --> cgrad([:grey, :grey])
+
+            s.args[1], s.args[2], ψ
+      end
     end
 end
 
@@ -74,11 +112,13 @@ end
     ()
 end
 
-@recipe function plot(b::PowerBody)
+@recipe function plot(b::ConformalBody)
     z = [b.zs; b.zs[1]]
-    linecolor --> :black
+    linecolor --> mygreen
     fillrange --> 0
-    fillcolor --> :black
+    fillcolor --> mygreen
+    ratio --> 1
+    legend --> :none
     x := real.(z)
     y := imag.(z)
     ()
