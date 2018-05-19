@@ -297,8 +297,8 @@ julia> ζ = exp(-im*π/4);
 
 julia> w̃ = induce_velocity(ζ,sys,0);
 
-julia> w = Bodies.transform_velocity(w̃,ζ,b)
--0.3981545255647751 - 0.02362029449846252im
+julia> w = Bodies.transform_velocity(w̃,ζ,body)
+0.7497272298496697 - 0.3058889412948484im
 ```
 """
 function transform_velocity!(wout,win,targets::T,b::ConformalBody) where T <: Union{Tuple,AbstractArray}
