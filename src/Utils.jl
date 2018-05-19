@@ -1,6 +1,6 @@
 module Utils
 
-export @get, MappedVector
+export @get, MappedVector, centraldiff
 
 """
 A macro for extracting fields from an object.  For example, instead of a statement
@@ -104,5 +104,31 @@ function Base.show(io::IO, M::MIME"text/plain", m::MappedVector{T, A, F}) where 
     print(io, "$A → $F ($(1-m.offset):$(length(m.data)-m.offset))")
 end
 Base.show(io::IO, m::MappedVector) = Base.show(io, MIME("text/plain"), m)
+
+# Base.gradient stopped working, so this is the fix
+function centraldiff(F::AbstractVector, h::Vector)
+    n = length(F)
+    T = typeof(oneunit(eltype(F))/oneunit(eltype(h)))
+    g = similar(F, T)
+    if n == 1
+        g[1] = zero(T)
+    elseif n > 1
+        g[1] = (F[2] - F[1]) / (h[2] - h[1])
+        g[n] = (F[n] - F[n-1]) / (h[end] - h[end-1])
+        if n > 2
+            h = h[3:n] - h[1:n-2]
+            g[2:n-1] = (F[3:n] - F[1:n-2]) ./ h
+        end
+    end
+    g
+end
+
+
+centraldiff(F::AbstractVector) = centraldiff(F, [1:length(F);])
+
+centraldiff(F::AbstractVector, h::Real) = centraldiff(F, [h*(1:length(F));])
+
+
+
 
 end
