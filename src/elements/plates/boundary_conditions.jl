@@ -25,7 +25,7 @@ function enforce_no_flow_through!(p::Plate, ṗ, elements, t)
     @get p (L, C, α, dchebt!)
     @get ṗ (ċ, α̇)
 
-    fill!(C, zero(Complex128))
+    fill!(C, zero(ComplexF64))
     induce_velocity!(C, p, elements, t)
 
     n̂ = exp(-im*α)
@@ -46,8 +46,8 @@ end
 
 Compute in-place the change in plate's Chebyshev coefficients `∂A` by a vortex element `v`
 """
-function influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v, t)
-    fill!(∂A, zero(Complex128))
+function influence_on_plate!(∂A::Vector{ComplexF64}, plate::Plate, v, t)
+    fill!(∂A, zero(ComplexF64))
     induce_velocity!(∂A, plate, v, t)
     scale!(∂A, exp(-im*plate.α))
     plate.dchebt! * ∂A
@@ -55,7 +55,7 @@ function influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v, t)
 end
 
 function influence_on_plate(plate::Plate, v, t)
-    ∂A = Vector{Complex128}(plate.N)
+    ∂A = Vector{ComplexF64}(plate.N)
     influence_on_plate!(∂A, plate, v, t)
     return ∂A
 end
@@ -103,8 +103,8 @@ julia> Γ # should equal -πULsin(α) = -π
 ```
 """
 function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
-                        ∂C₁ = Vector{Complex128}(plate.N),
-                        ∂C₂ = Vector{Complex128}(plate.N))
+                        ∂C₁ = Vector{ComplexF64}(plate.N),
+                        ∂C₂ = Vector{ComplexF64}(plate.N))
 
     @get plate (N, α, B₀, B₁, L, A, Γ)
 
@@ -156,8 +156,8 @@ enforced in the presence of `v₁` and `v₂` with strengths that satisfy
 the suction parameters.
 """
 function vorticity_flux!(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
-                        ∂C₁ = Vector{Complex128}(plate.N),
-                        ∂C₂ = Vector{Complex128}(plate.N))
+                        ∂C₁ = Vector{ComplexF64}(plate.N),
+                        ∂C₂ = Vector{ComplexF64}(plate.N))
     Γ₁, Γ₂, _, _ = vorticity_flux(plate, v₁, v₂, t, lesp, tesp, ∂C₁, ∂C₂)
     @. plate.C += ∂C₁ + ∂C₂
     plate.Γ -= Γ₁ + Γ₂

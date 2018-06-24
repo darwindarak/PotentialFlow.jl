@@ -22,7 +22,7 @@ macro kind(element, k)
 end
 
 @kind Complex128 Singleton
-kind(::AbstractArray{T}) where {T <: Union{Element, Complex128}} = Group
+kind(::AbstractArray{T}) where {T <: Union{Element, ComplexF64}} = Group
 kind(::Tuple) = Group
 
 # Convenience functions to define wrapper types

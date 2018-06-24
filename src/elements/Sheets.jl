@@ -8,7 +8,7 @@ using ..Blobs
 using ..Elements
 import ..Motions: position, mutually_induce_velocity!, self_induce_velocity!, advect!
 
-const MappedPositions{T} = MappedArrays.ReadonlyMappedArray{Complex128,1,Array{Blob{T},1},typeof(Elements.position)} where T
+const MappedPositions{T} = MappedArrays.ReadonlyMappedArray{ComplexF64,1,Array{Blob{T},1},typeof(Elements.position)} where T
 
 mutable struct Sheet{T} <: Element
     blobs::Vector{Blob{T}}

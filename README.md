@@ -85,8 +85,8 @@ starting_vortex = Vortex.Point(-Inf, Γ)
 
 # Plot some streamlines
 
-x = linspace(-2, 1, 100)
-y = linspace(-0.5, 0.5, 100)
+x = range(-2, stop=1, length=100)
+y = range(-0.5, stop=0.5, length=100)
 
 streamlines(x, y, (plate, freestream), legend = false, colorbar = false)
 plot!(plate, linewidth = 2, ratio = 1, size = (600, 300))

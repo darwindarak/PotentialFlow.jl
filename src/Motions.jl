@@ -179,7 +179,7 @@ function _self_induce_velocity!(out, src, ::Type{Group}, t)
 end
 
 self_induce_velocity(src, t) = _self_induce_velocity(src, t, kind(Elements.unwrap_src(src)))
-_self_induce_velocity(src, t, ::Type{Singleton}) = zero(Complex128)
+_self_induce_velocity(src, t, ::Type{Singleton}) = zero(ComplexF64)
 function _self_induce_velocity(src, t, ::Type{Group})
     out = allocate_velocity(src)
     self_induce_velocity!(out, src, t)
@@ -208,7 +208,7 @@ julia> ẋs
 (Complex{Float64}[0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im])
 ```
 """
-reset_velocity!(array::Vector{Complex128}) = fill!(array, zero(Complex128))
+reset_velocity!(array::Vector{ComplexF64}) = fill!(array, zero(ComplexF64))
 
 function reset_velocity!(group::Tuple)
     for ẋ in group
@@ -217,11 +217,11 @@ function reset_velocity!(group::Tuple)
     group
 end
 
-function reset_velocity!(array::Vector{Complex128}, v)
+function reset_velocity!(array::Vector{ComplexF64}, v)
     if length(array) != length(v)
         resize!(array, length(v))
     end
-    fill!(array, zero(Complex128))
+    fill!(array, zero(ComplexF64))
 end
 
 function reset_velocity!(group::T, src) where {T <: Tuple}
@@ -232,8 +232,8 @@ function reset_velocity!(group::T, src) where {T <: Tuple}
 end
 
 function reset_velocity!(m::RigidBodyMotion, src)
-    m.ċ = m.c̈ = zero(Complex128)
-    m.α̇ = zero(Complex128)
+    m.ċ = m.c̈ = zero(ComplexF64)
+    m.α̇ = zero(ComplexF64)
     m
 end
 

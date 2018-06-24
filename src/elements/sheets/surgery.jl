@@ -130,7 +130,7 @@ function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
 
     N = ceil(Int, L[end]/Δs)
 
-    L₌ = linspace(0, L[end], N)
+    L₌ = range(0, stop=L[end], length=N)
 
     z₌ = zspline[L₌]
     S₌ = Γspline[L₌]
@@ -339,7 +339,7 @@ function filter_position!(z₌::AbstractVector, Δf, L = arclength(z₌))
 
     cutoff = ceil(Int, 2L/Δf) + 1
 
-    z₌[cutoff:end] = zero(Complex128)
+    z₌[cutoff:end] = zero(ComplexF64)
 
     F \ z₌
 end

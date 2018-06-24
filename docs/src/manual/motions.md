@@ -64,7 +64,7 @@ also sinusoidally pitches about its centroid.
 import PotentialFlow.Plates.RigidBodyMotions: Kinematics
 
 struct MyMotion <: Kinematics
-    U₀::Complex128
+    U₀::ComplexF64
     ω::Float64
 end
 

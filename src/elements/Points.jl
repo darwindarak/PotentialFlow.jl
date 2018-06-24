@@ -18,7 +18,7 @@ An immutable structure representing a point source/vortex
 - `S::T`: strength/circulation
 """
 struct Point{T <: Number} <: Element
-    z::Complex128
+    z::ComplexF64
     S::T
     Point{T}(z, s::Real) where T <: Complex = new(z, im*s)
     Point{T}(z, s)       where T <: Complex = new(z, s)
@@ -31,11 +31,11 @@ Elements.kind(::Type{Point{T}}) where T = Singleton
 
 Elements.position(p::Point) = p.z
 
-Elements.streamfunction(z::Complex128, p::Point) = real(-0.5p.S*log(z - p.z)/π)
+Elements.streamfunction(z::ComplexF64, p::Point) = real(-0.5p.S*log(z - p.z)/π)
 
 cauchy_kernel(z) = z != zero(z) ? 0.5im/(π*conj(z)) : zero(z)
 
-function induce_velocity(z::Complex128, p::Point, t)
+function induce_velocity(z::ComplexF64, p::Point, t)
     p.S'*cauchy_kernel(z - p.z)
 end
 
@@ -64,7 +64,7 @@ function self_induce_velocity!(ws, points::Vector{Point{T}}, t) where T
     ws
 end
 
-function advect(p::Point{T}, w::Complex128, Δt::Float64) where T
+function advect(p::Point{T}, w::ComplexF64, Δt::Float64) where T
     Point{T}(p.z + w*Δt, p.S)
 end
 

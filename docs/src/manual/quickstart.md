@@ -153,7 +153,7 @@ The target can be
 The in-place version, `induce_velocity!(velocities, targets, source, t)`, computes the velocity and writes the results into a pre-allocated data structure.
 For example:
 ```jldoctest quickstart
-julia> vel_vortices = zeros(Complex128, length(vortices))
+julia> vel_vortices = zeros(ComplexF64, length(vortices))
 5-element Array{Complex{Float64},1}:
  0.0+0.0im
  0.0+0.0im

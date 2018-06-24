@@ -7,13 +7,13 @@ import ..Vortex
     stype = Complex128
 end
 
-function induce_acc(z::Complex128, ż::Complex128,
-                    p::Vortex.Point, point_vel::Complex128)
+function induce_acc(z::ComplexF64, ż::ComplexF64,
+                    p::Vortex.Point, point_vel::ComplexF64)
     -circulation(p)*Points.cauchy_kernel((z - p.z)^2)*conj(ż - point_vel)
 end
 
-function induce_acc(z::Complex128, ż::Complex128,
-                           b::Vortex.Blob, blob_vel::Complex128)
+function induce_acc(z::ComplexF64, ż::ComplexF64,
+                           b::Vortex.Blob, blob_vel::ComplexF64)
     induce_acc(z, ż,
                Vortex.Point(Elements.position(b), circulation(b)),
                blob_vel)
