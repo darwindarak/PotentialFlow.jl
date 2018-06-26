@@ -1,6 +1,8 @@
 module Chebyshev
 
 import Base: *, \
+import FFTW
+
 struct Transform{T,I}
     dct!::FFTW.r2rFFTWPlan{T,(3,),true,1}
 end
