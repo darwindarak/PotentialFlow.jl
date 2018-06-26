@@ -1,4 +1,9 @@
-using Test
+if isdefined(Base, :Test) && !Base.isdeprecated(Base, :Test)
+    using Base.Test
+else
+    using Test
+end
+
 using TestSetExtensions
 
 using PotentialFlow
