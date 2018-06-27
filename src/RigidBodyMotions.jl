@@ -97,14 +97,14 @@ end
 
 function Pitchup(U₀, a, K, α₀, t₀, Δα, ramp)
     Δt = 0.5Δα/K
-    p = 2K*((ramp >> t₀) - (ramp >> (t₀ + Δt)))
+    p = ConstantProfile(α₀) + 2K*((ramp >> t₀) - (ramp >> (t₀ + Δt)))
     ṗ = d_dt(p)
     p̈ = d_dt(ṗ)
     Pitchup(U₀, a, K, α₀, t₀, Δα, p, ṗ, p̈)
 end
 
 function (p::Pitchup)(t)
-    α = p.α₀ + p.α(t)
+    α = p.α(t)
     α̇ = p.α̇(t)
     α̈ = p.α̈(t)
 
@@ -119,51 +119,63 @@ function (p::Pitchup)(t)
 end
 
 """
-    OscilHeave <: Kinematics
+    PitchHeave <: Kinematics
 
-Kinematics describing an oscillatory heaving (i.e. plunging) motion (vertical
-  sinusoidal translation)
+Kinematics describing an oscillatory pitching and heaving (i.e. plunging) motion
 
 # Constructors
 # Fields
 $(FIELDS)
 """
-struct OscilHeave <: Kinematics
+struct PitchHeave <: Kinematics
     "Freestream velocity"
     U₀::Float64
+
+    "Axis of pitch rotation, relative to the plate centroid"
+    a::Float64
 
     "Reduced frequency ``K = \\frac{\\Omega c}{2U_0}``"
     K::Float64
 
-    "Phase lag"
+    "Phase lag of pitch to heave (in radians)"
     ϕ::Float64
 
-    "Angle of attack"
+    "Mean angle of attack"
     α₀::Float64
 
-    "Amplitude of translational heave relative to chord"
+    "Amplitude of pitching"
+    Δα::Float64
+
+    "Amplitude of translational heaving"
     A::Float64
 
     Y::Profile
     Ẏ::Profile
     Ÿ::Profile
+
+    α::Profile
+    α̇::Profile
+    α̈::Profile
 end
 
-function OscilHeave(U₀, K, ϕ, α₀, A)
-    p = A*(Sinusoid(2K) >> ϕ)
+function PitchHeave(U₀, a, K, ϕ, α₀, Δα, A)
+    p = A*Sinusoid(2K)
     ṗ = d_dt(p)
     p̈ = d_dt(ṗ)
-    OscilHeave(U₀, K, ϕ, α₀, A, p, ṗ, p̈)
+    α = ConstantProfile(α₀) + Δα*(Sinusoid(2K) >> ϕ/(2K))
+    α̇ = d_dt(α)
+    α̈ = d_dt(α̇)
+    PitchHeave(U₀, a, K, ϕ, α₀, Δα, A, p, ṗ, p̈, α, α̇, α̈)
 end
 
-function (p::OscilHeave)(t)
-    α = p.α₀
-    α̇ = 0.0
-    α̈ = 0.0
+function (p::PitchHeave)(t)
+    α = p.α(t)
+    α̇ = p.α̇(t)
+    α̈ = p.α̈(t)
 
     # c will be update in the integration
-    ċ = p.U₀ + im*p.Ẏ(t)
-    c̈ = im*p.Ÿ(t)
+    ċ = p.U₀ + im*p.Ẏ(t) - p.a*im*α̇*exp(im*α)
+    c̈ = im*p.Ÿ(t) + p.a*exp(im*α)*(α̇^2 - im*α̈)
 
     return ċ, c̈, α̇
 end
@@ -171,6 +183,28 @@ end
 #=
 Profiles
 =#
+
+"""
+    ConstantProfile(c::Number)
+
+Create a profile consisting of a constant `c`.
+
+# Example
+
+```jldoctest
+julia> p = RigidBodyMotions.ConstantProfile(1.0)
+Constant (2.3)
+```
+"""
+struct ConstantProfile <: Profile
+    c::Number
+end
+
+function show(io::IO, p::ConstantProfile)
+    print(io, "Constant ($(p.c))")
+end
+
+(p::ConstantProfile)(t) = p.c
 
 struct DerivativeProfile{P} <: Profile
     p::P
@@ -190,7 +224,7 @@ Take the time derivative of `p` and return it as a new profile.
 # Example
 
 ```jldoctest
-julia> s = Plates.RigidBodyMotions.Sinusoid(π)
+julia> s = RigidBodyMotions.Sinusoid(π)
 Sinusoid (ω = 3.14)
 
 julia> s.([0.0, 0.5, 0.75])
@@ -199,7 +233,7 @@ julia> s.([0.0, 0.5, 0.75])
  1.0
  0.707107
 
-julia> c = Plates.RigidBodyMotions.d_dt(s)
+julia> c = RigidBodyMotions.d_dt(s)
 d/dt (Sinusoid (ω = 3.14))
 
 julia> c.([0.0, 0.5, 0.75])
@@ -227,7 +261,7 @@ Returns a scaled profile with `(s*p)(t) = s*p(t)`
 # Example
 
 ```jldoctest
-julia> s = Plates.RigidBodyMotions.Sinusoid(π)
+julia> s = RigidBodyMotions.Sinusoid(π)
 Sinusoid (ω = 3.14)
 
 julia> 2s
@@ -246,7 +280,7 @@ s::Number * p::Profile = ScaledProfile(s, p)
     -(p₁::Profile, p₂::Profile)
 
 ```jldoctest
-julia> s = Plates.RigidBodyMotions.Sinusoid(π)
+julia> s = RigidBodyMotions.Sinusoid(π)
 Sinusoid (ω = 3.14)
 
 julia> 2s
@@ -258,7 +292,7 @@ julia> (2s).([0.0, 0.5, 0.75])
  2.0
  1.41421
 
-julia> s = Plates.RigidBodyMotions.Sinusoid(π);
+julia> s = RigidBodyMotions.Sinusoid(π);
 
 julia> s.([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
@@ -300,7 +334,7 @@ Shift the profile in time so that `(p >> Δt)(t) = p(t - Δt)`
 # Example
 
 ```jldoctest
-julia> s = Plates.RigidBodyMotions.Sinusoid(π);
+julia> s = RigidBodyMotions.Sinusoid(π);
 
 julia> s >> 0.5
 Sinusoid (ω = 3.14) >> 0.5
@@ -339,10 +373,10 @@ Add the profiles so that `(p₁ + p₂)(t) = p₁(t) + p₂(t)`.
 # Examples
 
 ```jldoctest
-julia> ramp₁ = Plates.RigidBodyMotions.EldredgeRamp(5)
+julia> ramp₁ = RigidBodyMotions.EldredgeRamp(5)
 logcosh ramp (aₛ = 5.0)
 
-julia> ramp₂ = Plates.RigidBodyMotions.ColoniusRamp(5)
+julia> ramp₂ = RigidBodyMotions.ColoniusRamp(5)
 power series ramp (n = 5.0)
 
 julia> ramp₁ + ramp₂
