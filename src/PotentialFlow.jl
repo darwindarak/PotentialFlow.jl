@@ -11,7 +11,6 @@ include("Elements.jl")
 include("RigidBodyMotions.jl")
 include("Motions.jl")
 
-
 @reexport using .Elements
 @reexport using .Motions
 @reexport using .RigidBodyMotions
@@ -38,15 +37,9 @@ include("elements/Bodies.jl")
 import .Plates: Plate
 import .Bodies: ConformalBody
 
-
 include("elements/Doublets.jl")
 import .Doublets: Doublet
 
 include("elements/Freestream.jl")
-
-#== Plot Recipes ==#
-
-include("plot_recipes.jl")
-
 
 end

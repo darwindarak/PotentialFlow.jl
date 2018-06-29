@@ -6,6 +6,4 @@ Reexport
 MacroTools
 ForwardDiff
 MappedArrays
-RecipesBase
-PlotUtils
 SchwarzChristoffel
