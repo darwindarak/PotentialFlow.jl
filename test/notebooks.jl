@@ -10,7 +10,7 @@ using NBInclude
     notebook_dir = joinpath(splitdir(@__FILE__())[1], "../binder/notebooks")
 
     @testset "$notebook" for notebook in notebooks
-        nbinclude(joinpath(notebook_dir, "$notebook.ipynb"))
+        @nbinclude(joinpath(notebook_dir, "$notebook.ipynb"))
         @test true
     end
 end
