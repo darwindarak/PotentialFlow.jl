@@ -3,6 +3,7 @@ __precompile__()
 module PotentialFlow
 
 using Reexport
+using Compat
 
 include("Properties.jl")
 include("Utils.jl")

@@ -1,5 +1,7 @@
 module Doublets
 
+using Compat
+
 using ..Elements
 using ..Motions
 

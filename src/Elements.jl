@@ -1,5 +1,7 @@
 module Elements
 
+using Compat
+
 export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction,
        conftransform, inverse_conftransform, jacobian, image
 
@@ -21,7 +23,7 @@ macro kind(element, k)
     end)
 end
 
-@kind Complex128 Singleton
+@kind ComplexF64 Singleton
 kind(::AbstractArray{T}) where {T <: Union{Element, ComplexF64}} = Group
 kind(::Tuple) = Group
 

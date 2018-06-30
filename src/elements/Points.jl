@@ -1,5 +1,6 @@
 module Points
 
+using Compat
 export Point
 
 using ..Elements
@@ -14,7 +15,7 @@ An immutable structure representing a point source/vortex
 
 ## Fields
 
-- `z::Complex128`: position
+- `z::ComplexF64`: position
 - `S::T`: strength/circulation
 """
 struct Point{T <: Number} <: Element

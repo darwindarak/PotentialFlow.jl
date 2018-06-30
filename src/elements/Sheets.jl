@@ -1,5 +1,6 @@
 module Sheets
 
+using Compat
 export Sheet
 
 using MappedArrays

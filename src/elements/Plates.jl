@@ -1,6 +1,7 @@
 module Plates
 
 using DocStringExtensions
+using Compat
 
 export Plate, bound_circulation, bound_circulation!,
        enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force
@@ -295,8 +296,8 @@ include("plates/pressure.jl")
 
 function Base.show(io::IO, p::Plate)
     lesp, tesp = suction_parameters(p)
-    println(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(round(rad2deg(p.α), digits=2))ᵒ")
-    print(io, "       LESP = $(round(lesp, digits=2)), TESP = $(round(tesp, digits=2))")
+    println(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(Compat.round(rad2deg(p.α), digits=2, base=10))ᵒ")
+    print(io, "       LESP = $(Compat.round(lesp, digits=2, base=10)), TESP = $(Compat.round(tesp, digits=2, base=10))")
 end
 
 end

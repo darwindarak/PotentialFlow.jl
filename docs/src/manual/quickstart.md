@@ -5,6 +5,7 @@ The code examples here should be directly copy-paste-able into the Julia REPL (e
 
 ```@meta
 DocTestSetup = quote
+    using Compat
     srand(1)
 end
 ```
@@ -251,4 +252,8 @@ savefig("final_clusters.svg"); nothing # hide
 ```
 ```@raw html
 <object data="final_clusters.svg" type="image/svg+xml"></object>
+```
+
+```@meta
+DocTestSetup  = nothing
 ```

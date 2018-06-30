@@ -3,6 +3,7 @@
 ```@meta
 DocTestSetup = quote
 using PotentialFlow
+using Compat
 srand(1)
 end
 ```
@@ -118,4 +119,8 @@ Bodies.transform_velocity!
 
 ```@index
 Pages = ["elements.md"]
+```
+
+```@meta
+DocTestSetup  = nothing
 ```

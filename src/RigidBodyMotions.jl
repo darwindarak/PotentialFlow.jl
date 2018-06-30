@@ -3,6 +3,7 @@ module RigidBodyMotions
 export RigidBodyMotion, Kinematics, d_dt
 
 using DocStringExtensions
+using Compat
 import ForwardDiff
 import Base: +, *, -, >>, <<, show
 
@@ -45,9 +46,9 @@ RigidBodyMotion(kin::Kinematics) = RigidBodyMotion(kin(0)..., kin)
 
 function show(io::IO, m::RigidBodyMotion)
     println(io, "Rigid Body Motion:")
-    println(io, "  ċ = $(round(m.ċ, digits=2))")
-    println(io, "  c̈ = $(round(m.c̈, digits=2))")
-    println(io, "  α̇ = $(round(m.α̇, digits=2))")
+    println(io, "  ċ = $(Compat.round(m.ċ, digits=2, base=10))")
+    println(io, "  c̈ = $(Compat.round(m.c̈, digits=2, base=10))")
+    println(io, "  α̇ = $(Compat.round(m.α̇, digits=2, base=10))")
     print(io, "  $(m.kin)")
 end
 
@@ -378,13 +379,13 @@ struct Sinusoid <: Profile
     ω::Float64
 end
 (s::Sinusoid)(t) = sin(s.ω*t)
-show(io::IO, s::Sinusoid) = print(io, "Sinusoid (ω = $(round(s.ω, digits=2)))")
+show(io::IO, s::Sinusoid) = print(io, "Sinusoid (ω = $(Compat.round(s.ω, digits=2, base=10)))")
 
 struct EldredgeRamp <: Profile
     aₛ::Float64
 end
 (r::EldredgeRamp)(t) = 0.5(log(2cosh(r.aₛ*t)) + r.aₛ*t)/r.aₛ
-show(io::IO, r::EldredgeRamp) = print(io, "logcosh ramp (aₛ = $(round(r.aₛ, digits=2)))")
+show(io::IO, r::EldredgeRamp) = print(io, "logcosh ramp (aₛ = $(Compat.round(r.aₛ, digits=2, base=10)))")
 
 struct ColoniusRamp <: Profile
     n::Int
@@ -403,6 +404,6 @@ function (r::ColoniusRamp)(t)
         f*Δt^(r.n + 2)/(2r.n + 2)
     end
 end
-show(io::IO, r::ColoniusRamp) = print(io, "power series ramp (n = $(round(r.n, digits=2)))")
+show(io::IO, r::ColoniusRamp) = print(io, "power series ramp (n = $(Compat.round(r.n, digits=2, base=10)))")
 
 end

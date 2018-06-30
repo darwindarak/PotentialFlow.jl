@@ -1,5 +1,7 @@
 module Motions
 
+using Compat
+
 export induce_velocity, induce_velocity!, allocate_velocity,
        self_induce_velocity, self_induce_velocity!,
        mutually_induce_velocity!, reset_velocity!,
@@ -17,7 +19,7 @@ Compute the velocity induced by `element` on `target`
 
 `target` can be:
 
-- a `Complex128`
+- a `ComplexF64`
 - a subtype of `Vortex.PointSource`
 - an array or tuple of vortex elements
 
@@ -28,12 +30,12 @@ while the `element` can be:
 
 # Example
 ```jldoctest
-julia> z = rand(Complex128)
+julia> z = rand(ComplexF64)
 0.23603334566204692 + 0.34651701419196046im
 
 julia> point = Vortex.Point(z, rand());
 
-julia> srcs = Vortex.Point.(rand(Complex128, 10), rand(10));
+julia> srcs = Vortex.Point.(rand(ComplexF64, 10), rand(10));
 
 julia> induce_velocity(z, srcs[1], 0.0)
 0.08722212007570912 + 0.14002850279102955im
@@ -51,20 +53,20 @@ julia> induce_velocity(point, srcs, 0.0)
 @property begin
     signature = induce_velocity(targ::Target, src::Source, t)
     preallocator = allocate_velocity
-    stype = Complex128
+    stype = ComplexF64
 end
 
 @doc """
     allocate_velocity(srcs)
 
-Allocate arrays of `Complex128` to match the structure of `srcs`
+Allocate arrays of `ComplexF64` to match the structure of `srcs`
 
 # Example
 
 ```jldoctest
-julia> points = Vortex.Point.(rand(Complex128, 2), rand(2));
+julia> points = Vortex.Point.(rand(ComplexF64, 2), rand(2));
 
-julia> blobs  = Vortex.Blob.(rand(Complex128, 3), rand(3), rand(3));
+julia> blobs  = Vortex.Blob.(rand(ComplexF64, 3), rand(3), rand(3));
 
 julia> allocate_velocity(points)
 2-element Array{Complex{Float64},1}:
@@ -90,13 +92,13 @@ while the `element` can be:
 # Example
 
 ```jldoctest
-julia> cluster₁ = Vortex.Point.(rand(Complex128, 5), rand(5));
+julia> cluster₁ = Vortex.Point.(rand(ComplexF64, 5), rand(5));
 
-julia> cluster₂ = Vortex.Point.(rand(Complex128, 5), rand(5));
+julia> cluster₂ = Vortex.Point.(rand(ComplexF64, 5), rand(5));
 
 julia> targets = (cluster₁, cluster₂);
 
-julia> sources = Vortex.Blob.(rand(Complex128), rand(10), 0.1);
+julia> sources = Vortex.Blob.(rand(ComplexF64), rand(10), 0.1);
 
 julia> ẋs = allocate_velocity(targets);
 
@@ -195,12 +197,12 @@ If `srcs` is provided, then the arrays in `vels` are resized their source counte
 # Example
 
 ```jldoctest
-julia> ẋs = (rand(Complex128, 1), rand(Complex128, 1))
+julia> ẋs = (rand(ComplexF64, 1), rand(ComplexF64, 1))
 (Complex{Float64}[0.236033+0.346517im], Complex{Float64}[0.312707+0.00790928im])
 
-julia> points = Vortex.Point.(rand(Complex128, 2), rand(2));
+julia> points = Vortex.Point.(rand(ComplexF64, 2), rand(2));
 
-julia> blobs  = Vortex.Blob.(rand(Complex128, 3), rand(3), rand(3));
+julia> blobs  = Vortex.Blob.(rand(ComplexF64, 3), rand(3), rand(3));
 
 julia> reset_velocity!(ẋs, (points, blobs));
 
@@ -238,7 +240,7 @@ function reset_velocity!(m::RigidBodyMotion, src)
 end
 
 """
-    advect(src::Element, velocity::Complex128, Δt)
+    advect(src::Element, velocity::ComplexF64, Δt)
 
 Return a new element that represents `src` advected by `velocity` over
 `Δt`.

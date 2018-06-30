@@ -4,6 +4,7 @@
 CurrentModule = Plates.RigidBodyMotions
 DocTestSetup  = quote
     using PotentialFlow
+    using Compat
     srand(1)
 end
 ```
@@ -189,4 +190,8 @@ Order   = [:type, :function]
 
 ```@index
 Pages   = ["motions.md"]
+```
+
+```@meta
+DocTestSetup  = nothing
 ```

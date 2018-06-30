@@ -1,5 +1,6 @@
 module Chebyshev
 
+using Compat
 import Base: *, \
 import FFTW
 
@@ -26,7 +27,7 @@ end
 Gives `N` extrema Chebyshev points of type `T` in [-1 ,1].
 """
 function nodes(N, T = Float64)
-    T[cos(θ) for θ in range(π, stop=0, length=N)]
+    T[cos(θ) for θ in Compat.range(π, stop=0, length=N)]
 end
 
 """

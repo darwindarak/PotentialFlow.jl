@@ -2,6 +2,7 @@
 
 ```@meta
 DocTestSetup = quote
+using Compat
 using PotentialFlow
 srand(1)
 end

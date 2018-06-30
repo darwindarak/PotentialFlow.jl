@@ -1,6 +1,7 @@
 module Blobs
 
 export Blob
+using Compat
 
 using ..Elements
 import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect

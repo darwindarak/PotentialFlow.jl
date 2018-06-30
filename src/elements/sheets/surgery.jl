@@ -130,7 +130,7 @@ function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
 
     N = ceil(Int, L[end]/Δs)
 
-    L₌ = range(0, stop=L[end], length=N)
+    L₌ = Compat.range(0, stop=L[end], length=N)
 
     z₌ = zspline[L₌]
     S₌ = Γspline[L₌]

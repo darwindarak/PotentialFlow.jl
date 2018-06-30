@@ -1,5 +1,7 @@
 module Source
 
+using Compat
+
 import ..Points
 import ..Blobs
 import ..Elements: circulation, flux
