@@ -26,6 +26,7 @@ A type to store the plate's current kinematics
 - `ċ`: current centroid velocity
 - `c̈`: current centroid acceleration
 - `α̇`: current angular velocity
+- `α̈`: current angular acceleration
 - `kin`: a [`Kinematics`](@ref) structure
 
 The first three fields are meant as a cache of the current kinematics
@@ -35,11 +36,12 @@ mutable struct RigidBodyMotion
     ċ::Complex128
     c̈::Complex128
     α̇::Float64
+    α̈::Float64
 
     kin::Kinematics
 end
 
-RigidBodyMotion(ċ, α̇) = RigidBodyMotion(complex(ċ), 0.0im, float(α̇), Constant(ċ, α̇))
+RigidBodyMotion(ċ, α̇) = RigidBodyMotion(complex(ċ), 0.0im, float(α̇), 0.0, Constant(ċ, α̇))
 RigidBodyMotion(kin::Kinematics) = RigidBodyMotion(kin(0)..., kin)
 (m::RigidBodyMotion)(t) = m.kin(t)
 
@@ -48,6 +50,7 @@ function show(io::IO, m::RigidBodyMotion)
     println(io, "  ċ = $(round(m.ċ, 2))")
     println(io, "  c̈ = $(round(m.c̈, 2))")
     println(io, "  α̇ = $(round(m.α̇, 2))")
+    println(io, "  α̈ = $(round(m.α̈, 2))")
     print(io, "  $(m.kin)")
 end
 
@@ -61,7 +64,7 @@ struct Constant{C <: Complex, A <: Real} <: Kinematics
     α̇::A
 end
 Constant(ċ, α̇) = Constant(complex(ċ), α̇)
-(c::Constant{C})(t) where C = c.ċ, zero(C), c.α̇
+(c::Constant{C})(t) where C = c.ċ, zero(C), c.α̇, zero(C)
 show(io::IO, c::Constant) = print(io, "Constant (ċ = $(c.ċ), α̇ = $(c.α̇))")
 
 """
@@ -115,7 +118,7 @@ function (p::Pitchup)(t)
         c̈ = p.a*exp(im*α)*(α̇^2 - im*α̈)
     end
 
-    return ċ, c̈, α̇
+    return ċ, c̈, α̇, α̈
 end
 
 """
@@ -177,7 +180,7 @@ function (p::PitchHeave)(t)
     ċ = p.U₀ + im*p.Ẏ(t) - p.a*im*α̇*exp(im*α)
     c̈ = im*p.Ÿ(t) + p.a*exp(im*α)*(α̇^2 - im*α̈)
 
-    return ċ, c̈, α̇
+    return ċ, c̈, α̇, α̈
 end
 
 #=

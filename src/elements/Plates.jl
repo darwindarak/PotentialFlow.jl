@@ -3,7 +3,8 @@ module Plates
 using DocStringExtensions
 
 export Plate, bound_circulation, bound_circulation!,
-       enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force
+       enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force,
+       moment
 
 using ..Points
 using ..Blobs
