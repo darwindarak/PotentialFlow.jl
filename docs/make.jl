@@ -15,7 +15,8 @@ makedocs(
         "Internals" => [ "internals/properties.md"]
     ],
     assets = ["assets/custom.css"],
-    strict = true
+    strict = true,
+    doctest = !is_windows()
 )
 
 
