@@ -85,6 +85,11 @@ function impulse(p::Plate)
     @get p (c, B₀, α, Γ, L, A)
     -im*c*Γ - exp(im*α)*π*(0.5L)^2*im*(A[0] - 0.5A[2] - B₀)
 end
+function angularimpulse(p::Plate)
+    @get p (c, B₀, α, Γ, L, A)
+    -0.5*(c*conj(c)+L^2/8)*Γ - real(exp(im*α)*conj(c)*π*(0.5L)^2*(A[0] - 0.5A[2] - B₀)) -
+          π*(0.25L)^3*(A[1]-A[3]-B₁)
+end
 
 function allocate_velocity(::Plate)
     warn("Plate kinematics should be initialized manually.  This simply returns a stationary motion")
