@@ -341,7 +341,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Elements",
     "title": "PotentialFlow.Plates.force",
     "category": "function",
-    "text": "force(plate, motion, elements, velocities, newelements = ())\n\nCompute the force on plate, given its motion and the state of the ambient vorticity.\n\nArguments\n\nplate: the plate\nmotion: a structure that contains the velocity, acceleration, and angular velocity of the plate.\nelements: vortex elements representing the ambient vorticity\nvelocities: the velocities of the vortex elements\nnewelements: an optional argument listing vortex elements that are just added to the flow field (it can be an element that is contained in elements)\nΔt: this is only required if newelements is not empty, we assume that the new vortex elements are created over the span of Δt\n\nReturns\n\nF: the force excerted on the plate in complex coordinates\n\n\n\n"
+    "text": "force(plate, motion, elements, velocities, newelements = ())\n\nCompute the force on plate, given its motion and the state of the ambient vorticity.\n\nArguments\n\nplate: the plate\nmotion: a structure that contains the velocity, acceleration, and angular velocity of the plate.\nelements: vortex elements representing the ambient vorticity\nvelocities: the velocities of the vortex elements\nnewelements: an optional argument listing vortex elements that are just added to the flow field (it can be an element that is contained in elements)\nΔt: this is only required if newelements is not empty, we assume that the new vortex elements are created over the span of Δt\n\nReturns\n\nF: the force exerted on the plate in complex coordinates\n\n\n\n"
 },
 
 {
@@ -389,7 +389,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Elements",
     "title": "PotentialFlow.Bodies.transform_velocity!",
     "category": "function",
-    "text": "transform_velocity!(wout, win, targets, body::ConformalBody)\n\nTransforms the velocity win in the circle plane of a conformal mapping to a velocity wout that can actually be used to transport the pre-images of elements in targets in this circle plane. This transformation applies the Routh correction and subtracts the relative motion of the body.\n\nExample\n\njulia> a1 = 1; b1 = 0.1; ccoeff = Complex128[0.5(a1+b1),0,0.5(a1-b1)];\n\njulia> body = Bodies.ConformalBody(ccoeff);\n\njulia> motion = RigidBodyMotion(0,0);\n\njulia> points = Vortex.Point.([-2, 2], 1.0);\n\njulia> Bodies.enforce_no_flow_through!(body, motion, points, 0);\n\njulia> sys = (body,points);\n\njulia> ẋ = (motion, allocate_velocity(points));\n\njulia> self_induce_velocity!(ẋ, sys, 0)\n(Rigid Body Motion:\n  ċ = 0.0 + 0.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 0.0\n  Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.129977im, 0.0-0.129977im])\n\njulia> Bodies.transform_velocity!(ẋ, ẋ, sys, body)\n(Rigid Body Motion:\n  ċ = 0.0 + 0.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 0.0\n  Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.785969im, 0.0-0.785969im])\n\ntransform_velocity(win, target::Complex128, body::ConformalBody)\n\nReturns the velocity in the physical plane from the velocity win in the circle plane.\n\njulia> a1 = 1; b1 = 0.1; ccoeff = Complex128[0.5(a1+b1),0,0.5(a1-b1)];\n\njulia> body = Bodies.ConformalBody(ccoeff,0.0+0.0im,π/4);\n\njulia> motion = RigidBodyMotion(1,0);\n\njulia> points = Vortex.Point.([-2, 2], 1.0);\n\njulia> Bodies.enforce_no_flow_through!(body, motion, points, 0);\n\njulia> sys = (body,points);\n\njulia> ζ = exp(-im*π/4);\n\njulia> w̃ = induce_velocity(ζ,sys,0);\n\njulia> w = Bodies.transform_velocity(w̃,ζ,body)\n0.7497272298496697 - 0.3058889412948484im\n\n\n\n"
+    "text": "transform_velocity!(wout, win, targets, body::ConformalBody)\n\nTransforms the velocity win in the circle plane of a conformal mapping to a velocity wout that can actually be used to transport the pre-images of elements in targets in this circle plane. This transformation applies the Routh correction and subtracts the relative motion of the body.\n\nExample\n\njulia> a1 = 1; b1 = 0.1; ccoeff = Complex128[0.5(a1+b1),0,0.5(a1-b1)];\n\njulia> body = Bodies.ConformalBody(ccoeff);\n\njulia> motion = RigidBodyMotion(0,0);\n\njulia> points = Vortex.Point.([-2, 2], 1.0);\n\njulia> Bodies.enforce_no_flow_through!(body, motion, points, 0);\n\njulia> sys = (body,points);\n\njulia> ẋ = (motion, allocate_velocity(points));\n\njulia> self_induce_velocity!(ẋ, sys, 0)\n(Rigid Body Motion:\n  ċ = 0.0 + 0.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 0.0\n  α̈ = 0.0\n  Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.129977im, 0.0-0.129977im])\n\njulia> Bodies.transform_velocity!(ẋ, ẋ, sys, body)\n(Rigid Body Motion:\n  ċ = 0.0 + 0.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 0.0\n  α̈ = 0.0\n  Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.785969im, 0.0-0.785969im])\n\ntransform_velocity(win, target::Complex128, body::ConformalBody)\n\nReturns the velocity in the physical plane from the velocity win in the circle plane.\n\njulia> a1 = 1; b1 = 0.1; ccoeff = Complex128[0.5(a1+b1),0,0.5(a1-b1)];\n\njulia> body = Bodies.ConformalBody(ccoeff,0.0+0.0im,π/4);\n\njulia> motion = RigidBodyMotion(1,0);\n\njulia> points = Vortex.Point.([-2, 2], 1.0);\n\njulia> Bodies.enforce_no_flow_through!(body, motion, points, 0);\n\njulia> sys = (body,points);\n\njulia> ζ = exp(-im*π/4);\n\njulia> w̃ = induce_velocity(ζ,sys,0);\n\njulia> w = Bodies.transform_velocity(w̃,ζ,body)\n0.7497272298496697 - 0.3058889412948484im\n\n\n\n"
 },
 
 {
@@ -581,7 +581,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Plate Motions",
     "title": "Motion",
     "category": "section",
-    "text": "By default, RigidBodyMotion assumes a constant translational and angular velocity. For example,julia> motion = Plates.RigidBodyMotion(1.0im, π/2)\nRigid Body Motion:\n  ċ = 0.0 + 1.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 1.57\n  Constant (ċ = 0.0 + 1.0im, α̇ = 1.5707963267948966)Here, Constant is a subtype of Kinematics that returns the same (ċ, c̈, α̇) triple at all timesjulia> motion.kin.([0.0, 1.0, 2.0])\n3-element Array{Tuple{Complex{Float64},Complex{Float64},Float64},1}:\n (0.0+1.0im, 0.0+0.0im, 1.5708)\n (0.0+1.0im, 0.0+0.0im, 1.5708)\n (0.0+1.0im, 0.0+0.0im, 1.5708)Calling Plates.RigidBodyMotion(1.0im, π/2) is equivalent doingkin = Plates.RigidBodyMotions.Constant(1.0im, π/2)\nmotion = Plates.RigidBodyMotion(1.0im, 0.0im, π/2, kin)\n\n# output\n\nRigid Body Motion:\n  ċ = 0.0 + 1.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 1.57\n  Constant (ċ = 0.0 + 1.0im, α̇ = 1.5707963267948966)The next section describes how to construct more interesting kinematics."
+    "text": "By default, RigidBodyMotion assumes a constant translational and angular velocity. For example,julia> motion = Plates.RigidBodyMotion(1.0im, π/2)\nRigid Body Motion:\n  ċ = 0.0 + 1.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 1.57\n  α̈ = 0.0\n  Constant (ċ = 0.0 + 1.0im, α̇ = 1.5707963267948966)Here, Constant is a subtype of Kinematics that returns the same (ċ, c̈, α̇) triple at all timesjulia> motion.kin.([0.0, 1.0, 2.0])\n3-element Array{Tuple{Complex{Float64},Complex{Float64},Float64,Complex{Float64}},1}:\n (0.0+1.0im, 0.0+0.0im, 1.5708, 0.0+0.0im)\n (0.0+1.0im, 0.0+0.0im, 1.5708, 0.0+0.0im)\n (0.0+1.0im, 0.0+0.0im, 1.5708, 0.0+0.0im)\nCalling Plates.RigidBodyMotion(1.0im, π/2) is equivalent doingkin = Plates.RigidBodyMotions.Constant(1.0im, π/2)\nmotion = Plates.RigidBodyMotion(1.0im, 0.0im, π/2, 0.0, kin)\n\n# output\n\nRigid Body Motion:\n  ċ = 0.0 + 1.0im\n  c̈ = 0.0 + 0.0im\n  α̇ = 1.57\n  α̈ = 0.0\n  Constant (ċ = 0.0 + 1.0im, α̇ = 1.5707963267948966)The next section describes how to construct more interesting kinematics."
 },
 
 {
@@ -621,7 +621,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Plate Motions",
     "title": "PotentialFlow.RigidBodyMotions.RigidBodyMotion",
     "category": "type",
-    "text": "RigidBodyMotion\n\nA type to store the plate\'s current kinematics\n\nFields\n\nċ: current centroid velocity\nc̈: current centroid acceleration\nα̇: current angular velocity\nkin: a Kinematics structure\n\nThe first three fields are meant as a cache of the current kinematics while the kin field can be used to find the plate kinematics at any time.\n\n\n\n"
+    "text": "RigidBodyMotion\n\nA type to store the plate\'s current kinematics\n\nFields\n\nċ: current centroid velocity\nc̈: current centroid acceleration\nα̇: current angular velocity\nα̈: current angular acceleration\nkin: a Kinematics structure\n\nThe first three fields are meant as a cache of the current kinematics while the kin field can be used to find the plate kinematics at any time.\n\n\n\n"
 },
 
 {
@@ -629,15 +629,23 @@ var documenterSearchIndex = {"docs": [
     "page": "Plate Motions",
     "title": "PotentialFlow.RigidBodyMotions.d_dt",
     "category": "method",
-    "text": "d_dt(p::Profile)\n\nTake the time derivative of p and return it as a new profile.\n\nExample\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> s.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 1.0\n 0.707107\n\njulia> c = Plates.RigidBodyMotions.d_dt(s)\nd/dt (Sinusoid (ω = 3.14))\n\njulia> c.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n  3.14159\n  1.92367e-16\n -2.22144\n\n\n\n"
+    "text": "d_dt(p::Profile)\n\nTake the time derivative of p and return it as a new profile.\n\nExample\n\njulia> s = RigidBodyMotions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> s.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 1.0\n 0.707107\n\njulia> c = RigidBodyMotions.d_dt(s)\nd/dt (Sinusoid (ω = 3.14))\n\njulia> c.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n  3.14159\n  1.92367e-16\n -2.22144\n\n\n\n"
 },
 
 {
-    "location": "manual/motions.html#PotentialFlow.RigidBodyMotions.OscilHeave",
+    "location": "manual/motions.html#PotentialFlow.RigidBodyMotions.ConstantProfile",
     "page": "Plate Motions",
-    "title": "PotentialFlow.RigidBodyMotions.OscilHeave",
+    "title": "PotentialFlow.RigidBodyMotions.ConstantProfile",
     "category": "type",
-    "text": "OscilHeave <: Kinematics\n\nKinematics describing an oscillatory heaving (i.e. plunging) motion (vertical   sinusoidal translation)\n\nConstructors\n\nFields\n\nU₀\nFreestream velocity\nK\nReduced frequency K = fracOmega c2U_0\nϕ\nPhase lag\nα₀\nAngle of attack\nA\nAmplitude of translational heave relative to chord\nY\nẎ\nŸ\n\n\n\n"
+    "text": "ConstantProfile(c::Number)\n\nCreate a profile consisting of a constant c.\n\nExample\n\njulia> p = RigidBodyMotions.ConstantProfile(1.0)\nConstant (1.0)\n\n\n\n"
+},
+
+{
+    "location": "manual/motions.html#PotentialFlow.RigidBodyMotions.PitchHeave",
+    "page": "Plate Motions",
+    "title": "PotentialFlow.RigidBodyMotions.PitchHeave",
+    "category": "type",
+    "text": "PitchHeave <: Kinematics\n\nKinematics describing an oscillatory pitching and heaving (i.e. plunging) motion\n\nConstructors\n\nFields\n\nU₀\nFreestream velocity\na\nAxis of pitch rotation, relative to the plate centroid\nK\nReduced frequency K = fracOmega c2U_0\nϕ\nPhase lag of pitch to heave (in radians)\nα₀\nMean angle of attack\nΔα\nAmplitude of pitching\nA\nAmplitude of translational heaving\nY\nẎ\nŸ\nα\nα̇\nα̈\n\n\n\n"
 },
 
 {
@@ -661,7 +669,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Plate Motions",
     "title": "Base.:*",
     "category": "method",
-    "text": "s::Number * p::Profile\n\nReturns a scaled profile with (s*p)(t) = s*p(t)\n\nExample\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> 2s\n2 × (Sinusoid (ω = 3.14))\n\njulia> (2s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 2.0\n 1.41421\n\n\n\n"
+    "text": "s::Number * p::Profile\n\nReturns a scaled profile with (s*p)(t) = s*p(t)\n\nExample\n\njulia> s = RigidBodyMotions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> 2s\n2 × (Sinusoid (ω = 3.14))\n\njulia> (2s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 2.0\n 1.41421\n\n\n\n"
 },
 
 {
@@ -669,7 +677,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Plate Motions",
     "title": "Base.:+",
     "category": "method",
-    "text": "p₁::Profile + p₂::Profile\n\nAdd the profiles so that (p₁ + p₂)(t) = p₁(t) + p₂(t).\n\nExamples\n\njulia> ramp₁ = Plates.RigidBodyMotions.EldredgeRamp(5)\nlogcosh ramp (aₛ = 5.0)\n\njulia> ramp₂ = Plates.RigidBodyMotions.ColoniusRamp(5)\npower series ramp (n = 5.0)\n\njulia> ramp₁ + ramp₂\nAddedProfiles:\n  logcosh ramp (aₛ = 5.0)\n  power series ramp (n = 5.0)\n\n\njulia> ramp₁ + (ramp₂ + ramp₁) == ramp₁ + ramp₂ + ramp₁\ntrue\n\n\n\n\n"
+    "text": "p₁::Profile + p₂::Profile\n\nAdd the profiles so that (p₁ + p₂)(t) = p₁(t) + p₂(t).\n\nExamples\n\njulia> ramp₁ = RigidBodyMotions.EldredgeRamp(5)\nlogcosh ramp (aₛ = 5.0)\n\njulia> ramp₂ = RigidBodyMotions.ColoniusRamp(5)\npower series ramp (n = 5.0)\n\njulia> ramp₁ + ramp₂\nAddedProfiles:\n  logcosh ramp (aₛ = 5.0)\n  power series ramp (n = 5.0)\n\n\njulia> ramp₁ + (ramp₂ + ramp₁) == ramp₁ + ramp₂ + ramp₁\ntrue\n\n\n\n\n"
 },
 
 {
@@ -677,7 +685,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Plate Motions",
     "title": "Base.:-",
     "category": "method",
-    "text": "-(p₁::Profile, p₂::Profile)\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> 2s\n2 × (Sinusoid (ω = 3.14))\n\njulia> (2s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 2.0\n 1.41421\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π);\n\njulia> s.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 1.0\n 0.707107\n\njulia> (-s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n -0.0\n -1.0\n -0.707107\n\njulia> (s - s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 0.0\n 0.0\n\n\n\n"
+    "text": "-(p₁::Profile, p₂::Profile)\n\njulia> s = RigidBodyMotions.Sinusoid(π)\nSinusoid (ω = 3.14)\n\njulia> 2s\n2 × (Sinusoid (ω = 3.14))\n\njulia> (2s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 2.0\n 1.41421\n\njulia> s = RigidBodyMotions.Sinusoid(π);\n\njulia> s.([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 1.0\n 0.707107\n\njulia> (-s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n -0.0\n -1.0\n -0.707107\n\njulia> (s - s).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n 0.0\n 0.0\n 0.0\n\n\n\n"
 },
 
 {
@@ -685,7 +693,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Plate Motions",
     "title": "Base.:>>",
     "category": "method",
-    "text": "p::Profile >> Δt::Number\n\nShift the profile in time so that (p >> Δt)(t) = p(t - Δt)\n\nExample\n\njulia> s = Plates.RigidBodyMotions.Sinusoid(π);\n\njulia> s >> 0.5\nSinusoid (ω = 3.14) >> 0.5\n\njulia> (s >> 0.5).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n -1.0\n  0.0\n  0.707107\n\njulia> (s << 0.5).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n  1.0\n  1.22465e-16\n -0.707107\n\n\n\n"
+    "text": "p::Profile >> Δt::Number\n\nShift the profile in time so that (p >> Δt)(t) = p(t - Δt)\n\nExample\n\njulia> s = RigidBodyMotions.Sinusoid(π);\n\njulia> s >> 0.5\nSinusoid (ω = 3.14) >> 0.5\n\njulia> (s >> 0.5).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n -1.0\n  0.0\n  0.707107\n\njulia> (s << 0.5).([0.0, 0.5, 0.75])\n3-element Array{Float64,1}:\n  1.0\n  1.22465e-16\n -0.707107\n\n\n\n"
 },
 
 {
