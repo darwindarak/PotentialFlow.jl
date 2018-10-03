@@ -168,6 +168,33 @@ julia> Elements.impulse(sys)
     stype = Complex128
 end
 
+doc"""
+    Elements.angularimpulse(src)
+
+Return the aerodynamic angular impulse of `src` about (0,0):
+```math
+\Pi := \frac{1}{2}\int \boldsymbol{x} \times (\boldsymbol{x}\times\boldsymbol{\omega})\,\mathrm{d}A.
+```
+This is a required method for all vortex types.
+
+# Example
+
+```jldoctest
+julia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(1.0im, -π, 0.1));
+
+julia> Elements.angularimpulse(sys[1])
+3.141592653589793 + 0.0im
+
+julia> Elements.angularimpulse(sys)
+0.0 + 0.0im
+```
+"""
+@property begin
+    signature = angularimpulse(src::Source)
+    reduce = (+)
+    stype = Complex128
+end
+
 @property begin
     signature = streamfunction(targ::Target, src::Source)
     preallocator = allocate_streamfunction

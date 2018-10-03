@@ -123,14 +123,14 @@ function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
     A₂₋ = -2imag(∂C₂[1]) + imag(∂C₂[2]) - 2Γ₂/(π*L)
 
     if (abs2(lesp) > abs2(b₊)) && (abs2(tesp) ≤ abs2(b₋))
-        K₁, K₂ = 0.0, (tesp - b₋)/A₂₋
+        K₁, K₂ = 0.0, (sign(b₋)*tesp - b₋)/A₂₋
     elseif (abs2(lesp) ≤ abs2(b₊)) && (abs2(tesp) > abs2(b₋))
-        K₁, K₂ = (lesp - b₊)/A₁₊, 0.0
+        K₁, K₂ = (sign(b₊)*lesp - b₊)/A₁₊, 0.0
     elseif (abs2(lesp) > abs2(b₊)) && (abs2(tesp) > abs2(b₋))
         K₁ = K₂ = 0.0
     else
-        b₊ = lesp - b₊
-        b₋ = tesp - b₋
+        b₊ = sign(b₊)*lesp - b₊
+        b₋ = sign(b₋)*tesp - b₋
 
         detA = A₁₊*A₂₋ - A₂₊*A₁₋
 

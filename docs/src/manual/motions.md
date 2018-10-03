@@ -29,20 +29,22 @@ Rigid Body Motion:
   ċ = 0.0 + 1.0im
   c̈ = 0.0 + 0.0im
   α̇ = 1.57
+  α̈ = 0.0
   Constant (ċ = 0.0 + 1.0im, α̇ = 1.5707963267948966)
 ```
 Here, `Constant` is a subtype of [`Kinematics`](@ref) that returns the same `(ċ, c̈, α̇)` triple at all times
 ```jldoctest constant
 julia> motion.kin.([0.0, 1.0, 2.0])
-3-element Array{Tuple{Complex{Float64},Complex{Float64},Float64},1}:
- (0.0+1.0im, 0.0+0.0im, 1.5708)
- (0.0+1.0im, 0.0+0.0im, 1.5708)
- (0.0+1.0im, 0.0+0.0im, 1.5708)
+3-element Array{Tuple{Complex{Float64},Complex{Float64},Float64,Complex{Float64}},1}:
+ (0.0+1.0im, 0.0+0.0im, 1.5708, 0.0+0.0im)
+ (0.0+1.0im, 0.0+0.0im, 1.5708, 0.0+0.0im)
+ (0.0+1.0im, 0.0+0.0im, 1.5708, 0.0+0.0im)
+
 ```
 Calling `Plates.RigidBodyMotion(1.0im, π/2)` is equivalent doing
 ```jldoctest
 kin = Plates.RigidBodyMotions.Constant(1.0im, π/2)
-motion = Plates.RigidBodyMotion(1.0im, 0.0im, π/2, kin)
+motion = Plates.RigidBodyMotion(1.0im, 0.0im, π/2, 0.0, kin)
 
 # output
 
@@ -50,6 +52,7 @@ Rigid Body Motion:
   ċ = 0.0 + 1.0im
   c̈ = 0.0 + 0.0im
   α̇ = 1.57
+  α̈ = 0.0
   Constant (ċ = 0.0 + 1.0im, α̇ = 1.5707963267948966)
 ```
 The next section describes how to construct more interesting kinematics.

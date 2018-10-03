@@ -170,8 +170,11 @@ end
 
 Elements.conftransform(ζ::Complex128,b::ConformalBody) = b.c + b.m(ζ)*exp(im*b.α)
 
-Elements.conftransform(s::T,b::ConformalBody) where T <: Union{Blob,Point} =
-                T(Elements.conftransform(s.z,b),s.S)
+Elements.conftransform(s::Point{T},b::ConformalBody) where T =
+                Point{T}(Elements.conftransform(s.z,b),s.S)
+
+Elements.conftransform(s::Blob{T},b::ConformalBody) where T =
+                Blob{T}(Elements.conftransform(s.z,b),s.S,s.δ)
 
 function allocate_inv_conftransform(::ConformalBody)
     nothing
@@ -179,8 +182,11 @@ end
 
 Elements.inverse_conftransform(z::Complex128,b::ConformalBody) = b.minv((z-b.c)*exp(-im*b.α))
 
-Elements.inverse_conftransform(s::T,b::ConformalBody) where T <: Union{Blob,Point} =
-                T(Elements.inverse_conftransform(s.z,b),s.S)
+Elements.inverse_conftransform(s::Point{T},b::ConformalBody) where T=
+                Point{T}(Elements.inverse_conftransform(s.z,b),s.S)
+
+Elements.inverse_conftransform(s::Blob{T},b::ConformalBody) where T =
+                Blob{T}(Elements.inverse_conftransform(s.z,b),s.S,s.δ)
 
 function allocate_jacobian(::ConformalBody)
     nothing
@@ -266,6 +272,7 @@ julia> self_induce_velocity!(ẋ, sys, 0)
   ċ = 0.0 + 0.0im
   c̈ = 0.0 + 0.0im
   α̇ = 0.0
+  α̈ = 0.0
   Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.129977im, 0.0-0.129977im])
 
 julia> Bodies.transform_velocity!(ẋ, ẋ, sys, body)
@@ -273,6 +280,7 @@ julia> Bodies.transform_velocity!(ẋ, ẋ, sys, body)
   ċ = 0.0 + 0.0im
   c̈ = 0.0 + 0.0im
   α̇ = 0.0
+  α̈ = 0.0
   Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.785969im, 0.0-0.785969im])
 ```
 
