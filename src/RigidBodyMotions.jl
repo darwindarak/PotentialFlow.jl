@@ -196,7 +196,7 @@ Create a profile consisting of a constant `c`.
 
 ```jldoctest
 julia> p = RigidBodyMotions.ConstantProfile(1.0)
-Constant (2.3)
+Constant (1.0)
 ```
 """
 struct ConstantProfile <: Profile

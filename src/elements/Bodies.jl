@@ -272,6 +272,7 @@ julia> self_induce_velocity!(ẋ, sys, 0)
   ċ = 0.0 + 0.0im
   c̈ = 0.0 + 0.0im
   α̇ = 0.0
+  α̈ = 0.0
   Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.129977im, 0.0-0.129977im])
 
 julia> Bodies.transform_velocity!(ẋ, ẋ, sys, body)
@@ -279,6 +280,7 @@ julia> Bodies.transform_velocity!(ẋ, ẋ, sys, body)
   ċ = 0.0 + 0.0im
   c̈ = 0.0 + 0.0im
   α̇ = 0.0
+  α̈ = 0.0
   Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.785969im, 0.0-0.785969im])
 ```
 
