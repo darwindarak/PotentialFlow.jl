@@ -1,4 +1,5 @@
 using Interpolations
+using FFTW
 
 """
     Sheets.redistribute_points!(sheet, zs, Γs)
@@ -329,7 +330,7 @@ end
 Filter out any length scales in `s` that is smaller than `Δf`, storing the result back in `s`.
 `s` can be either a vector of complex positions, or a `Vortex.Sheet`.
 """
-function filter_position!(z₌::AbstractVector, Δf, L = arclength(z₌))
+function filter_position!(z₌::AbstractVector{T}, Δf, L = arclength(z₌)) where T
     Δs = abs(z₌[2] - z₌[1])
 
     @assert Δs < Δf
@@ -339,9 +340,18 @@ function filter_position!(z₌::AbstractVector, Δf, L = arclength(z₌))
 
     cutoff = ceil(Int, 2L/Δf) + 1
 
-    z₌[cutoff:end] = zero(ComplexF64)
+    z₌[cutoff:end] .= zero(ComplexF64)
 
-    F \ z₌
+    # F \ z₌
+    # Out-of-date syntax in FFTW for planned inverse transforms
+    # manually construct inverse transform for now
+    F⁻¹ = let X = Array{T}(undef, F.plan.sz),
+             iK = FFTW.inv_kind[FFTW.REDFT10]
+           FFTW.DCTPlan{T,iK,true}(FFTW.plan_r2r!(X, iK, F.region, flags=F.plan.flags),
+                              F.r, F.nrm, F.region)
+       end
+
+    F⁻¹ * z₌
 end
 
 function filter_position!(sheet::Sheet, Δf, L = arclength(sheet))
