@@ -7,6 +7,8 @@ MacroTools
 ForwardDiff
 MappedArrays
 RecipesBase
+ColorTypes
 PlotUtils
 SchwarzChristoffel
 FFTW
+
