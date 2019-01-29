@@ -81,7 +81,7 @@ function advect(b::Blob{T}, w::ComplexF64, Δt::Float64) where T
 end
 #
 #function Base.show(io::IO, b::Blob)
-#    print(io, "Vortex Blob: z = $(round(b.z, 3)), Γ = $(round(b.Γ, 3)), δ = $(round(b.δ, 3))")
+#    print(io, "Vortex Blob: z = $(round(b.z, digits=3)), Γ = $(round(b.Γ, digits=3)), δ = $(round(b.δ, digits=3))")
 #end
 
 end

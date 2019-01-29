@@ -301,8 +301,8 @@ include("plates/pressure.jl")
 
 function Base.show(io::IO, p::Plate)
     lesp, tesp = suction_parameters(p)
-    println(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(round(rad2deg(p.α),2))ᵒ")
-    print(io, "       LESP = $(round(lesp,2)), TESP = $(round(tesp,2))")
+    println(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(round(rad2deg(p.α); digits=2))ᵒ")
+    print(io, "       LESP = $(round(lesp; digits=2)), TESP = $(round(tesp; digits=2))")
 end
 
 end

@@ -69,7 +69,7 @@ function advect(p::Point{T}, w::ComplexF64, Δt::Float64) where T
 end
 
 #function Base.show(io::IO, p::Point)
-#    print(io, "Vortex.Point(z = $(round(p.z, 3)), Γ = $(round(p.Γ, 3)))")
+#    print(io, "Vortex.Point(z = $(round(p.z, digits=3)), Γ = $(round(p.Γ, digits=3)))")
 #end
 
 end

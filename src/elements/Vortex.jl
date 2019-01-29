@@ -97,7 +97,7 @@ Sheet(zs::AbstractVector,  Ss::AbstractVector{Float64}, δ::Float64) = Sheets.Sh
 
 function Base.show(io::IO, s::Sheet)
     L = Sheets.arclength(s)
-    print(io, "Vortex Sheet: L ≈ $(round(L, 3)), Γ = $(round(s.Ss[end] - s.Ss[1], 3)), δ = $(round(s.δ, 3))")
+    print(io, "Vortex Sheet: L ≈ $(round(L, digits=3)), Γ = $(round(s.Ss[end] - s.Ss[1], digits=3)), δ = $(round(s.δ, digits=3))")
 end
 
 circulation(s::Sheet) = s.Ss[end] - s.Ss[1]
