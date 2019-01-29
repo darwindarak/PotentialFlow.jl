@@ -1,5 +1,7 @@
 module Chebyshev
 
+using FFTW
+
 import Base: *, \
 struct Transform{T,I}
     dct!::FFTW.r2rFFTWPlan{T,(3,),true,1}
@@ -140,7 +142,7 @@ function transform!(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
     x
 end
 
-function transform!{T}(A::T, x::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
+function transform!(A::T, x::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where T
     copy!(A, x)
     transform!(A, plan!)
 end
@@ -198,7 +200,7 @@ function inv_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
     plan!*A
 end
 
-function inv_transform!{T}(x::T, A::T, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
+function inv_transform!(x::T, A::T, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00)) where T
     copy!(x, A)
     Chebyshev.inv_transform!(x, plan!)
 end

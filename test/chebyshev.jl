@@ -1,3 +1,5 @@
+using FFTW
+
 @testset "Chebyshev Routines" begin
     import PotentialFlow.Plates.Chebyshev
 
