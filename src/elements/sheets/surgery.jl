@@ -130,7 +130,7 @@ function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
 
     N = ceil(Int, L[end]/Δs)
 
-    L₌ = linspace(0, L[end], N)
+    L₌ = range(0, L[end], length=N)
 
     z₌ = zspline[L₌]
     S₌ = Γspline[L₌]

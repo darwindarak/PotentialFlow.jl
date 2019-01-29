@@ -26,7 +26,7 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
         n = 31
         vmin = vmean+vfact*(vmin-vmean)
         vmax = vmean+vfact*(vmax-vmean)
-        v = linspace(vmin,vmax,n)
+        v = range(vmin,vmax,length=n)
         if (sign(vmin) != sign(vmax))
             v = v .- v[abs.(v).==minimum(abs.(v))];
         end

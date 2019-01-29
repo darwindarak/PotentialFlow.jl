@@ -26,7 +26,7 @@ end
 Gives `N` extrema Chebyshev points of type `T` in [-1 ,1].
 """
 function nodes(N, T = Float64)
-    T[cos(θ) for θ in linspace(π, 0, N)]
+    T[cos(θ) for θ in range(π, 0, length=N)]
 end
 
 """
