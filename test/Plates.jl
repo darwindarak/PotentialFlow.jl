@@ -2,7 +2,7 @@
 
     @testset "Singular Interactions" begin
         N = 100
-        zs = rand(Complex128, N)
+        zs = rand(ComplexF64, N)
         δ  = rand()
 
         sheet = Vortex.Sheet(zs, cumsum(rand(N)), δ)
@@ -11,10 +11,10 @@
         points = Vortex.Point.(zs, Γs)
         blobs = Vortex.Blob.(zs, Γs, δ)
 
-        plate = Plate(128, 2.0, rand(Complex128), 0.5π*rand())
+        plate = Plate(128, 2.0, rand(ComplexF64), 0.5π*rand())
 
-        vel_s = zeros(Complex128, plate.N)
-        vel_p = zeros(Complex128, plate.N)
+        vel_s = zeros(ComplexF64, plate.N)
+        vel_p = zeros(ComplexF64, plate.N)
 
         induce_velocity!(vel_s, plate, sheet, 0)
 
@@ -40,8 +40,8 @@
         include("utils/circle_plane.jl")
 
 
-        c = rand(Complex128)
-        ċ = rand(Complex128)
+        c = rand(ComplexF64)
+        ċ = rand(ComplexF64)
         α = 0.5π*rand()
         α̇ = rand()
 
@@ -89,8 +89,8 @@
     end
 
     @testset "Induced Velocities" begin
-        c = rand(Complex128)
-        ċ = rand(Complex128)
+        c = rand(ComplexF64)
+        ċ = rand(ComplexF64)
         α = 0.5π*rand()
         α̇ = rand()
 
@@ -164,7 +164,7 @@
     end
 
 @testset "Impulse" begin
-    ċ = rand(Complex128)
+    ċ = rand(ComplexF64)
     α = rand()*0.5π
     L = 2rand()
     plate = Plate(128, L, 0.0, α)
@@ -172,8 +172,8 @@
 
     motion = Plates.RigidBodyMotion(ċ, 0.0)
 
-    points = Vortex.Point.(2.0im + rand(Complex128, 20), rand(20))
-    sheet  = Vortex.Sheet(2.0im + rand(Complex128, 20), cumsum(rand(20)), rand())
+    points = Vortex.Point.(2.0im + rand(ComplexF64, 20), rand(20))
+    sheet  = Vortex.Sheet(2.0im + rand(ComplexF64, 20), cumsum(rand(20)), rand())
 
     impulse  = sum(points) do p
         circulation(p)*Plates.unit_impulse(p, plate)
@@ -193,12 +193,12 @@
 end
 
 @testset "Advection" begin
-    motion = Plates.RigidBodyMotion(rand(Complex128), rand())
-    c = rand(Complex128)
+    motion = Plates.RigidBodyMotion(rand(ComplexF64), rand())
+    c = rand(ComplexF64)
     α = 0.5π*rand()
     L = 2rand()
 
-    points = Vortex.Point.(rand(Complex128, 10), rand(10))
+    points = Vortex.Point.(rand(ComplexF64, 10), rand(10))
 
     plate = Plate(128, L, c, α)
     Plates.enforce_no_flow_through!(plate, motion, points, 0)

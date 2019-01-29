@@ -339,7 +339,7 @@ function filter_position!(z₌::AbstractVector, Δf, L = arclength(z₌))
 
     cutoff = ceil(Int, 2L/Δf) + 1
 
-    z₌[cutoff:end] = zero(Complex128)
+    z₌[cutoff:end] = zero(ComplexF64)
 
     F \ z₌
 end

@@ -21,8 +21,8 @@ macro kind(element, k)
     end)
 end
 
-@kind Complex128 Singleton
-kind(::AbstractArray{T}) where {T <: Union{Element, Complex128}} = Group
+@kind ComplexF64 Singleton
+kind(::AbstractArray{T}) where {T <: Union{Element, ComplexF64}} = Group
 kind(::Tuple) = Group
 
 # Convenience functions to define wrapper types
@@ -57,7 +57,7 @@ julia> Elements.position.(points)
 """
 @property begin
     signature = position(src::Source)
-    stype = Complex128
+    stype = ComplexF64
 end
 
 """
@@ -165,7 +165,7 @@ julia> Elements.impulse(sys)
 @property begin
     signature = impulse(src::Source)
     reduce = (+)
-    stype = Complex128
+    stype = ComplexF64
 end
 
 doc"""
@@ -192,7 +192,7 @@ julia> Elements.angularimpulse(sys)
 @property begin
     signature = angularimpulse(src::Source)
     reduce = (+)
-    stype = Complex128
+    stype = ComplexF64
 end
 
 @property begin
@@ -222,7 +222,7 @@ julia> Elements.conftransform(sys,b)
 @property begin
     signature = conftransform(src::Source,b)
     preallocator = allocate_conftransform
-    stype = Complex128
+    stype = ComplexF64
 end
 
 doc"""
@@ -246,7 +246,7 @@ julia> Elements.inverse_conftransform(sys,b)
 @property begin
     signature = inverse_conftransform(src::Source,b)
     preallocator = allocate_inv_conftransform
-    stype = Complex128
+    stype = ComplexF64
 end
 
 
@@ -272,7 +272,7 @@ julia> Elements.jacobian(sys,b)
 @property begin
     signature = jacobian(src::Source,b)
     preallocator = allocate_jacobian
-    stype = Complex128
+    stype = ComplexF64
 end
 
 
@@ -288,7 +288,7 @@ coordinates in the circle plane.
 ```jldoctest
 julia> sys = (Vortex.Point(1.0im, π), Vortex.Blob(2.0im, -π, 0.1));
 
-julia> b = PowerBody([1/4,0,1/4],zero(Complex128),0.0)
+julia> b = PowerBody([1/4,0,1/4],zero(ComplexF64),0.0)
 
 julia> Elements.image(sys,b)
 (0.0 + 1.0im, 0.0 + 0.5im)
@@ -298,7 +298,7 @@ julia> Elements.image(sys,b)
 @property begin
     signature = image(src::Source,b)
     preallocator = allocate_image
-    stype = Complex128
+    stype = ComplexF64
 end
 
 end

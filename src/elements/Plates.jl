@@ -32,7 +32,7 @@ mutable struct Plate <: Element
     "chord length"
     L::Float64
     "centroid"
-    c::Complex128
+    c::ComplexF64
     "centroid velocity"
     α::Float64
 
@@ -44,18 +44,18 @@ mutable struct Plate <: Element
     "normalized positions (within [-1, 1]) of the control points"
     ss::Vector{Float64}
     "control point coordinates"
-    zs::Vector{Complex128}
+    zs::Vector{ComplexF64}
     "Chebyshev coefficients of the normal component of velocity induced along the plate by ambient vorticity"
-    A::MappedVector{Float64, Vector{Complex128}, typeof(imag)}
+    A::MappedVector{Float64, Vector{ComplexF64}, typeof(imag)}
     "Chebyshev coefficients of the velocity induced along the plate by ambient vorticity"
-    C::Vector{Complex128}
+    C::Vector{ComplexF64}
     "zeroth Chebyshev coefficient associated with body motion"
     B₀::Float64
     "first Chebyshev coefficient associated with body motion"
     B₁::Float64
 
     "Preplanned discrete Chebyshev transform"
-    dchebt!::Chebyshev.Transform{Complex128, true}
+    dchebt!::Chebyshev.Transform{ComplexF64, true}
 end
 @kind Plate Singleton
 
@@ -70,7 +70,7 @@ function Plate(N, L, c, α)
     ss = Chebyshev.nodes(N)
     zs = c + 0.5L*ss*exp(im*α)
 
-    C  = zeros(Complex128, N)
+    C  = zeros(ComplexF64, N)
     A = MappedVector(imag, C, 1)
 
     dchebt! = Chebyshev.plan_transform!(C)
@@ -103,7 +103,7 @@ end
 normal(z, α) = imag(exp(-im*α)*z)
 tangent(z, α) = real(exp(-im*α)*z)
 
-function induce_velocity(z::Complex128, p::Plate, t)
+function induce_velocity(z::ComplexF64, p::Plate, t)
     @get p (α, L, c, B₀, B₁, Γ, A)
 
     z̃ = conj(2*(z - c)*exp(-im*α)/L)
@@ -161,7 +161,7 @@ end
 induce_velocity!(m::RigidBodyMotion, target::Plate, source, t) = m
 
 
-function Elements.streamfunction(z::Complex128, p::Plate)
+function Elements.streamfunction(z::ComplexF64, p::Plate)
     @get p (N, L, c, α, Γ, A, B₀, B₁)
     z̃ = 2*(z - c)*exp(-im*α)/L
     J = z̃ - √(z̃ - 1)*√(z̃ + 1)
@@ -208,9 +208,9 @@ end
     unit_impulse(src, plate::Plate)
 
 Compute the impulse per unit circulation of `src` and its associated bound vortex sheet on `plate` (its image vortex)
-`src` can be either a `Complex128` or a subtype of `Vortex.PointSource`.
+`src` can be either a `ComplexF64` or a subtype of `Vortex.PointSource`.
 """
-function unit_impulse(z::Complex128, plate::Plate)
+function unit_impulse(z::ComplexF64, plate::Plate)
     z̃ = 2(z - plate.c)*exp(-im*plate.α)/plate.L
     unit_impulse(z̃)
 end

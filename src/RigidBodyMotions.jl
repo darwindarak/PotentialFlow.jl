@@ -33,8 +33,8 @@ The first three fields are meant as a cache of the current kinematics
 while the `kin` field can be used to find the plate kinematics at any time.
 """
 mutable struct RigidBodyMotion
-    ċ::Complex128
-    c̈::Complex128
+    ċ::ComplexF64
+    c̈::ComplexF64
     α̇::Float64
     α̈::Float64
 

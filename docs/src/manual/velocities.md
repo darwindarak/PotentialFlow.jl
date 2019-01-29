@@ -49,7 +49,7 @@ However we can also have
 
 - an array of complex numbers, e.g.
   ```jldoctest sources-targets
-  julia> targets = Complex128.(1:3);
+  julia> targets = ComplexF64.(1:3);
 
   julia> induce_velocity(targets, src, 0.0)
   3-element Array{Complex{Float64},1}:

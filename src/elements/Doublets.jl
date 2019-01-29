@@ -4,7 +4,7 @@ using ..Elements
 using ..Motions
 
 struct Doublet{T <: Number} <: Element
-    z::Complex128
+    z::ComplexF64
     S::T
 end
 
@@ -12,9 +12,9 @@ Elements.kind(::Doublet) = Singleton
 Elements.kind(::Type{Doublet{T}}) where T = Singleton
 
 Elements.position(d::Doublet) = d.z
-Elements.streamfunction(z::Complex128, d::Doublet) = imag(d.S/(z - d.z)/π)
+Elements.streamfunction(z::ComplexF64, d::Doublet) = imag(d.S/(z - d.z)/π)
 
-function Motions.induce_velocity(z::Complex128, d::Doublet, t)
+function Motions.induce_velocity(z::ComplexF64, d::Doublet, t)
     conj(-d.S/(z - d.z)^2)
 end
 

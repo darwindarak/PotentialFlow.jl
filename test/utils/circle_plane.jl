@@ -3,7 +3,7 @@
 # fit with other rest of code.
 
 immutable JoukowskyMap
-    c::Complex128
+    c::ComplexF64
     α::Float64
 end
 

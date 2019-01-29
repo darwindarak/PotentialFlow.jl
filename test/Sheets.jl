@@ -1,7 +1,7 @@
 @testset "Vortex Sheets" begin
     @testset "Sheet construction" begin
         N = 100
-        zs = rand(Complex128, N)
+        zs = rand(ComplexF64, N)
         Γs = accumulate(+, rand(N))
         δ = rand()
 
@@ -12,7 +12,7 @@
 
     @testset "Sheet induced velocities" begin
         N = 100
-        zs = rand(Complex128, N)
+        zs = rand(ComplexF64, N)
         Γs = accumulate(+, rand(N))
         δ = rand()
         sheet = Vortex.Sheet(zs, Γs, δ)
@@ -43,7 +43,7 @@
 
     @testset "Sheet surgery" begin
         N = 100
-        zs = rand(Complex128, N)
+        zs = rand(ComplexF64, N)
         Γs = accumulate(+, rand(N))
         δ = 0.05
         sheet = Vortex.Sheet(zs, Γs, δ)

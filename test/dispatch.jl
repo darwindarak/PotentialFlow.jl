@@ -1,10 +1,10 @@
 @testset "Pairwise Dispatch" begin
     N = 100
-    points = Vortex.Point.(rand(Complex128, N), rand(N))
-    sheet  = Vortex.Sheet(rand(Complex128, N), accumulate(+, rand(N)), rand())
+    points = Vortex.Point.(rand(ComplexF64, N), rand(N))
+    sheet  = Vortex.Sheet(rand(ComplexF64, N), accumulate(+, rand(N)), rand())
     blobs = sheet.blobs
 
-    z = rand(Complex128)
+    z = rand(ComplexF64)
 
     wp = induce_velocity(z, points, 0.0)
     wb = induce_velocity(z, blobs, 0.0)
@@ -63,7 +63,7 @@
 
     @test ws[2] ≈ wb
 
-    points = Vortex.Point.(rand(Complex128, 2N), rand(2N))
+    points = Vortex.Point.(rand(ComplexF64, 2N), rand(2N))
     reset_velocity!(ws, (points, blobs))
     @test length.(ws) == (2N, N)
 
@@ -81,7 +81,7 @@
     @testset "defaults" begin
         # Minimum implementation of a vortex point source
         @eval struct NewPoint <: Elements.Element
-            z::Complex128
+            z::ComplexF64
             Γ::Float64
         end
 
@@ -92,11 +92,11 @@
         Elements.kind(::NewPoint) = Elements.Singleton
         Elements.kind(::Type{NewPoint}) = Elements.Singleton
 
-        function Motions.induce_velocity(z::Complex128, p::NewPoint, t)
+        function Motions.induce_velocity(z::ComplexF64, p::NewPoint, t)
             p.Γ*Vortex.Points.cauchy_kernel(z - p.z)
         end
 
-        zs = rand(Complex128, 100)
+        zs = rand(ComplexF64, 100)
         Γs = rand(100)
 
         new_points = NewPoint.(zs, Γs)
@@ -142,25 +142,25 @@
                       end)
 
         @eval Vortex.Points begin
-            Elements.induce_count(::Complex128, tcount, ::Point, scount) = scount
+            Elements.induce_count(::ComplexF64, tcount, ::Point, scount) = scount
             Elements.max_blob_radius(::Point) = 0
         end
         @eval Vortex.Blobs begin
-            Elements.induce_count(::Complex128, tcount, ::Blob, scount) = tcount
+            Elements.induce_count(::ComplexF64, tcount, ::Blob, scount) = tcount
             Elements.max_blob_radius(b::Blob) = b.δ
         end
 
         N = rand(1:100)
-        points = Vortex.Point.(rand(Complex128, N), rand(N))
+        points = Vortex.Point.(rand(ComplexF64, N), rand(N))
         pcounts = fill(1, length(points))
 
-        blobs  = Vortex.Blob.(rand(Complex128, N), rand(N), rand())
+        blobs  = Vortex.Blob.(rand(ComplexF64, N), rand(N), rand())
         bcounts = fill(2, length(blobs))
 
-        sources  = Source.Blob.(rand(Complex128, N), rand(N), rand())
+        sources  = Source.Blob.(rand(ComplexF64, N), rand(N), rand())
         bcounts = fill(2, length(blobs))
 
-        targets = rand(Complex128, rand(1:100))
+        targets = rand(ComplexF64, rand(1:100))
         tcounts = fill(3, length(targets))
 
         @test Elements.max_blob_radius(points) == 0

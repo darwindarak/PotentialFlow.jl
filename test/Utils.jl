@@ -2,7 +2,7 @@ import PotentialFlow.Utils: @get, MappedVector
 
 @testset "Utils" begin
     @testset "get" begin
-        z = rand(Complex128)
+        z = rand(ComplexF64)
 
         @get z (im, re)
         @test im == imag(z)

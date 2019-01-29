@@ -13,7 +13,7 @@ sheet generated in response to the vortex element.
 @property begin
     signature = rate_of_impulse(plate, motion, elements::Source, velocities::Source)
     reduce = (+)
-    stype = Complex128
+    stype = ComplexF64
 end
 
 function rate_of_impulse(plate, motion, element, velocity, ::Type{Singleton})
@@ -42,7 +42,7 @@ sheet generated in response to the vortex element.
 @property begin
     signature = vortex_impulse(plate, elements::Source)
     reduce = (+)
-    stype = Complex128
+    stype = ComplexF64
 end
 
 function vortex_impulse(plate, element, ::Type{Singleton})
@@ -68,7 +68,7 @@ sheet generated in response to the vortex element.
 @property begin
     signature = rate_of_angular_impulse(plate, motion, elements::Source, velocities::Source)
     reduce = (+)
-    stype = Complex128
+    stype = ComplexF64
 end
 
 function rate_of_angular_impulse(plate, motion, element, velocity, ::Type{Singleton})
