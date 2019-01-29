@@ -272,7 +272,7 @@ Moves the elements in `srcs₋` by their corresponding velocity in
 ```jldoctest
 julia> points₋ = [Vortex.Point(x + 0im, 1.0) for x in 1:5];
 
-julia> points₊ = Vector{Vortex.Point}(5);
+julia> points₊ = Vector{Vortex.Point}(undef, 5);
 
 julia> vels = [ y*im for y in 1.0:5 ];
 
