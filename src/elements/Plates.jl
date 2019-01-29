@@ -1,6 +1,7 @@
 module Plates
 
 using DocStringExtensions
+using LinearAlgebra: rmul!
 
 export Plate, bound_circulation, bound_circulation!,
        enforce_no_flow_through!, vorticity_flux, suction_parameters, unit_impulse, force,

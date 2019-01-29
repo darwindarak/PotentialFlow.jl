@@ -41,7 +41,7 @@ function surface_pressure_inst(p::Plate, ṗ, ambient_sys, z_new, t, Δt, lesp, 
     Γ₊, Γ₋, ∂C₊, ∂C₋ = vorticity_flux!(p, point₊, point₋, t, lesp, tesp)
 
     n̂ = exp(-im*α)
-    scale!(Ċ, n̂)
+    rmul!(Ċ, n̂)
     dchebt! * Ċ
 
     @. Ċ += (∂C₊ + ∂C₋)/Δt - im*α̇*C

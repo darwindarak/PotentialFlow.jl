@@ -29,7 +29,7 @@ function enforce_no_flow_through!(p::Plate, ṗ, elements, t)
     induce_velocity!(C, p, elements, t)
 
     n̂ = exp(-im*α)
-    scale!(C, n̂)
+    rmul!(C, n̂)
 
     dchebt! * C
 
@@ -49,7 +49,7 @@ Compute in-place the change in plate's Chebyshev coefficients `∂A` by a vortex
 function influence_on_plate!(∂A::Vector{ComplexF64}, plate::Plate, v, t)
     fill!(∂A, zero(ComplexF64))
     induce_velocity!(∂A, plate, v, t)
-    scale!(∂A, exp(-im*plate.α))
+    rmul!(∂A, exp(-im*plate.α))
     plate.dchebt! * ∂A
     nothing
 end
@@ -140,7 +140,7 @@ function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
         K₂ = (A₁₊*b₋ - A₁₋*b₊)/detA
     end
 
-    return K₁*Γ₁, K₂*Γ₂, scale!(∂C₁, K₁), scale!(∂C₂, K₂)
+    return K₁*Γ₁, K₂*Γ₂, rmul!(∂C₁, K₁), rmul!(∂C₂, K₂)
 end
 
 """
