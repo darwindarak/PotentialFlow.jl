@@ -132,8 +132,8 @@ function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
 
     L₌ = range(0, L[end], length=N)
 
-    z₌ = zspline[L₌]
-    S₌ = Γspline[L₌]
+    z₌ = zspline(L₌)
+    S₌ = Γspline(L₌)
 
     p₌ = map(psplines) do spline
         spline[L₌]
