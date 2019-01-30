@@ -101,7 +101,7 @@ end
 
 
 rigid_transform(z̃::Union{ComplexF64,Vector{ComplexF64}},
-                c::ComplexF64,α::Float64) = c + z̃*exp(im*α)
+                c::ComplexF64,α::Float64) = c .+ z̃*exp(im*α)
 
 
 Base.length(b::ConformalBody) = b.m.N

@@ -29,7 +29,7 @@ using FFTW
         R = zeros(Float64, N)
         y = zeros(Float64, N)
         @test all(rand(0:(N÷2), 10)) do n
-            x = [cos(n*θ) for θ in linspace(π, 0, N)]
+            x = [cos(n*θ) for θ in range(π, 0, length=N)]
             Chebyshev.transform!(R, x)
             Chebyshev.inv_transform!(y, R)
             (y ≈ x) && (R[n+1] ≈ 1.0) && (sum(R) ≈ 1.0)
@@ -37,8 +37,8 @@ using FFTW
 
         n₁ = rand(0:(N÷2))
         n₂ = rand(0:(N÷2))
-        x₁ = [cos(n₁*θ) for θ in linspace(π, 0, N)]
-        x₂ = [cos(n₂*θ) for θ in linspace(π, 0, N)]
+        x₁ = [cos(n₁*θ) for θ in range(π, 0, length=N)]
+        x₂ = [cos(n₂*θ) for θ in range(π, 0, length=N)]
 
         C = x₁ .+ im.*x₂
         I = zeros(Float64, N)

@@ -69,7 +69,7 @@ end
 
 function Plate(N, L, c, α)
     ss = Chebyshev.nodes(N)
-    zs = c + 0.5L*ss*exp(im*α)
+    zs = c .+ 0.5L*ss*exp(im*α)
 
     C  = zeros(ComplexF64, N)
     A = MappedVector(imag, C, 1)

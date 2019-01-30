@@ -47,13 +47,13 @@
 
         N = 10
         ζs = (2 .+ rand(N)).*exp.(2π.*rand(N))
-        zs = c .+ 0.5.*exp(im*α).*(ζs .+ 1./ζs)
-        Γs = 1 .- 2.*rand(N)
+        zs = c .+ 0.5.*exp(im*α).*(ζs .+ 1 ./ ζs)
+        Γs = 1 .- 2 .* rand(N)
 
         Np = 129
         J = JoukowskyMap(c, α)
 
-        Δż_circle = map(linspace(π, 0, Np)) do θ
+        Δż_circle = map(range(π, 0, length = Np)) do θ
             η₊ = exp.(im*θ)
             η₋ = conj.(η₊)
 
@@ -80,7 +80,7 @@
         kutta_points = Vortex.Point.(c .+ [-1.1, 1.1].*exp(im*α), 1.0)
         Plates.vorticity_flux!(plate, kutta_points[1], kutta_points[2], 0)
 
-        ss = linspace(-1, 1, 4001)
+        ss = range(-1, 1, length = 4001)
         γs = Plates.strength(plate, ss)
         Γs = Plates.bound_circulation(plate, ss)
         @test Γs[ceil(Int,length(ss)/2)] ≈ Plates.bound_circulation(plate)[ceil(Int,length(plate)/2)]
@@ -100,12 +100,12 @@
         N = 100
         ζs = (2 .+ rand(N)).*exp.(2π.*rand(N))
         zs = J.(ζs)
-        Γs = 1 .- 2.*rand(N)
+        Γs = 1 .- 2 .* rand(N)
 
         Np = 128
         Nt = 256
 
-        ζt = 10.0.*exp.(im.*linspace(0, 2π, Nt))
+        ζt = 10.0.*exp.(im.*range(0, 2π, length = Nt))
         zt = J.(ζt)
 
         ż_circle = map(ζt) do ζ
@@ -172,8 +172,8 @@
 
     motion = Plates.RigidBodyMotion(ċ, 0.0)
 
-    points = Vortex.Point.(2.0im + rand(ComplexF64, 20), rand(20))
-    sheet  = Vortex.Sheet(2.0im + rand(ComplexF64, 20), cumsum(rand(20)), rand())
+    points = Vortex.Point.(2.0im .+ rand(ComplexF64, 20), rand(20))
+    sheet  = Vortex.Sheet(2.0im .+ rand(ComplexF64, 20), cumsum(rand(20)), rand())
 
     impulse  = sum(points) do p
         circulation(p)*Plates.unit_impulse(p, plate)

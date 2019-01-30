@@ -2,7 +2,7 @@
 # evolution routines written using Chebyshev series.  They are not designed to
 # fit with other rest of code.
 
-immutable JoukowskyMap
+struct JoukowskyMap
     c::ComplexF64
     α::Float64
 end

@@ -65,7 +65,7 @@
         @test Sheets.compute_trapezoidal_weights(sheet₊.Ss) ≈ circulation.(sheet₊.blobs)
 
         N = 200
-        θ = linspace(π, 0, N)
+        θ = range(π, 0, length = N)
         zs = complex.(cos.(θ))
         Γs = sin.(θ)
         Sheets.redistribute_points!(sheet, zs, Γs)
@@ -77,22 +77,22 @@
 
         Sheets.remesh!(sheet, 0.005)
         @test length(sheet) == 400
-        @test sheet.zs ≈ linspace(-1, 1, 400)
-        @test norm(sheet.Ss .- sqrt.(1 - linspace(-1,1,400).^2)) ≤ 1e-3
+        @test sheet.zs ≈ range(-1, 1, length = 400)
+        @test norm(sheet.Ss .- sqrt.(1 .- range(-1,1, length=400).^2)) ≤ 1e-3
 
-        θ = linspace(π, 0, N)
+        θ = range(π, 0, length = N)
         zs = complex.(cos.(θ))
         Γs = sin.(θ)
         Sheets.redistribute_points!(sheet, zs, Γs)
         sheet₁ = deepcopy(sheet)
         sheet₂ = deepcopy(sheet)
 
-        @test_warn r"smaller than nominal spacing" Sheets.filter!(sheet₁, 3.0, 0.03)
+        @test_logs (:warn, "Cannot remesh, sheet length smaller than nominal spacing") (:warn, "Filter not applied, total sheet length smaller than nominal spacing") Sheets.filter!(sheet₁, 3.0, 0.03)
         @test sheet₁.zs == sheet₂.zs
         @test sheet₁.Ss == sheet₂.Ss
         @test sheet₁.blobs == sheet₂.blobs
 
-        @test_warn r"smaller than nominal spacing" Sheets.remesh!(sheet₂, 3.0)
+        @test_logs (:warn, "Cannot remesh, sheet length smaller than nominal spacing") Sheets.remesh!(sheet₂, 3.0)
         @test sheet₁.zs == sheet₂.zs
         @test sheet₁.Ss == sheet₂.Ss
         @test sheet₁.blobs == sheet₂.blobs

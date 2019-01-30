@@ -30,7 +30,7 @@ function surface_pressure_inst(p::Plate, ṗ, ambient_sys, z_new, t, Δt, lesp, 
     induce_velocity!(srcvel, ambient_sys, p, t)
 
     targvel = fill(ċ, length(p))
-    Ċ = zeros(targvel)
+    Ċ = zero(targvel)
 
     induce_acc!(Ċ, p.zs, targvel, ambient_sys, srcvel)
 
