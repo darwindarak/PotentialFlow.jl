@@ -18,7 +18,6 @@ makedocs(
     strict = true
 )
 
-
 if "DOCUMENTER_KEY" in keys(ENV)
     deploydocs(;
      repo = "github.com/darwindarak/PotentialFlow.jl.git",
