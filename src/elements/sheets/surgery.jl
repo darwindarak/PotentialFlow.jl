@@ -115,7 +115,7 @@ function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
     L = arclengths(sheet)
 
     if L[end] < Δs
-        warn("Cannot remesh, sheet length smaller than nominal spacing")
+        @warn("Cannot remesh, sheet length smaller than nominal spacing")
         return Elements.position.(sheet.blobs), sheet.Ss, L[end], params
     end
 
@@ -137,7 +137,7 @@ function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
     S₌ = Γspline(L₌)
 
     p₌ = map(psplines) do spline
-        spline[L₌]
+        spline(L₌)
     end
 
     z₌, S₌, L[end], p₌
@@ -164,11 +164,11 @@ julia> Sheets.remesh!(sheet, 0.2, (age,));
 
 julia> Elements.position.(sheet.blobs)
 5-element Array{Complex{Float64},1}:
-  0.0+0.0im
- 0.25+0.0im
-  0.5+0.0im
- 0.75+0.0im
-  1.0+0.0im
+  0.0 + 0.0im
+ 0.25 + 0.0im
+  0.5 + 0.0im
+ 0.75 + 0.0im
+  1.0 + 0.0im
 
 julia> age
 5-element Array{Float64,1}:
@@ -319,7 +319,7 @@ function filter!(sheet, Δs, Δf, params::Tuple = ())
         filter_position!(z₌, Δf, L)
         redistribute_points!(sheet, z₌, S₌), params
     else
-        warn("Filter not applied, total sheet length smaller than nominal spacing")
+        @warn("Filter not applied, total sheet length smaller than nominal spacing")
         sheet, params
     end
 end

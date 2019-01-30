@@ -5,7 +5,8 @@ The code examples here should be directly copy-paste-able into the Julia REPL (e
 
 ```@meta
 DocTestSetup = quote
-    srand(1)
+    using Random
+    Random.seed!(1)
 end
 ```
 
@@ -32,7 +33,7 @@ julia> N = 5;
 
 julia> zs = Complex.(randn(N), randn(N));
 
-julia> vortices = Vortex.Point.(zs + 1.5, rand(N))
+julia> vortices = Vortex.Point.(zs .+ 1.5, rand(N))
 5-element Array{PotentialFlow.Points.Point{Float64},1}:
  Vortex.Point(1.7972879845354617 + 0.31111133849833383im, 0.42471785049513144)
  Vortex.Point(1.882395967790608 + 2.2950878238373105im, 0.773223048457377)
@@ -40,7 +41,7 @@ julia> vortices = Vortex.Point.(zs + 1.5, rand(N))
  Vortex.Point(1.4895547553626243 + 0.5299655761667461im, 0.20947237319807077)
  Vortex.Point(0.660973145611236 + 0.43142152642291204im, 0.25137920979222494)
 
-julia> sources = Source.Point.(zs - 1.5, rand(N))
+julia> sources = Source.Point.(zs .- 1.5, rand(N))
 5-element Array{PotentialFlow.Points.Point{Complex{Float64}},1}:
  Source.Point(-1.2027120154645383 + 0.31111133849833383im, 0.02037486871266725)
  Source.Point(-1.117604032209392 + 2.2950878238373105im, 0.2877015122756894)
@@ -91,19 +92,19 @@ julia> Elements.circulation(sys)
 
 julia> Elements.circulation.(vortices)
 5-element Array{Float64,1}:
- 0.424718
- 0.773223
- 0.28119
- 0.209472
- 0.251379
+ 0.42471785049513144
+ 0.773223048457377
+ 0.2811902322857298
+ 0.20947237319807077
+ 0.25137920979222494
 
 julia> Elements.position.(sources)
 5-element Array{Complex{Float64},1}:
- -1.20271+0.311111im
-  -1.1176+2.29509im
- -2.09763-2.26709im
- -1.51045+0.529966im
- -2.33903+0.431422im
+ -1.2027120154645383 + 0.31111133849833383im
+  -1.117604032209392 + 2.2950878238373105im
+ -2.0976344767282313 - 2.2670863488005306im
+ -1.5104452446373757 + 0.5299655761667461im
+  -2.339026854388764 + 0.43142152642291204im
 
 ```
 
@@ -134,19 +135,19 @@ The target can be
   ```jldoctest quickstart
   julia> induce_velocity(vortices, sources, 0.0)
   5-element Array{Complex{Float64},1}:
-   0.0645438+0.00789838im
-    0.053907+0.0279029im
-   0.0706678-0.0271182im
-   0.0676412+0.0111206im
-    0.078947+0.0117864im
+    0.06454384396015585 + 0.007898382618214123im
+   0.053907048316969616 + 0.02790291832733651im
+     0.0706678480701265 - 0.02711822881988212im
+    0.06764122439359754 + 0.011120627964923711im
+    0.07894704527850091 + 0.01178636990942516im
 
   julia> induce_velocity(sources, sys, 0.0)
   5-element Array{Complex{Float64},1}:
-      0.140692-0.0968066im
-   -0.00338844-0.00482933im
-     0.0350822-0.105919im
-      0.122123-0.044777im
-    -0.0294289-0.0392489im
+      0.1406920003437716 - 0.09680661285216872im
+   -0.003388443511578354 - 0.004829334922251807im
+     0.03508222004503095 - 0.10591880362792691im
+      0.1221234594021031 - 0.04477695050245835im
+    -0.02942885432058654 - 0.03924892616438964im
 
   ```
 
@@ -155,21 +156,21 @@ For example:
 ```jldoctest quickstart
 julia> vel_vortices = zeros(ComplexF64, length(vortices))
 5-element Array{Complex{Float64},1}:
- 0.0+0.0im
- 0.0+0.0im
- 0.0+0.0im
- 0.0+0.0im
- 0.0+0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
 
 julia> induce_velocity!(vel_vortices, vortices, sources, 0.0);
 
 julia> vel_vortices
 5-element Array{Complex{Float64},1}:
- 0.0645438+0.00789838im
-  0.053907+0.0279029im
- 0.0706678-0.0271182im
- 0.0676412+0.0111206im
-  0.078947+0.0117864im
+  0.06454384396015585 + 0.007898382618214123im
+ 0.053907048316969616 + 0.02790291832733651im
+   0.0706678480701265 - 0.02711822881988212im
+  0.06764122439359754 + 0.011120627964923711im
+  0.07894704527850091 + 0.01178636990942516im
 
 ```
 To make it easier to allocate velocities for more complex collections of vortex elements, the library provides the `allocate_velocity` function:
@@ -184,9 +185,6 @@ Similarly, there is also the `reset_velocity!(velocities, sources)` function, wh
 We can compute the velocity that a source induces on the entire points/blobs system with:
 ```jldoctest quickstart
 julia> src = Vortex.Point(1.0, 1.0);
-
-julia> induce_velocity!(vels, sys, src, 0.0)
-(Complex{Float64}[-0.067601+0.173242im, -0.0604154+0.023228im, 0.0700725-0.00301774im, -0.162041+0.149685im, -0.228068-0.179224im], Complex{Float64}[-0.0100056-0.0708409im, -0.0374576-0.0345609im, 0.0244871-0.033458im, -0.0128124-0.0606923im, -0.00605748-0.0468824im])
 
 ```
 
@@ -211,8 +209,9 @@ julia> self_induce_velocity!(vels, sys, 0.0);
 ```@setup timemarching
 using PotentialFlow
 using Plots
+using Random
 clibrary(:colorbrewer)
-srand(1)
+Random.seed!(1)
 default(colorbar_title=("Γ"), grid = false, ratio = 1, legend = :none, colorbar = :right, markerstrokealpha = 0, markersize = 5, size = (600, 400))
 ```
 Now that we compute the velocities of a system of vortex elements, we can march the system forward in time to simulate its behavior.
@@ -221,8 +220,8 @@ As an example, we will simulate of two clusters of vortex blobs merging.
 N = 200
 zs = Complex.(0.5randn(N), 0.5randn(N))
 Γs  = @. exp(-4abs2(zs))
-cluster₁ = Vortex.Blob.(zs + 1, Γs, 0.01)
-cluster₂ = Vortex.Blob.(zs - 1, Γs, 0.01)
+cluster₁ = Vortex.Blob.(zs .+ 1, Γs, 0.01)
+cluster₂ = Vortex.Blob.(zs .- 1, Γs, 0.01)
 
 sys = (cluster₁, cluster₂)
 vels = allocate_velocity(sys)

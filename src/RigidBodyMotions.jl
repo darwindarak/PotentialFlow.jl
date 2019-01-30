@@ -234,16 +234,17 @@ julia> s.([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  0.0
  1.0
- 0.707107
+ 0.7071067811865476
 
 julia> c = RigidBodyMotions.d_dt(s)
 d/dt (Sinusoid (ω = 3.14))
 
 julia> c.([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
-  3.14159
-  1.92367e-16
- -2.22144
+  3.141592653589793
+  1.9236706937217898e-16
+ -2.221441469079183
+
 ```
 """
 d_dt(p::Profile) = DerivativeProfile(p)
@@ -274,7 +275,8 @@ julia> (2s).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  0.0
  2.0
- 1.41421
+ 1.4142135623730951
+
 ```
 """
 s::Number * p::Profile = ScaledProfile(s, p)
@@ -293,7 +295,7 @@ julia> (2s).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  0.0
  2.0
- 1.41421
+ 1.4142135623730951
 
 julia> s = RigidBodyMotions.Sinusoid(π);
 
@@ -301,13 +303,13 @@ julia> s.([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  0.0
  1.0
- 0.707107
+ 0.7071067811865476
 
 julia> (-s).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  -0.0
  -1.0
- -0.707107
+ -0.7071067811865476
 
 julia> (s - s).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
@@ -346,13 +348,14 @@ julia> (s >> 0.5).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  -1.0
   0.0
-  0.707107
+  0.7071067811865475
 
 julia> (s << 0.5).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
   1.0
-  1.22465e-16
- -0.707107
+  1.2246467991473532e-16
+ -0.7071067811865475
+
 ```
 """
 p::Profile >> Δt::Number = ShiftedProfile(Δt, p)

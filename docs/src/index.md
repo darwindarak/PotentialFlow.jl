@@ -60,9 +60,10 @@ julia> induce_velocity(0.0im, (vortex, source), t)
 
 julia> induce_velocity([0.0im, 1.0im, 1.0], (vortex, source), t)
 3-element Array{Complex{Float64},1}:
- 0.5-0.5im
- 0.1-0.7im
- 0.5-0.5im
+                 0.5 - 0.5im
+ 0.09999999999999999 - 0.7im
+                 0.5 - 0.5im
+
 ```
 Note the all positions and velocities are given in complex coordiantes.
 
@@ -95,8 +96,8 @@ starting_vortex = Vortex.Point(-Inf, Γ)
 
 # Plot some streamlines
 
-x = linspace(-2, 1, 100)
-y = linspace(-0.5, 0.5, 100)
+x = range(-2, 1, length=100)
+y = range(-0.5, 0.5, length=100)
 
 streamlines(x, y, (plate, freestream), legend = false, colorbar = false)
 plot!(plate, linewidth = 2, ratio = 1, size = (600, 300))

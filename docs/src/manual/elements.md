@@ -3,7 +3,8 @@
 ```@meta
 DocTestSetup = quote
 using PotentialFlow
-srand(1)
+using Random
+Random.seed!(1)
 end
 ```
 The library currently has these built-in potential flow elements:

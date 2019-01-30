@@ -93,7 +93,7 @@ function angularimpulse(p::Plate)
 end
 
 function allocate_velocity(::Plate)
-    warn("Plate kinematics should be initialized manually.  This simply returns a stationary motion")
+    @warn("Plate kinematics should be initialized manually.  This simply returns a stationary motion")
     RigidBodyMotion(0.0, 0.0)
 end
 function self_induce_velocity!(motion, ::Plate, t)

@@ -11,4 +11,4 @@ ColorTypes
 PlotUtils
 SchwarzChristoffel
 FFTW
-
+LinearAlgebra

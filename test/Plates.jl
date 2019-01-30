@@ -168,7 +168,7 @@
     α = rand()*0.5π
     L = 2rand()
     plate = Plate(128, L, 0.0, α)
-    @test_warn "Plate kinematics should be initialized manually.  This simply returns a stationary motion" allocate_velocity(plate)
+    @test_logs (:warn,"Plate kinematics should be initialized manually.  This simply returns a stationary motion") allocate_velocity(plate)
 
     motion = Plates.RigidBodyMotion(ċ, 0.0)
 

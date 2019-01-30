@@ -3,7 +3,8 @@
 ```@meta
 DocTestSetup = quote
 using PotentialFlow
-srand(1)
+using Random
+Random.seed!(1)
 end
 ```
 
@@ -53,9 +54,9 @@ However we can also have
 
   julia> induce_velocity(targets, src, 0.0)
   3-element Array{Complex{Float64},1}:
-   0.0795775+0.0795775im
-    0.031831+0.063662im
-   0.0159155+0.0477465im
+   0.07957747154594767 + 0.07957747154594767im
+   0.03183098861837907 + 0.06366197723675814im
+   0.01591549430918953 + 0.0477464829275686im
   ```
 - an array of vortex elements, e.g.
   ```jldoctest sources-targets
@@ -63,9 +64,9 @@ However we can also have
 
   julia> induce_velocity(targets₂, src, 0.0)
   3-element Array{Complex{Float64},1}:
-          0.0+0.0im
-    -0.159155+0.0im
-   -0.0795775+0.0im
+                    0.0 + 0.0im
+   -0.15915494309189535 + 0.0im
+   -0.07957747154594767 + 0.0im
   ```
 - a tuple with any of the above, e.g.
   ```jldoctest sources-targets

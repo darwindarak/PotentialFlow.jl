@@ -68,8 +68,8 @@ julia> blobs  = Vortex.Blob.(rand(ComplexF64, 3), rand(3), rand(3));
 
 julia> allocate_velocity(points)
 2-element Array{Complex{Float64},1}:
- 0.0+0.0im
- 0.0+0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
 
 julia> allocate_velocity((points, blobs))
 (Complex{Float64}[0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im])
@@ -142,13 +142,13 @@ julia> points = Vortex.Point.([-1, 1], 1.0)
 
 julia> vels = allocate_velocity(points)
 2-element Array{Complex{Float64},1}:
- 0.0+0.0im
- 0.0+0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
 
 julia> self_induce_velocity!(vels, points, 0.0) # should be ±0.25im/π
 2-element Array{Complex{Float64},1}:
- 0.0-0.0795775im
- 0.0+0.0795775im
+ 0.0 - 0.07957747154594767im
+ 0.0 + 0.07957747154594767im
 ```
 """
 function self_induce_velocity!(out, group::Tuple, t)

@@ -114,21 +114,6 @@
     @testset "Property Macro" begin
         import PotentialFlow.Properties: @property
 
-        @test_throws ArgumentError @eval (
-            @property begin
-            end
-        )
-
-        @test_throws ArgumentError @eval (
-            @property begin
-                signature = ""
-            end)
-
-        @test_throws ArgumentError @eval (
-            @property begin
-                signature = f(targ, src)
-            end)
-
         @eval Elements (@property begin
                       signature = max_blob_radius(s::Source)
                       stype = Int

@@ -202,7 +202,7 @@ Elements.jacobian(s::T,b::ConformalBody) where T <: Union{Blob,Point} =
 
 
 function allocate_velocity(::ConformalBody)
-    warn("Body kinematics should be initialized manually.  This simply returns a stationary motion")
+    @warn("Body kinematics should be initialized manually.  This simply returns a stationary motion")
     RigidBodyMotion(0.0, 0.0)
 end
 
