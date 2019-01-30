@@ -1,7 +1,6 @@
 using Documenter, PotentialFlow
 
 makedocs(
-    format = Documenter.HTML(),
     sitename = "PotentialFlow.jl",
     pages = [
         "Home" => "index.md",
@@ -15,7 +14,7 @@ makedocs(
         "Internals" => [ "internals/properties.md"]
     ],
     assets = ["assets/custom.css"],
-    strict = true
+#   strict = true
 )
 
 if "DOCUMENTER_KEY" in keys(ENV)
