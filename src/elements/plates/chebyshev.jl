@@ -1,6 +1,7 @@
 module Chebyshev
 
 using FFTW
+using Future: copy!
 
 import Base: *, \
 struct Transform{T,I}
