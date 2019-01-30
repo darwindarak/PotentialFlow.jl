@@ -1,7 +1,7 @@
 @testset "Body" begin
     @testset "Geometry" begin
     a1 = 1; b1 = 0.1
-    ccoeff = Complex128[0.5(a1+b1),0,0.5(a1-b1)]
+    ccoeff = ComplexF64[0.5(a1+b1),0,0.5(a1-b1)]
     b = Bodies.ConformalBody(ccoeff)
     ζ = exp(im*0)
     v = exp(im*π/4)
@@ -19,7 +19,7 @@
 
     @testset "Motion" begin
     a1 = 1; b1 = 0.1
-    ccoeff = Complex128[0.5(a1+b1),0,0.5(a1-b1)]
+    ccoeff = ComplexF64[0.5(a1+b1),0,0.5(a1-b1)]
     b = Bodies.ConformalBody(ccoeff)
     Δt = 1.0
     ċ = 1.0im

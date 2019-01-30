@@ -4,7 +4,8 @@
 CurrentModule = Plates.RigidBodyMotions
 DocTestSetup  = quote
     using PotentialFlow
-    srand(1)
+    using Random
+    Random.seed!(1)
 end
 ```
 
@@ -36,9 +37,9 @@ Here, `Constant` is a subtype of [`Kinematics`](@ref) that returns the same `(c�
 ```jldoctest constant
 julia> motion.kin.([0.0, 1.0, 2.0])
 3-element Array{Tuple{Complex{Float64},Complex{Float64},Float64,Complex{Float64}},1}:
- (0.0+1.0im, 0.0+0.0im, 1.5708, 0.0+0.0im)
- (0.0+1.0im, 0.0+0.0im, 1.5708, 0.0+0.0im)
- (0.0+1.0im, 0.0+0.0im, 1.5708, 0.0+0.0im)
+ (0.0 + 1.0im, 0.0 + 0.0im, 1.5707963267948966, 0.0 + 0.0im)
+ (0.0 + 1.0im, 0.0 + 0.0im, 1.5707963267948966, 0.0 + 0.0im)
+ (0.0 + 1.0im, 0.0 + 0.0im, 1.5707963267948966, 0.0 + 0.0im)
 
 ```
 Calling `Plates.RigidBodyMotion(1.0im, π/2)` is equivalent doing
@@ -67,7 +68,7 @@ also sinusoidally pitches about its centroid.
 import PotentialFlow.Plates.RigidBodyMotions: Kinematics
 
 struct MyMotion <: Kinematics
-    U₀::Complex128
+    U₀::ComplexF64
     ω::Float64
 end
 
@@ -83,9 +84,10 @@ We can then evaluate `sinusoid` at different times
 ```jldoctest sinusoidal
 julia> sinusoid.([0.0, 1.0, 2.0])
 3-element Array{Tuple{Complex{Float64},Complex{Float64},Float64},1}:
- (1.0+0.0im, 0.0+0.0im, 0.0)
- (1.0+0.0im, 0.0+0.0im, 0.707107)
- (1.0+0.0im, 0.0+0.0im, 1.0)
+ (1.0 + 0.0im, 0.0 + 0.0im, 0.0)
+ (1.0 + 0.0im, 0.0 + 0.0im, 0.7071067811865475)
+ (1.0 + 0.0im, 0.0 + 0.0im, 1.0)
+
 ```
 
 ## Profiles
@@ -102,7 +104,7 @@ using PotentialFlow.Plates.RigidBodyMotions
 
 ramp = RigidBodyMotions.EldredgeRamp(6)
 
-T = linspace(-1, 4, 200)
+T = range(-1, 4, length=200)
 plot(T, ramp.(T), xlabel = "t", ylabel="Smoothed Ramp",
      legend = :none, linewidth = 2)
 
@@ -167,7 +169,7 @@ end
 which can then be used as follows:
 ```@example custom_profile
 
-T = linspace(-6, 6, 200)
+T = range(-6, 6, length = 200)
 
 s = Sinusoid(2.0)
 c = d_dt(2s >> 0.5)

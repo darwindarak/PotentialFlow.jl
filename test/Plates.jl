@@ -2,7 +2,7 @@
 
     @testset "Singular Interactions" begin
         N = 100
-        zs = rand(Complex128, N)
+        zs = rand(ComplexF64, N)
         δ  = rand()
 
         sheet = Vortex.Sheet(zs, cumsum(rand(N)), δ)
@@ -11,10 +11,10 @@
         points = Vortex.Point.(zs, Γs)
         blobs = Vortex.Blob.(zs, Γs, δ)
 
-        plate = Plate(128, 2.0, rand(Complex128), 0.5π*rand())
+        plate = Plate(128, 2.0, rand(ComplexF64), 0.5π*rand())
 
-        vel_s = zeros(Complex128, plate.N)
-        vel_p = zeros(Complex128, plate.N)
+        vel_s = zeros(ComplexF64, plate.N)
+        vel_p = zeros(ComplexF64, plate.N)
 
         induce_velocity!(vel_s, plate, sheet, 0)
 
@@ -40,20 +40,20 @@
         include("utils/circle_plane.jl")
 
 
-        c = rand(Complex128)
-        ċ = rand(Complex128)
+        c = rand(ComplexF64)
+        ċ = rand(ComplexF64)
         α = 0.5π*rand()
         α̇ = rand()
 
         N = 10
         ζs = (2 .+ rand(N)).*exp.(2π.*rand(N))
-        zs = c .+ 0.5.*exp(im*α).*(ζs .+ 1./ζs)
-        Γs = 1 .- 2.*rand(N)
+        zs = c .+ 0.5.*exp(im*α).*(ζs .+ 1 ./ ζs)
+        Γs = 1 .- 2 .* rand(N)
 
         Np = 129
         J = JoukowskyMap(c, α)
 
-        Δż_circle = map(linspace(π, 0, Np)) do θ
+        Δż_circle = map(range(π, 0, length = Np)) do θ
             η₊ = exp.(im*θ)
             η₋ = conj.(η₊)
 
@@ -80,7 +80,7 @@
         kutta_points = Vortex.Point.(c .+ [-1.1, 1.1].*exp(im*α), 1.0)
         Plates.vorticity_flux!(plate, kutta_points[1], kutta_points[2], 0)
 
-        ss = linspace(-1, 1, 4001)
+        ss = range(-1, 1, length = 4001)
         γs = Plates.strength(plate, ss)
         Γs = Plates.bound_circulation(plate, ss)
         @test Γs[ceil(Int,length(ss)/2)] ≈ Plates.bound_circulation(plate)[ceil(Int,length(plate)/2)]
@@ -89,8 +89,8 @@
     end
 
     @testset "Induced Velocities" begin
-        c = rand(Complex128)
-        ċ = rand(Complex128)
+        c = rand(ComplexF64)
+        ċ = rand(ComplexF64)
         α = 0.5π*rand()
         α̇ = rand()
 
@@ -100,12 +100,12 @@
         N = 100
         ζs = (2 .+ rand(N)).*exp.(2π.*rand(N))
         zs = J.(ζs)
-        Γs = 1 .- 2.*rand(N)
+        Γs = 1 .- 2 .* rand(N)
 
         Np = 128
         Nt = 256
 
-        ζt = 10.0.*exp.(im.*linspace(0, 2π, Nt))
+        ζt = 10.0.*exp.(im.*range(0, 2π, length = Nt))
         zt = J.(ζt)
 
         ż_circle = map(ζt) do ζ
@@ -164,16 +164,16 @@
     end
 
 @testset "Impulse" begin
-    ċ = rand(Complex128)
+    ċ = rand(ComplexF64)
     α = rand()*0.5π
     L = 2rand()
     plate = Plate(128, L, 0.0, α)
-    @test_warn "Plate kinematics should be initialized manually.  This simply returns a stationary motion" allocate_velocity(plate)
+    @test_logs (:warn,"Plate kinematics should be initialized manually.  This simply returns a stationary motion") allocate_velocity(plate)
 
     motion = Plates.RigidBodyMotion(ċ, 0.0)
 
-    points = Vortex.Point.(2.0im + rand(Complex128, 20), rand(20))
-    sheet  = Vortex.Sheet(2.0im + rand(Complex128, 20), cumsum(rand(20)), rand())
+    points = Vortex.Point.(2.0im .+ rand(ComplexF64, 20), rand(20))
+    sheet  = Vortex.Sheet(2.0im .+ rand(ComplexF64, 20), cumsum(rand(20)), rand())
 
     impulse  = sum(points) do p
         circulation(p)*Plates.unit_impulse(p, plate)
@@ -193,12 +193,12 @@
 end
 
 @testset "Advection" begin
-    motion = Plates.RigidBodyMotion(rand(Complex128), rand())
-    c = rand(Complex128)
+    motion = Plates.RigidBodyMotion(rand(ComplexF64), rand())
+    c = rand(ComplexF64)
     α = 0.5π*rand()
     L = 2rand()
 
-    points = Vortex.Point.(rand(Complex128, 10), rand(10))
+    points = Vortex.Point.(rand(ComplexF64, 10), rand(10))
 
     plate = Plate(128, L, c, α)
     Plates.enforce_no_flow_through!(plate, motion, points, 0)

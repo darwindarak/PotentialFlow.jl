@@ -9,17 +9,17 @@ export @property
 macro property(rawexpr)
     ex = (rawexpr)
 
-    signature = Nullable()
-    stype = Nullable()
-    reduce_op = Nullable()
-    preallocator = Nullable()
+    signature = nothing
+    stype = nothing
+    reduce_op = nothing
+    preallocator = nothing
     has_sources = has_targets = false
 
     postwalk(ex) do x
-        @capture(x, signature = f_) && (signature = Nullable(f))
-        @capture(x, stype = t_)             && (stype = Nullable(t))
-        @capture(x, reduce = op_)           && (reduce_op = Nullable(op))
-        @capture(x, preallocator = p_)      && (preallocator = Nullable(p))
+        @capture(x, signature = f_) && (signature = f)
+        @capture(x, stype = t_)             && (stype = t)
+        @capture(x, reduce = op_)           && (reduce_op = op)
+        @capture(x, preallocator = p_)      && (preallocator = p)
 
         has_sources |= @capture(x, _::Source)
         has_targets |= @capture(x, _::Target)
@@ -27,18 +27,18 @@ macro property(rawexpr)
         return x
     end
 
-    if isnull(signature)
+    if nothing === signature
         throw(ArgumentError("missing `signature = ...` entry"))
     end
 
-    if !(@capture(get(signature), _(__)))
+    if !(@capture(signature, _(__)))
         throw(ArgumentError("signature must look like a function call"))
     end
 
     if has_sources && has_targets
-        return esc(induced_property(get(signature), stype, preallocator))
+        return esc(induced_property(signature, stype, preallocator))
     elseif has_sources
-        return esc(source_property(get(signature), stype, reduce_op))
+        return esc(source_property(signature, stype, reduce_op))
     else
         throw(ArgumentError("missing at least one `::Source` argument in signature"))
     end
@@ -58,7 +58,7 @@ function source_property(signature, stype, reduce_op)
              ex
              end, _(unwrappedargs__))
 
-    if isnull(reduce_op)
+    if nothing === reduce_op
         mappedvars = Symbol[]
         mappedsyms = Symbol[]
 
@@ -70,7 +70,7 @@ function source_property(signature, stype, reduce_op)
                      return sym
                  end
                  ex
-             end, _(mappedargs__))
+                 end, _(mappedargs__))
 
         fgroup = quote
             function $fname($(fargs...), ::Type{Elements.Group})
@@ -80,12 +80,12 @@ function source_property(signature, stype, reduce_op)
             end
         end
     else
-        op = get(reduce_op)
+        op = reduce_op
         if isa(op, Expr) && (op.head == :tuple)
             init_val = op.args[2]
             op = op.args[1]
         else
-            init_val = :(zero($(get(stype))))
+            init_val = :(zero($stype))
         end
 
         sumvar = gensym(:Σ)
@@ -128,7 +128,7 @@ function induced_property(signature, stype, preallocator)
              end, fname_(fargs__))
     fname! = Symbol(fname, "!")
 
-    f_allocate = get(preallocator)
+    f_allocate = preallocator
 
     @capture(postwalk(signature) do ex
              @capture(ex, t_::Target) && (return :(Elements.unwrap_targ($t)))
@@ -171,7 +171,7 @@ function induced_property(signature, stype, preallocator)
             $f_allocate(Elements.unwrap_targ($target_name), Elements.kind(eltype(Elements.unwrap_targ($target_name))))
         end
 
-        $f_allocate($target_name, el::Type{Elements.Singleton}) = zeros($(get(stype)), size($target_name))
+        $f_allocate($target_name, el::Type{Elements.Singleton}) = zeros($stype, size($target_name))
 
         Core.@__doc__ function $fname($(fargs...))
             $fname($(unwrappedargs...),
@@ -190,7 +190,7 @@ function induced_property(signature, stype, preallocator)
         end
 
         function $fname($(fargs...), ::Type{Elements.Singleton}, ::Type{Elements.Group})
-            $Σ = zero($(get(stype)))
+            $Σ = zero($stype)
             for $index in eachindex($source_name)
                 $Σ += $fname($(iteratedsources...))
             end

@@ -33,8 +33,8 @@ The first three fields are meant as a cache of the current kinematics
 while the `kin` field can be used to find the plate kinematics at any time.
 """
 mutable struct RigidBodyMotion
-    ċ::Complex128
-    c̈::Complex128
+    ċ::ComplexF64
+    c̈::ComplexF64
     α̇::Float64
     α̈::Float64
 
@@ -47,10 +47,10 @@ RigidBodyMotion(kin::Kinematics) = RigidBodyMotion(kin(0)..., kin)
 
 function show(io::IO, m::RigidBodyMotion)
     println(io, "Rigid Body Motion:")
-    println(io, "  ċ = $(round(m.ċ, 2))")
-    println(io, "  c̈ = $(round(m.c̈, 2))")
-    println(io, "  α̇ = $(round(m.α̇, 2))")
-    println(io, "  α̈ = $(round(m.α̈, 2))")
+    println(io, "  ċ = $(round(m.ċ, digits=2))")
+    println(io, "  c̈ = $(round(m.c̈, digits=2))")
+    println(io, "  α̇ = $(round(m.α̇, digits=2))")
+    println(io, "  α̈ = $(round(m.α̈, digits=2))")
     print(io, "  $(m.kin)")
 end
 
@@ -234,16 +234,17 @@ julia> s.([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  0.0
  1.0
- 0.707107
+ 0.7071067811865476
 
 julia> c = RigidBodyMotions.d_dt(s)
 d/dt (Sinusoid (ω = 3.14))
 
 julia> c.([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
-  3.14159
-  1.92367e-16
- -2.22144
+  3.141592653589793
+  1.9236706937217898e-16
+ -2.221441469079183
+
 ```
 """
 d_dt(p::Profile) = DerivativeProfile(p)
@@ -274,7 +275,8 @@ julia> (2s).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  0.0
  2.0
- 1.41421
+ 1.4142135623730951
+
 ```
 """
 s::Number * p::Profile = ScaledProfile(s, p)
@@ -293,7 +295,7 @@ julia> (2s).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  0.0
  2.0
- 1.41421
+ 1.4142135623730951
 
 julia> s = RigidBodyMotions.Sinusoid(π);
 
@@ -301,13 +303,13 @@ julia> s.([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  0.0
  1.0
- 0.707107
+ 0.7071067811865476
 
 julia> (-s).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  -0.0
  -1.0
- -0.707107
+ -0.7071067811865476
 
 julia> (s - s).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
@@ -346,13 +348,14 @@ julia> (s >> 0.5).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
  -1.0
   0.0
-  0.707107
+  0.7071067811865475
 
 julia> (s << 0.5).([0.0, 0.5, 0.75])
 3-element Array{Float64,1}:
   1.0
-  1.22465e-16
- -0.707107
+  1.2246467991473532e-16
+ -0.7071067811865475
+
 ```
 """
 p::Profile >> Δt::Number = ShiftedProfile(Δt, p)
@@ -415,13 +418,13 @@ struct Sinusoid <: Profile
     ω::Float64
 end
 (s::Sinusoid)(t) = sin(s.ω*t)
-show(io::IO, s::Sinusoid) = print(io, "Sinusoid (ω = $(round(s.ω, 2)))")
+show(io::IO, s::Sinusoid) = print(io, "Sinusoid (ω = $(round(s.ω, digits=2)))")
 
 struct EldredgeRamp <: Profile
     aₛ::Float64
 end
 (r::EldredgeRamp)(t) = 0.5(log(2cosh(r.aₛ*t)) + r.aₛ*t)/r.aₛ
-show(io::IO, r::EldredgeRamp) = print(io, "logcosh ramp (aₛ = $(round(r.aₛ, 2)))")
+show(io::IO, r::EldredgeRamp) = print(io, "logcosh ramp (aₛ = $(round(r.aₛ, digits=2)))")
 
 struct ColoniusRamp <: Profile
     n::Int
@@ -440,6 +443,6 @@ function (r::ColoniusRamp)(t)
         f*Δt^(r.n + 2)/(2r.n + 2)
     end
 end
-show(io::IO, r::ColoniusRamp) = print(io, "power series ramp (n = $(round(r.n, 2)))")
+show(io::IO, r::ColoniusRamp) = print(io, "power series ramp (n = $(round(r.n, digits=2)))")
 
 end

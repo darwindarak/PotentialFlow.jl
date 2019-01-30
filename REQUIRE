@@ -1,4 +1,4 @@
-julia 0.6
+julia 0.7
 Documenter
 DocStringExtensions
 Interpolations
@@ -7,5 +7,7 @@ MacroTools
 ForwardDiff
 MappedArrays
 RecipesBase
+ColorTypes
 PlotUtils
 SchwarzChristoffel
+FFTW

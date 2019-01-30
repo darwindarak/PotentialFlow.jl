@@ -4,16 +4,16 @@ import ..Vortex
 @property begin
     signature = induce_acc(targ::Target, targvel::Target, src::Source, srcvel::Source)
     preallocator = allocate_acc
-    stype = Complex128
+    stype = ComplexF64
 end
 
-function induce_acc(z::Complex128, ż::Complex128,
-                    p::Vortex.Point, point_vel::Complex128)
+function induce_acc(z::ComplexF64, ż::ComplexF64,
+                    p::Vortex.Point, point_vel::ComplexF64)
     -circulation(p)*Points.cauchy_kernel((z - p.z)^2)*conj(ż - point_vel)
 end
 
-function induce_acc(z::Complex128, ż::Complex128,
-                           b::Vortex.Blob, blob_vel::Complex128)
+function induce_acc(z::ComplexF64, ż::ComplexF64,
+                           b::Vortex.Blob, blob_vel::ComplexF64)
     induce_acc(z, ż,
                Vortex.Point(Elements.position(b), circulation(b)),
                blob_vel)
@@ -30,7 +30,7 @@ function surface_pressure_inst(p::Plate, ṗ, ambient_sys, z_new, t, Δt, lesp, 
     induce_velocity!(srcvel, ambient_sys, p, t)
 
     targvel = fill(ċ, length(p))
-    Ċ = zeros(targvel)
+    Ċ = zero(targvel)
 
     induce_acc!(Ċ, p.zs, targvel, ambient_sys, srcvel)
 
@@ -41,7 +41,7 @@ function surface_pressure_inst(p::Plate, ṗ, ambient_sys, z_new, t, Δt, lesp, 
     Γ₊, Γ₋, ∂C₊, ∂C₋ = vorticity_flux!(p, point₊, point₋, t, lesp, tesp)
 
     n̂ = exp(-im*α)
-    scale!(Ċ, n̂)
+    rmul!(Ċ, n̂)
     dchebt! * Ċ
 
     @. Ċ += (∂C₊ + ∂C₋)/Δt - im*α̇*C

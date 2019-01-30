@@ -81,7 +81,7 @@ All the `induce_velocity` methods listed above (and their in-place version, `ind
 @property begin
     signature = induce_velocity(targ::Target, src::Source)
     preallocator = allocate_velocity
-    stype = Complex128
+    stype = ComplexF64
 end
 ```
 where
@@ -97,7 +97,7 @@ where
     julia> @macroexpand(@property begin
                signature = induce_velocity(targ::Target, src::Source)
                preallocator = allocate_velocity
-               stype = Complex128
+               stype = ComplexF64
            end)
     ```
 
@@ -107,7 +107,7 @@ To find the acceleration, we need to know the current velocity, so we can have s
 @property begin
     signature = induce_acceleration(targ::Target, targvel::Target, src::Source, srcvel::Source)
     preallocator = allocate_acceleration
-    stype = Complex128
+    stype = ComplexF64
 end
 ```
 By annotating `targvel` as a `Target`, we are saying that whenever you iterate through `targ`, we should pass in the corresponding element in `targvel`, and likewise for `srcvel`.

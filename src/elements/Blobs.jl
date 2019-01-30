@@ -21,7 +21,7 @@ An immutable structure representing a regularized point source/vortex
 
 """
 struct Blob{T <: Number} <: Element
-    z::Complex128
+    z::ComplexF64
     S::T
     δ::Float64
     Blob{T}(z, s::Real, δ) where T <: Complex = new(z, im*s, δ)
@@ -36,11 +36,11 @@ Elements.kind(::Type{Blob{T}}) where T = Singleton
 #== Methods to be extended ==#
 
 Elements.position(b::Blob) = b.z
-Elements.streamfunction(z::Complex128, b::Blob) = real(-0.5b.S*log(z - b.z)/π)
+Elements.streamfunction(z::ComplexF64, b::Blob) = real(-0.5b.S*log(z - b.z)/π)
 
 blob_kernel(z, δ) = 0.5im*z/(π*(abs2(z) + δ^2))
 
-function induce_velocity(z::Complex128, b::Blob, t)
+function induce_velocity(z::ComplexF64, b::Blob, t)
     b.S*blob_kernel(z - b.z, b.δ)
 end
 
@@ -76,12 +76,12 @@ function self_induce_velocity!(ws, blobs::Vector{Blob{T}}, t) where T
     ws
 end
 
-function advect(b::Blob{T}, w::Complex128, Δt::Float64) where T
+function advect(b::Blob{T}, w::ComplexF64, Δt::Float64) where T
     Blob{T}(b.z + w*Δt, b.S, b.δ)
 end
 #
 #function Base.show(io::IO, b::Blob)
-#    print(io, "Vortex Blob: z = $(round(b.z, 3)), Γ = $(round(b.Γ, 3)), δ = $(round(b.δ, 3))")
+#    print(io, "Vortex Blob: z = $(round(b.z, digits=3)), Γ = $(round(b.Γ, digits=3)), δ = $(round(b.δ, digits=3))")
 #end
 
 end

@@ -12,7 +12,7 @@ import ..Sheets
 #== Wrapper for a point vortex ==#
 
 """
-    Vortex.Point(z::Complex128, Γ::Float64)
+    Vortex.Point(z::ComplexF64, Γ::Float64)
 
 A point vortex located at `z` with circulation `Γ`.
 
@@ -44,7 +44,7 @@ Base.show(io::IO, s::Point) = print(io, "Vortex.Point($(s.z), $(s.S))")
 #== Wrapper for a vortex blob ==#
 
 """
-    Vortex.Blob(z::Complex128, Γ::Float64, δ::Float64)
+    Vortex.Blob(z::ComplexF64, Γ::Float64, δ::Float64)
 
 A regularized point vortex located at `z` with circulation `Γ` and blob radius `δ`.
 
@@ -97,7 +97,7 @@ Sheet(zs::AbstractVector,  Ss::AbstractVector{Float64}, δ::Float64) = Sheets.Sh
 
 function Base.show(io::IO, s::Sheet)
     L = Sheets.arclength(s)
-    print(io, "Vortex Sheet: L ≈ $(round(L, 3)), Γ = $(round(s.Ss[end] - s.Ss[1], 3)), δ = $(round(s.δ, 3))")
+    print(io, "Vortex Sheet: L ≈ $(round(L, digits=3)), Γ = $(round(s.Ss[end] - s.Ss[1], digits=3)), δ = $(round(s.δ, digits=3))")
 end
 
 circulation(s::Sheet) = s.Ss[end] - s.Ss[1]

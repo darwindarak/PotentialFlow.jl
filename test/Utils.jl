@@ -2,25 +2,12 @@ import PotentialFlow.Utils: @get, MappedVector
 
 @testset "Utils" begin
     @testset "get" begin
-        z = rand(Complex128)
-
-        @get z (im, re)
-        @test im == imag(z)
-        @test re == real(z)
-
-        @get z (re, im)
-        @test im == imag(z)
-        @test re == real(z)
+        z = rand(ComplexF64)
 
         @get z (re, im) (r, i)
         @test i == imag(z)
         @test r == real(z)
 
-        @test_throws ArgumentError (@eval @get z z)
-        @test_throws ArgumentError (@eval @get z (re, im) nothing)
-        @test_throws ArgumentError (@eval @get z (re, im) (r, i) nothing)
-        @test_throws ArgumentError (@eval @get z (re, im) (im,) (im,))
-        @test_throws AssertionError (@eval @get z (re, im) (im,))
     end
 
     @testset "MappedVector" begin
@@ -32,6 +19,6 @@ import PotentialFlow.Utils: @get, MappedVector
 
         buff = IOBuffer()
         show(buff, y)
-        @test String(take!(buff)) == "Array{Float64,1} → Base.#cos (0:2)"
+        @test String(take!(buff)) == "Array{Float64,1} → typeof(cos) (0:2)"
     end
 end

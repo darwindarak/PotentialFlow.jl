@@ -25,11 +25,11 @@ function enforce_no_flow_through!(p::Plate, ṗ, elements, t)
     @get p (L, C, α, dchebt!)
     @get ṗ (ċ, α̇)
 
-    fill!(C, zero(Complex128))
+    fill!(C, zero(ComplexF64))
     induce_velocity!(C, p, elements, t)
 
     n̂ = exp(-im*α)
-    scale!(C, n̂)
+    rmul!(C, n̂)
 
     dchebt! * C
 
@@ -42,20 +42,20 @@ end
 
 
 """
-    influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v, t)
+    influence_on_plate!(∂A::Vector{ComplexF64}, plate::Plate, v, t)
 
 Compute in-place the change in plate's Chebyshev coefficients `∂A` by a vortex element `v`
 """
-function influence_on_plate!(∂A::Vector{Complex128}, plate::Plate, v, t)
-    fill!(∂A, zero(Complex128))
+function influence_on_plate!(∂A::Vector{ComplexF64}, plate::Plate, v, t)
+    fill!(∂A, zero(ComplexF64))
     induce_velocity!(∂A, plate, v, t)
-    scale!(∂A, exp(-im*plate.α))
+    rmul!(∂A, exp(-im*plate.α))
     plate.dchebt! * ∂A
     nothing
 end
 
 function influence_on_plate(plate::Plate, v, t)
-    ∂A = Vector{Complex128}(plate.N)
+    ∂A = Vector{ComplexF64}(undef, plate.N)
     influence_on_plate!(∂A, plate, v, t)
     return ∂A
 end
@@ -63,8 +63,8 @@ end
 """
     vorticity_flux(p::Plate, v₁, v₂,
                    lesp = 0.0, tesp = 0.0,
-                   ∂C₁ = Vector{Complex128}(plate.N),
-                   ∂C₂ = Vector{Complex128}(plate.N))
+                   ∂C₁ = Vector{ComplexF64}(undef, plate.N),
+                   ∂C₂ = Vector{ComplexF64}(undef, plate.N))
 
 Return strengths of new vortex elements that satisfies edge suction parameters.
 For a given edge, if the current suction parameter is less than the criticial suction parameter, then no vorticity is released.  If it is higher, however, vorticity will be released so that the suction parameter equals the critical value.
@@ -103,8 +103,8 @@ julia> Γ # should equal -πULsin(α) = -π
 ```
 """
 function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
-                        ∂C₁ = Vector{Complex128}(plate.N),
-                        ∂C₂ = Vector{Complex128}(plate.N))
+                        ∂C₁ = Vector{ComplexF64}(undef,plate.N),
+                        ∂C₂ = Vector{ComplexF64}(undef,plate.N))
 
     @get plate (N, α, B₀, B₁, L, A, Γ)
 
@@ -140,14 +140,14 @@ function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
         K₂ = (A₁₊*b₋ - A₁₋*b₊)/detA
     end
 
-    return K₁*Γ₁, K₂*Γ₂, scale!(∂C₁, K₁), scale!(∂C₂, K₂)
+    return K₁*Γ₁, K₂*Γ₂, rmul!(∂C₁, K₁), rmul!(∂C₂, K₂)
 end
 
 """
     vorticity_flux!(p::Plate, v₁, v₂,
                     lesp = 0.0, tesp = 0.0,
-                    ∂C₁ = Vector{Complex128}(plate.N),
-                    ∂C₂ = Vector{Complex128}(plate.N))
+                    ∂C₁ = Vector{ComplexF64}(undef,plate.N),
+                    ∂C₂ = Vector{ComplexF64}(undef,plate.N))
 
 In-place version of [`vorticity_flux`](@ref), except instead of just
 returning the possible changes in plate Chebyshev coefficients, we
@@ -156,8 +156,8 @@ enforced in the presence of `v₁` and `v₂` with strengths that satisfy
 the suction parameters.
 """
 function vorticity_flux!(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
-                        ∂C₁ = Vector{Complex128}(plate.N),
-                        ∂C₂ = Vector{Complex128}(plate.N))
+                        ∂C₁ = Vector{ComplexF64}(undef, plate.N),
+                        ∂C₂ = Vector{ComplexF64}(undef, plate.N))
     Γ₁, Γ₂, _, _ = vorticity_flux(plate, v₁, v₂, t, lesp, tesp, ∂C₁, ∂C₂)
     @. plate.C += ∂C₁ + ∂C₂
     plate.Γ -= Γ₁ + Γ₂

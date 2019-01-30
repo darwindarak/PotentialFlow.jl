@@ -1,4 +1,5 @@
 using Interpolations
+using FFTW
 
 """
     Sheets.redistribute_points!(sheet, zs, Γs)
@@ -114,7 +115,7 @@ function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
     L = arclengths(sheet)
 
     if L[end] < Δs
-        warn("Cannot remesh, sheet length smaller than nominal spacing")
+        @warn("Cannot remesh, sheet length smaller than nominal spacing")
         return Elements.position.(sheet.blobs), sheet.Ss, L[end], params
     end
 
@@ -130,13 +131,13 @@ function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
 
     N = ceil(Int, L[end]/Δs)
 
-    L₌ = linspace(0, L[end], N)
+    L₌ = range(0, L[end], length=N)
 
-    z₌ = zspline[L₌]
-    S₌ = Γspline[L₌]
+    z₌ = zspline(L₌)
+    S₌ = Γspline(L₌)
 
     p₌ = map(psplines) do spline
-        spline[L₌]
+        spline(L₌)
     end
 
     z₌, S₌, L[end], p₌
@@ -163,11 +164,11 @@ julia> Sheets.remesh!(sheet, 0.2, (age,));
 
 julia> Elements.position.(sheet.blobs)
 5-element Array{Complex{Float64},1}:
-  0.0+0.0im
- 0.25+0.0im
-  0.5+0.0im
- 0.75+0.0im
-  1.0+0.0im
+  0.0 + 0.0im
+ 0.25 + 0.0im
+  0.5 + 0.0im
+ 0.75 + 0.0im
+  1.0 + 0.0im
 
 julia> age
 5-element Array{Float64,1}:
@@ -318,7 +319,7 @@ function filter!(sheet, Δs, Δf, params::Tuple = ())
         filter_position!(z₌, Δf, L)
         redistribute_points!(sheet, z₌, S₌), params
     else
-        warn("Filter not applied, total sheet length smaller than nominal spacing")
+        @warn("Filter not applied, total sheet length smaller than nominal spacing")
         sheet, params
     end
 end
@@ -329,7 +330,7 @@ end
 Filter out any length scales in `s` that is smaller than `Δf`, storing the result back in `s`.
 `s` can be either a vector of complex positions, or a `Vortex.Sheet`.
 """
-function filter_position!(z₌::AbstractVector, Δf, L = arclength(z₌))
+function filter_position!(z₌::AbstractVector{T}, Δf, L = arclength(z₌)) where T
     Δs = abs(z₌[2] - z₌[1])
 
     @assert Δs < Δf
@@ -339,9 +340,18 @@ function filter_position!(z₌::AbstractVector, Δf, L = arclength(z₌))
 
     cutoff = ceil(Int, 2L/Δf) + 1
 
-    z₌[cutoff:end] = zero(Complex128)
+    z₌[cutoff:end] .= zero(ComplexF64)
 
-    F \ z₌
+    # F \ z₌
+    # Out-of-date syntax in FFTW for planned inverse transforms
+    # manually construct inverse transform for now
+    F⁻¹ = let X = Array{T}(undef, F.plan.sz),
+             iK = FFTW.inv_kind[FFTW.REDFT10]
+           FFTW.DCTPlan{T,iK,true}(FFTW.plan_r2r!(X, iK, F.region, flags=F.plan.flags),
+                              F.r, F.nrm, F.region)
+       end
+
+    F⁻¹ * z₌
 end
 
 function filter_position!(sheet::Sheet, Δf, L = arclength(sheet))

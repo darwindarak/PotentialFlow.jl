@@ -1,7 +1,7 @@
 @testset "Vortex Sheets" begin
     @testset "Sheet construction" begin
         N = 100
-        zs = rand(Complex128, N)
+        zs = rand(ComplexF64, N)
         Γs = accumulate(+, rand(N))
         δ = rand()
 
@@ -12,7 +12,7 @@
 
     @testset "Sheet induced velocities" begin
         N = 100
-        zs = rand(Complex128, N)
+        zs = rand(ComplexF64, N)
         Γs = accumulate(+, rand(N))
         δ = rand()
         sheet = Vortex.Sheet(zs, Γs, δ)
@@ -27,7 +27,7 @@
         @test wb ≈ ws
         @test wb ≈ induce_velocity(sheet, sheet, 0)
 
-        sheet₊ = Vortex.Sheet(Vector{Vortex.Blob}(10), rand(10), 0.0)
+        sheet₊ = Vortex.Sheet(Vector{Vortex.Blob}(undef, 10), rand(10), 0.0)
         Δt = 1e-2
         advect!(sheet₊, sheet, ws, Δt)
         advect!(sheet, sheet, ws, Δt)
@@ -43,7 +43,7 @@
 
     @testset "Sheet surgery" begin
         N = 100
-        zs = rand(Complex128, N)
+        zs = rand(ComplexF64, N)
         Γs = accumulate(+, rand(N))
         δ = 0.05
         sheet = Vortex.Sheet(zs, Γs, δ)
@@ -65,7 +65,7 @@
         @test Sheets.compute_trapezoidal_weights(sheet₊.Ss) ≈ circulation.(sheet₊.blobs)
 
         N = 200
-        θ = linspace(π, 0, N)
+        θ = range(π, 0, length = N)
         zs = complex.(cos.(θ))
         Γs = sin.(θ)
         Sheets.redistribute_points!(sheet, zs, Γs)
@@ -77,22 +77,22 @@
 
         Sheets.remesh!(sheet, 0.005)
         @test length(sheet) == 400
-        @test sheet.zs ≈ linspace(-1, 1, 400)
-        @test norm(sheet.Ss .- sqrt.(1 - linspace(-1,1,400).^2)) ≤ 1e-3
+        @test sheet.zs ≈ range(-1, 1, length = 400)
+        @test norm(sheet.Ss .- sqrt.(1 .- range(-1,1, length=400).^2)) ≤ 1e-3
 
-        θ = linspace(π, 0, N)
+        θ = range(π, 0, length = N)
         zs = complex.(cos.(θ))
         Γs = sin.(θ)
         Sheets.redistribute_points!(sheet, zs, Γs)
         sheet₁ = deepcopy(sheet)
         sheet₂ = deepcopy(sheet)
 
-        @test_warn r"smaller than nominal spacing" Sheets.filter!(sheet₁, 3.0, 0.03)
+        @test_logs (:warn, "Cannot remesh, sheet length smaller than nominal spacing") (:warn, "Filter not applied, total sheet length smaller than nominal spacing") Sheets.filter!(sheet₁, 3.0, 0.03)
         @test sheet₁.zs == sheet₂.zs
         @test sheet₁.Ss == sheet₂.Ss
         @test sheet₁.blobs == sheet₂.blobs
 
-        @test_warn r"smaller than nominal spacing" Sheets.remesh!(sheet₂, 3.0)
+        @test_logs (:warn, "Cannot remesh, sheet length smaller than nominal spacing") Sheets.remesh!(sheet₂, 3.0)
         @test sheet₁.zs == sheet₂.zs
         @test sheet₁.Ss == sheet₂.Ss
         @test sheet₁.blobs == sheet₂.blobs

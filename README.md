@@ -8,21 +8,11 @@
 
 ## Installation
 
-This package requires Julia `0.6-` and above.
-To install, simply run
+PotentialFlow can be installed using the Julia package manager. From the Julia REPL, type ] to enter the Pkg REPL mode and run
+
 ```julia-repl
-julia> Pkg.add("PotentialFlow")
+pkg> add PotentialFlow
 ```
-in the Julia REPL.
-Since this package is still under heavy development, you should run
-```julia-repl
-julia> Pkg.test("PotentialFlow") # might take some time
-```
-to make sure things are working as intended and
-```julia-repl
-julia> Pkg.update()
-```
-to get the most recent version of the library and its dependencies.
 
 ## Basic Usage
 
@@ -85,8 +75,8 @@ starting_vortex = Vortex.Point(-Inf, Γ)
 
 # Plot some streamlines
 
-x = linspace(-2, 1, 100)
-y = linspace(-0.5, 0.5, 100)
+x = range(-2, 1, length=100)
+y = range(-0.5, 0.5, length=100)
 
 streamlines(x, y, (plate, freestream), legend = false, colorbar = false)
 plot!(plate, linewidth = 2, ratio = 1, size = (600, 300))

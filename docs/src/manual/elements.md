@@ -3,7 +3,8 @@
 ```@meta
 DocTestSetup = quote
 using PotentialFlow
-srand(1)
+using Random
+Random.seed!(1)
 end
 ```
 The library currently has these built-in potential flow elements:
@@ -20,7 +21,7 @@ Most functions in the library that act on elements can take either a single elem
 These collections can be represented as an array or a tuple.
 Arrays should be used when the elements are the same type, for example:
 ```jldoctest overview
-julia> points = Vortex.Point.(rand(Complex128, 5), rand(5))
+julia> points = Vortex.Point.(rand(ComplexF64, 5), rand(5))
 5-element Array{PotentialFlow.Points.Point{Float64},1}:
  Vortex.Point(0.23603334566204692 + 0.34651701419196046im, 0.5557510873245723)
  Vortex.Point(0.3127069683360675 + 0.00790928339056074im, 0.43710797460962514)
@@ -31,7 +32,7 @@ julia> points = Vortex.Point.(rand(Complex128, 5), rand(5))
 julia> Elements.impulse(points)
 1.3362266530178137 - 1.2821936908564113im
 
-julia> blobs = [Vortex.Blob(rand(Complex128), rand(), 0.1) for i in 1:5]
+julia> blobs = [Vortex.Blob(rand(ComplexF64), rand(), 0.1) for i in 1:5]
 5-element Array{PotentialFlow.Blobs.Blob{Float64},1}:
  Vortex.Blob(0.20947237319807077 + 0.25137920979222494im, 0.02037486871266725, 0.1)
  Vortex.Blob(0.2877015122756894 + 0.859512136087661im, 0.07695088688120899, 0.1)

@@ -1,5 +1,8 @@
 module Chebyshev
 
+using FFTW
+using Future: copy!
+
 import Base: *, \
 struct Transform{T,I}
     dct!::FFTW.r2rFFTWPlan{T,(3,),true,1}
@@ -24,7 +27,7 @@ end
 Gives `N` extrema Chebyshev points of type `T` in [-1 ,1].
 """
 function nodes(N, T = Float64)
-    T[cos(θ) for θ in linspace(π, 0, N)]
+    T[cos(θ) for θ in range(π, 0, length=N)]
 end
 
 """
@@ -140,7 +143,7 @@ function transform!(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
     x
 end
 
-function transform!{T}(A::T, x::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
+function transform!(A::T, x::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where T
     copy!(A, x)
     transform!(A, plan!)
 end
@@ -198,7 +201,7 @@ function inv_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
     plan!*A
 end
 
-function inv_transform!{T}(x::T, A::T, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
+function inv_transform!(x::T, A::T, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00)) where T
     copy!(x, A)
     Chebyshev.inv_transform!(x, plan!)
 end

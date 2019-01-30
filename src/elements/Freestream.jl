@@ -1,14 +1,14 @@
 struct Freestream <: Element
-    U::Complex128
+    U::ComplexF64
 end
 
 Elements.@kind Freestream Singleton
 
-Motions.induce_velocity(::Complex128, f::Freestream, t) = f.U
+Motions.induce_velocity(::ComplexF64, f::Freestream, t) = f.U
 Motions.induce_velocity(f::Freestream, src, t) = nothing
 Motions.induce_velocity!(vel, f::Freestream, src, t) = nothing
 
-Elements.streamfunction(z::Complex128, f::Freestream) = -imag(f.U*z')
+Elements.streamfunction(z::ComplexF64, f::Freestream) = -imag(f.U*z')
 Elements.circulation(::Freestream) = 0.0
 Elements.flux(::Freestream) = 0.0
 

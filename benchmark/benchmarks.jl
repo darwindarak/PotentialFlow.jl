@@ -4,11 +4,11 @@ using PotentialFlow
     N = 500
     t = 0.0
 
-    points = Vortex.Point.(rand(Complex128, N), rand(N))
-    sheet  = Vortex.Sheet(rand(Complex128, N), accumulate(+, rand(N)), rand())
+    points = Vortex.Point.(rand(ComplexF64, N), rand(N))
+    sheet  = Vortex.Sheet(rand(ComplexF64, N), accumulate(+, rand(N)), rand())
     blobs = sheet.blobs
 
-    z = rand(Complex128)
+    z = rand(ComplexF64)
 
     @bench "points to position" induce_velocity(z, points, t)
     @bench "group to position" induce_velocity(z, (points, blobs, sheet), t)
