@@ -11,7 +11,8 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
 @recipe function f(s::Streamlines)
     elements = s.args[3]
 
-    if ConformalBody in typeof.(elements)
+    if (isa(elements, Array) || isa(elements, Tuple)) &&
+        ConformalBody in typeof.(elements)
 
         b = elements[findfirst(isa.(elements,PotentialFlow.ConformalBody))]
         ζ = [r*exp(im*θ) for θ in s.args[2], r in s.args[1]]
@@ -48,7 +49,7 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
 
       @series begin
           seriestype --> :contour
-            grid --> :none
+          grid --> :none
             seriescolor --> cgrad([:grey, :grey])
 
             s.args[1], s.args[2], ψ
