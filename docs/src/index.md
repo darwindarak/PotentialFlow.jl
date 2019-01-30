@@ -14,22 +14,11 @@ With this in mind, we want to construct a library that makes it
 
 ## Installation
 
-This package requires Julia `0.6-` and above.
-To install, simply run
-```julia
-julia> Pkg.add("PotentialFlow")
-```
-in the Julia REPL.
-Since this package is still under heavy development, you should run
-```julia
-julia> Pkg.test("PotentialFlow") # might take some time
-```
-to make sure things are working as intended and
-```julia
-julia> Pkg.update()
-```
-to get the most recent version of the library and its dependencies.
+PotentialFlow can be installed using the Julia package manager. From the Julia REPL, type ] to enter the Pkg REPL mode and run
 
+```julia
+pkg> add PotentialFlow
+```
 The plots in this documentation are generated using [Plots.jl](http://docs.juliaplots.org/latest/).
 You might want to install that too to follow the examples in the [getting started guide](@ref getting-started) or the [Jupyter notebooks](https://github.com/darwindarak/PotentialFlow.jl/tree/binder/binder/notebooks).
 The notebooks can also be run online [here](https://beta.mybinder.org/v2/gh/darwindarak/PotentialFlow.jl/binder?filepath=binder%2Fnotebooks).
