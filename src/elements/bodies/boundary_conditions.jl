@@ -78,3 +78,63 @@ end
 function get_image(src::Union{Blob{T},Point{T}}, b::ConformalBody) where T <: Real
     Point{T}(Elements.image(src.z,b),-src.S)
 end
+
+"""
+    vorticity_flux(b::ConformalBody, edge, sys, v, t,
+                   tesp = 0.0)
+
+Return strength of a new vortex element that satisfies edge suction parameter on an edge of a conformally-mapped body.
+For a given edge, if the current suction parameter is less than the criticial suction parameter, then no vorticity is released.  If it is higher, however, vorticity will be released so that the suction parameter equals the critical value.
+
+# Arguments
+
+- `b`: the body
+- `edge`: index of the vertex on the body corresponding to designated edge
+- `sys`: current system of body and fluid vorticity
+- `v`: the vortex element (with unit circulation) that the vorticity flux is going into
+- `t`: the current time (for evaluating body motion)
+- `tesp`: the critical trailing edge suction parameter we want to enforce.  By default, the parameters is set to 0.0 to enforce the Kutta condition on the edge.  We can disable vortex shedding from an edge by setting the its critical suction parameter to `Inf`
+
+# Returns
+
+- `Γ`: the strength that the vortex element should have in order to satisfy the edge suction parameters
+
+"""
+function vorticity_flux(b::Bodies.ConformalBody, edge::Integer, sys, v, t, tesp = 0.0)
+    σ̃ = suction_parameter(edge,b,sys,t)
+
+    # enforce boundary conditions for the elements v on a stationary airfoil
+    db = deepcopy(b)
+    motion = RigidBodyMotion(0.0, 0.0)
+    Bodies.enforce_no_flow_through!(db, motion, v, 0)
+
+    dσ = suction_parameter(edge,b,(db,v),t)
+
+    Γ = circulation(v)
+
+    if (abs2(tesp) > abs2(σ̃))
+        K = 0.0
+    else
+        K = (sign(σ̃)*tesp - σ̃)/dσ
+    end
+    return K*Γ
+end
+
+function suction_parameter_factor(k::Integer,m::ExteriorMap)
+    # Return the factor in front of the velocity tangent to the circle for vertex k
+    beta = 1-m.angle
+    zeta = m.preprev
+    fact = (1+beta[k])^beta[k]*abs(m.constant)
+    for j = 1:m.N
+        if j == k
+            continue
+        end
+        fact *= abs(zeta[k]-zeta[j])^beta[j]
+    end
+    return -fact^(-1/(1+beta[k]))
+end
+function suction_parameter(edge::Integer,b::Bodies.ConformalBody,sys,t)
+    w̃ = induce_velocity(b,sys,t)
+    σ = real(-im*conj(b.zetas[edge])*w̃[edge])*suction_parameter_factor(edge,b.m)
+    return σ
+end
