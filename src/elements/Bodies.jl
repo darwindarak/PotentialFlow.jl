@@ -5,6 +5,7 @@ using DocStringExtensions
 
 using ..Points
 using ..Blobs
+using ..Sheets
 
 using ..Elements
 using ..RigidBodyMotions
@@ -33,6 +34,8 @@ mutable struct ConformalBody <: Element
     c::ComplexF64
     "orientation angle (in radians)"
     α::Float64
+    "control points on unit circle"
+    zetas::Vector{ComplexF64}
     "control points in inertial coordinates in physical plane"
     zs::Vector{ComplexF64}
     "translational velocity"
@@ -46,7 +49,7 @@ end
 
 ConformalBody(m::ConformalMap,c,α) =
         ConformalBody(m,InverseMap(m),DerivativeMap(m),
-        ComplexF64(c),α,rigid_transform(m.z,ComplexF64(c),α),ComplexF64(0),0.0,
+        ComplexF64(c),α,(1+1e-15)*m.preprev,rigid_transform(m.z,ComplexF64(c),α),ComplexF64(0),0.0,
         Points.Point{Float64}[])
 
 ConformalBody(m::ConformalMap) = ConformalBody(m,ComplexF64(0),0.0)
@@ -329,7 +332,7 @@ function transform_velocity(win,targ::T,b::ConformalBody) where T <: Union{Blob,
   dz̃, ddz̃ = b.dm(targ.z)
   wout += targ.S*conj(ddz̃)/(4π*im*conj(dz̃))
   wout /= conj(dz̃)
-  wout -= b.ċ + im*b.α̇*z̃
+  wout -= b.ċ*exp(-im*b.α) + im*b.α̇*z̃
   wout /= dz̃
   wout
 end
@@ -348,6 +351,8 @@ transform_velocity(win,ζ::Vector{ComplexF64},b::ConformalBody) =
 function transform_velocity!(wout,win,targ::ConformalBody,b::ConformalBody)
     wout = win
 end
+
+transform_velocity!(wout,win,sheet::Sheet,b) = transform_velocity!(wout,win,sheet.blobs,b)
 
 include("bodies/boundary_conditions.jl")
 
@@ -390,12 +395,13 @@ function induce_velocity!(ws::Vector, b::ConformalBody, src, t)
                         kind(Elements.unwrap_src(src)))
 end
 
+# Note that we are assuming here that the blobs/points are in the circle plane
 function _singular_velocity!(ws, b, src::Blob{T}, t, ::Type{Singleton}) where T
-    induce_velocity!(ws, b.zs, Point{T}(src.z, src.S), t)
+    induce_velocity!(ws, b.zetas, Point{T}(src.z, src.S), t)
 end
 
 function _singular_velocity!(ws, b, src, t, ::Type{Singleton})
-    induce_velocity!(ws, b.zs, src, t)
+    induce_velocity!(ws, b.zetas, src, t)
 end
 
 function _singular_velocity!(ws, b, src, t, ::Type{Group})
@@ -430,14 +436,20 @@ end
 
 function Elements.impulse(body::ConformalBody)
 
-  @get body (m,α,ċ,α̇,img)
+  @get body (m,α,c,ċ,α̇,img)
   ċ̃ = ċ*exp(-im*α)
+  c̃ = c*exp(-im*α)
 
-  impv = addedmass(body)[2:3,:]*[α̇;real(ċ);imag(ċ)]
+  impv = addedmass(body)[2:3,:]*[α̇;real(ċ̃);imag(ċ̃)]
 
   imp = impv[1]+im*impv[2]
-  for (i,v) in enumerate(img)
-    imp -= im*m.ps.ccoeff[1]*v.S*(v.z-m(v.z)-image(v.z,body))
+  for v in img
+    ζ = image(v.z,body) # image of the img (outside of circle)
+    Γ = -v.S # strength of vortex
+    # the last terms cancel the direct contribution from
+    # the vortex, which is calculated from vortex
+    # position in inertial coordinates
+    imp += im*Γ*(m.ps.ccoeff[1]*(v.z-ζ)+(m(ζ)+c̃))
   end
 
   return imp*exp(im*α)
