@@ -122,7 +122,7 @@ end
 
 function suction_parameter_factor(k::Integer,m::ExteriorMap)
     # Return the factor in front of the velocity tangent to the circle for vertex k
-    beta = 1-m.angle
+    beta = 1 .- m.angle
     zeta = m.preprev
     fact = (1+beta[k])^beta[k]*abs(m.constant)
     for j = 1:m.N
