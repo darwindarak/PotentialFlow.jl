@@ -47,7 +47,12 @@ mutable struct ConformalBody <: Element
 end
 @kind ConformalBody Singleton
 
-ConformalBody(m::ConformalMap,c,α) =
+ConformalBody(m::PowerMap,c,α) =
+        ConformalBody(m,InverseMap(m),DerivativeMap(m),
+        ComplexF64(c),α,ComplexF64[],rigid_transform(m.z,ComplexF64(c),α),ComplexF64(0),0.0,
+        Points.Point{Float64}[])
+
+ConformalBody(m::ExteriorMap,c,α) =
         ConformalBody(m,InverseMap(m),DerivativeMap(m),
         ComplexF64(c),α,(1+1e-15)*m.preprev,rigid_transform(m.z,ComplexF64(c),α),ComplexF64(0),0.0,
         Points.Point{Float64}[])
