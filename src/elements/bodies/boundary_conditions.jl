@@ -120,6 +120,78 @@ function vorticity_flux(b::Bodies.ConformalBody, edge::Integer, sys, v, t, tesp 
     return K*Γ
 end
 
+"""
+    vorticity_flux(b::ConformalBody, edge₁, edge₂, sys, v₁, v₂, t,
+                   sp₁ = 0.0, sp₂ = 0.0)
+
+Return strength of two new vortex elements that satisfies edge suction parameter on the specified edges of a conformally-mapped body.
+For a given edge, if the current suction parameter is less than the criticial suction parameter, then no vorticity is released.
+If it is higher, however, vorticity will be released so that the suction parameter equals the critical value.
+
+# Arguments
+
+- `b`: the body
+- `edge₁`: index of the vertex on the body corresponding to first designated edge
+- `edge₂`: index of the vertex on the body corresponding to second designated edge
+- `sys`: current system of body and fluid vorticity
+- `v₁`: the first vortex element (with unit circulation) that the vorticity flux is going into
+- `v₂`: the second vortex element (with unit circulation) that the vorticity flux is going into
+- `t`: the current time (for evaluating body motion)
+- `sp₁`: the critical edge suction parameter at edge₁ we want to enforce. By default, the parameters is set to 0.0 to enforce the Kutta condition on the edge.  We can disable vortex shedding from an edge by setting the its critical suction parameter to `Inf`
+- `sp₂`: the critical edge suction parameter at edge₂ we want to enforce. By default, the parameters is set to 0.0 to enforce the Kutta condition on the edge.  We can disable vortex shedding from an edge by setting the its critical suction parameter to `Inf`
+
+# Returns
+
+- `Γ₁`: the strength that the vortex element `v₁` should have in order to satisfy the edge suction parameters
+- `Γ₂`: the strength that the vortex element `v₂` should have in order to satisfy the edge suction parameters
+
+"""
+function vorticity_flux(b::Bodies.ConformalBody, edge₁::Integer, edge₂::Integer, sys, v₁, v₂, t, sp₁ = 0.0, sp₂ = 0.0)
+
+    # existing suction parameters
+    σ̃₁ = Bodies.suction_parameter(edge₁,b,sys,t)
+    σ̃₂ = Bodies.suction_parameter(edge₂,b,sys,t)
+
+
+    # enforce boundary conditions for the elements v on a stationary airfoil
+    db₁ = deepcopy(b)
+    db₂ = deepcopy(b)
+    motion = RigidBodyMotion(0.0, 0.0)
+    Bodies.enforce_no_flow_through!(db₁, motion, v₁, 0)
+    Bodies.enforce_no_flow_through!(db₂, motion, v₂, 0)
+
+    # Unit suction parameters
+    dσ₁₁ = suction_parameter(edge₁,b,(db₁,v₁),t)
+    dσ₁₂ = suction_parameter(edge₂,b,(db₁,v₁),t)
+
+    dσ₂₁ = suction_parameter(edge₁,b,(db₂,v₂),t)
+    dσ₂₂ = suction_parameter(edge₂,b,(db₂,v₂),t)
+
+
+    Γ₁ = circulation(v₁)
+    Γ₂ = circulation(v₂)
+
+
+    if (abs2(sp₁) > abs2(σ̃₁)) && (abs2(sp₂) ≤ abs2(σ̃₂))
+        K₁, K₂ = 0.0, (sign(σ̃₂)*sp₂ - σ̃₂)/dσ₂₂
+    elseif (abs2(sp₁) ≤ abs2(σ̃₁)) && (abs2(sp₂) > abs2(σ̃₂))
+        K₁, K₂ = (sign(σ̃₁)*sp₁ - σ̃₁)/dσ₁₁, 0.0
+    elseif (abs2(sp₁) > abs2(σ̃₁)) && (abs2(sp₂) > abs2(σ̃₂))
+        K₁ = K₂ = 0.0
+    else
+        σ̃₁ = sign(σ̃₁)*sp₁ - σ̃₁
+        σ̃₂ = sign(σ̃₂)*sp₂ - σ̃₂
+        detA = dσ₁₁*dσ₂₂ - dσ₁₂*dσ₂₁
+
+        @assert (detA != 0) "Cannot enforce suction parameters"
+
+        K₁ = (dσ₂₂*σ̃₁ - dσ₂₁*σ̃₂)/detA
+        K₂ = (dσ₁₁*σ̃₂ - dσ₁₂*σ̃₁)/detA
+
+    end
+    return K₁*Γ₁, K₂*Γ₂
+end
+
 function suction_parameter_factor(k::Integer,m::ExteriorMap)
     # Return the factor in front of the velocity tangent to the circle for vertex k
     beta = 1 .- m.angle
