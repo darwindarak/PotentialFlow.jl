@@ -261,6 +261,8 @@ end
 induce_velocity(target::T,b::ConformalBody, t) where
             T <: Union{Blob,Point} = induce_velocity(target.z,b,t)
 
+induce_velocity(f::Freestream,b::ConformalBody, t) = -im*b.α̇*f.U
+
 """
     transform_velocity!(wout, win, targets, body::ConformalBody)
 
@@ -449,6 +451,7 @@ function advect!(body₊::ConformalBody, body₋::ConformalBody, ṗ::RigidBodyM
     return body₊
 end
 
+advect(f₋::Freestream, w::ComplexF64, Δt) = Freestream(f₋.U+w*Δt)
 
 function Elements.impulse(body::ConformalBody)
 

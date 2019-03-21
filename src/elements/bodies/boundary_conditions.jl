@@ -80,8 +80,8 @@ function get_image(src::Union{Blob{T},Point{T}}, b::ConformalBody) where T <: Re
 end
 
 function get_image(src::Freestream, b::ConformalBody)
-    # it is assumed that freestream is given in physical plane
-    Doublet{ComplexF64}(0.0,conj(inverse_conftransform(src,b).U)*π)
+    # it is assumed that freestream is given in the circle plane form
+    Doublet{ComplexF64}(0.0,conj(src.U)*π)
 end
 
 """
