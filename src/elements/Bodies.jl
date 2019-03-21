@@ -43,7 +43,7 @@ mutable struct ConformalBody <: Element
     "angular velocity"
     α̇::Float64
     "image singularities"
-    img::Vector{Point}
+    img::Vector{Element}
 end
 @kind ConformalBody Singleton
 
@@ -207,7 +207,6 @@ end
 
 Elements.jacobian(s::T,b::ConformalBody) where T <: Union{Blob,Point} =
                 Elements.jacobian(s.z,b)
-
 
 function allocate_velocity(::ConformalBody)
     @warn("Body kinematics should be initialized manually.  This simply returns a stationary motion")
