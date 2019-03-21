@@ -188,6 +188,9 @@ Elements.conftransform(s::Point{T},b::ConformalBody) where T =
 Elements.conftransform(s::Blob{T},b::ConformalBody) where T =
                 Blob{T}(Elements.conftransform(s.z,b),s.S,s.δ)
 
+Elements.conftransform(f::Freestream,b::ConformalBody) = f.U*conj(b.m.ps.ccoeff[1])*exp(-im*b.α)
+
+
 function allocate_inv_conftransform(::ConformalBody)
     nothing
 end

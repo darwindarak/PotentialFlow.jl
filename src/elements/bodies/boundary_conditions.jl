@@ -86,7 +86,7 @@ function get_image(src::Union{Blob{T},Point{T}}, b::ConformalBody) where T <: Re
 end
 
 function get_image(src::Freestream, b::ConformalBody)
-    Doublet{ComplexF64}(0.0,conj(src.U))
+    Doublet{ComplexF64}(0.0,conj(src.U)*π)
 end
 
 """
