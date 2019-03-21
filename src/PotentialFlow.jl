@@ -43,6 +43,8 @@ include("elements/Doublets.jl")
 import .Doublets: Doublet
 
 include("elements/Freestream.jl")
+import .Freestreams: Freestream
+
 
 #== Plot Recipes ==#
 

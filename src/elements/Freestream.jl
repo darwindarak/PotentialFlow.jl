@@ -1,3 +1,8 @@
+module Freestreams
+
+using ..Elements
+using ..Motions
+
 struct Freestream <: Element
     U::ComplexF64
 end
@@ -15,3 +20,5 @@ Elements.flux(::Freestream) = 0.0
 Motions.self_induce_velocity!(vel, f::Freestream, t) = nothing
 
 Motions.allocate_velocity(::Freestream) = nothing
+
+end

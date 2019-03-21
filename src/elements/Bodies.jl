@@ -6,6 +6,7 @@ using DocStringExtensions
 using ..Points
 using ..Blobs
 using ..Sheets
+using ..Freestreams
 
 using ..Elements
 using ..RigidBodyMotions
