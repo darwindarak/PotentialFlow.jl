@@ -15,7 +15,7 @@ using ..RigidBodyMotions
 
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
-                  self_induce_velocity!, allocate_velocity, advect!, streamfunction
+                  self_induce_velocity!, allocate_velocity, advect!, advect, streamfunction
 import SchwarzChristoffel: Polygon, ExteriorMap, ConformalMap, PowerMap, addedmass,
                             InverseMap, DerivativeMap, coefficients
 
