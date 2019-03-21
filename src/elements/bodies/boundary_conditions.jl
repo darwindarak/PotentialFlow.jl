@@ -36,13 +36,7 @@ function enforce_no_flow_through!(b::ConformalBody, ṗ, elements, t)
     b.ċ = ċ
     b.α̇ = α̇
 
-    # Need to adjust physical free stream so that it provides correct free stream
-    # in circle plane.
-    ccoeff, _ = coefficients(b.m)
-    elcopy = map(el -> typeof(el)==Freestream ?
-                  Freestream(el.U*conj(ccoeff[1])*exp(-im*b.α)) : el, elements)
-
-    get_image!(b,elcopy)
+    get_image!(b,elements)
 
     nothing
 end
@@ -86,7 +80,8 @@ function get_image(src::Union{Blob{T},Point{T}}, b::ConformalBody) where T <: Re
 end
 
 function get_image(src::Freestream, b::ConformalBody)
-    Doublet{ComplexF64}(0.0,conj(src.U)*π)
+    # it is assumed that freestream is given in physical plane
+    Doublet{ComplexF64}(0.0,conj(inverse_conftransform(src,b).U)*π)
 end
 
 """
