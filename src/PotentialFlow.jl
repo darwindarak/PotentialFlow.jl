@@ -30,6 +30,11 @@ include("elements/Sheets.jl")
 include("elements/Vortex.jl")
 include("elements/Source.jl")
 
+include("elements/Doublets.jl")
+import .Doublets: Doublet
+
+include("elements/Freestream.jl")
+
 include("elements/Plates.jl")
 include("elements/Bodies.jl")
 
@@ -39,11 +44,7 @@ import .Plates: Plate
 import .Bodies: ConformalBody
 
 
-include("elements/Doublets.jl")
-import .Doublets: Doublet
 
-include("elements/Freestream.jl")
-import .Freestreams: Freestream
 
 
 #== Plot Recipes ==#

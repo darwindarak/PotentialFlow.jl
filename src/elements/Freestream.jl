@@ -1,5 +1,7 @@
 module Freestreams
 
+export Freestream
+
 using ..Elements
 using ..Motions
 
