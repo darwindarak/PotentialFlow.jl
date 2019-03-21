@@ -38,6 +38,7 @@ function enforce_no_flow_through!(b::ConformalBody, ṗ, elements, t)
 
     # Need to adjust physical free stream so that it provides correct free stream
     # in circle plane.
+    ccoeff, _ = coefficients(b.m)
     elcopy = map(el -> typeof(el)==Freestream ?
                   Freestream(el.U*conj(ccoeff[1])*exp(-im*b.α)) : el, elements)
 

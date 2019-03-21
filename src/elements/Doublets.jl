@@ -1,5 +1,7 @@
 module Doublets
 
+export Doublet
+
 using ..Elements
 using ..Motions
 

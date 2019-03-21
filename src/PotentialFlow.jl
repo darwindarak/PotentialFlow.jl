@@ -21,7 +21,8 @@ include("TimeMarching.jl")
 
 #== Some Built-in Potential Flow Elements ==#
 
-export Vortex, Source, Sheets, Plates, Plate, Freestream, Doublet, Bodies
+export Vortex, Source, Sheets, Plates, Plate, Freestreams, Freestream,
+       Doublets, Doublet, Bodies
 
 include("elements/Points.jl")
 include("elements/Blobs.jl")
@@ -31,8 +32,6 @@ include("elements/Vortex.jl")
 include("elements/Source.jl")
 
 include("elements/Doublets.jl")
-import .Doublets: Doublet
-
 include("elements/Freestream.jl")
 
 include("elements/Plates.jl")
