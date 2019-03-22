@@ -24,7 +24,7 @@ julia&gt; induce_velocity([0.0im, 1.0im, 1.0], (vortex, source), t)
                  0.5 - 0.5im
  0.09999999999999999 - 0.7im
                  0.5 - 0.5im
-</code></pre><p>Note the all positions and velocities are given in complex coordiantes.</p><p>Now let&#39;s move on to something more interesting. We&#39;ll create a stationary flat plate (bound vortex sheet) and place it in a freestream. In order to enforce the Kutta condition, we also place a starting vortex at <code>-Inf</code>.</p><div><pre><code class="language-julia">using PotentialFlow
+</code></pre><p>Note the all positions and velocities are given in complex coordiantes.</p><p>Now let&#39;s move on to something more interesting. We&#39;ll create a stationary flat plate (bound vortex sheet) and place it in a freestream. In order to enforce the Kutta condition, we also place a starting vortex at <code>-Inf</code>.</p><pre><code class="language-">using PotentialFlow
 using Plots
 
 c₀ = 0.0im # initial centroid position
@@ -53,4 +53,6 @@ x = range(-2, 1, length=100)
 y = range(-0.5, 0.5, length=100)
 
 streamlines(x, y, (plate, freestream), legend = false, colorbar = false)
-plot!(plate, linewidth = 2, ratio = 1, size = (600, 300))</code></pre></div><p><img src="translating_plate.svg" alt="Flat plate in freestream"/></p><footer><hr/><a class="next" href="manual/quickstart/"><span class="direction">Next</span><span class="title">Getting Started</span></a></footer></article></body></html>
+plot!(plate, linewidth = 2, ratio = 1, size = (600, 300))
+savefig(&quot;translating_plate.svg&quot;) # hide
+nothing # hide</code></pre><p><img src="translating_plate.svg" alt="Flat plate in freestream"/></p><footer><hr/><a class="next" href="manual/quickstart/"><span class="direction">Next</span><span class="title">Getting Started</span></a></footer></article></body></html>
