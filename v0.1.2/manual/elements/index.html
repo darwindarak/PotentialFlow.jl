@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Elements · PotentialFlow.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link href="../../assets/documenter.css" rel="stylesheet" type="text/css"/><link href="../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>PotentialFlow.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../../">Home</a></li><li><span class="toctext">Manual</span><ul><li><a class="toctext" href="../quickstart/">Getting Started</a></li><li class="current"><a class="toctext" href>Elements</a><ul class="internal"><li><a class="toctext" href="#Built-in-Types-1">Built-in Types</a></li><li><a class="toctext" href="#Element-Properties-1">Element Properties</a></li><li><a class="toctext" href="#Methods-on-Vortex-Sheets-1">Methods on Vortex Sheets</a></li><li><a class="toctext" href="#Methods-on-Plates-1">Methods on Plates</a></li><li><a class="toctext" href="#Methods-on-Conformally-Mapped-Bodies-1">Methods on Conformally-Mapped Bodies</a></li><li><a class="toctext" href="#Index-1">Index</a></li></ul></li><li><a class="toctext" href="../velocities/">Computing Velocities</a></li><li><a class="toctext" href="../timemarching/">Time Marching</a></li><li><a class="toctext" href="../noflowthrough/">Enforcing No-Flow-Through</a></li><li><a class="toctext" href="../motions/">Plate Motions</a></li></ul></li><li><span class="toctext">Internals</span><ul><li><a class="toctext" href="../../internals/properties/">Handing Pairwise Interactions</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li>Manual</li><li><a href>Elements</a></li></ul><a class="edit-page" href="https://github.com/darwindarak/PotentialFlow.jl/blob/master/docs/src/manual/elements.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Elements</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Elements-1" href="#Elements-1">Elements</a></h1><p>The library currently has these built-in potential flow elements:</p><ul><li><a href="#PotentialFlow.Vortex.Point"><code>Vortex.Point</code></a></li><li><a href="#PotentialFlow.Vortex.Blob"><code>Vortex.Blob</code></a></li><li><a href="#PotentialFlow.Vortex.Sheet"><code>Vortex.Sheet</code></a></li><li><a href="#PotentialFlow.Source.Point"><code>Source.Point</code></a></li><li><a href="#PotentialFlow.Source.Blob"><code>Source.Blob</code></a></li><li><a href="#PotentialFlow.Plates.Plate"><code>Plate</code></a> (at the moment, there can only be one plate in the fluid at at time)</li><li><a href="#PotentialFlow.Bodies.ConformalBody"><code>Bodies.ConformalBody</code></a></li></ul><p>Most functions in the library that act on elements can take either a single element, or a collection of elements. These collections can be represented as an array or a tuple. Arrays should be used when the elements are the same type, for example:</p><pre><code class="language-julia-repl">julia&gt; points = Vortex.Point.(rand(ComplexF64, 5), rand(5))
+5-element Array{PotentialFlow.Points.Point{Float64},1}:
+ Vortex.Point(0.23603334566204692 + 0.34651701419196046im, 0.5557510873245723)
+ Vortex.Point(0.3127069683360675 + 0.00790928339056074im, 0.43710797460962514)
+ Vortex.Point(0.4886128300795012 + 0.21096820215853596im, 0.42471785049513144)
+ Vortex.Point(0.951916339835734 + 0.9999046588986136im, 0.773223048457377)
+ Vortex.Point(0.25166218303197185 + 0.9866663668987996im, 0.2811902322857298)
+
+julia&gt; Elements.impulse(points)
+1.3362266530178137 - 1.2821936908564113im
+
+julia&gt; blobs = [Vortex.Blob(rand(ComplexF64), rand(), 0.1) for i in 1:5]
+5-element Array{PotentialFlow.Blobs.Blob{Float64},1}:
+ Vortex.Blob(0.20947237319807077 + 0.25137920979222494im, 0.02037486871266725, 0.1)
+ Vortex.Blob(0.2877015122756894 + 0.859512136087661im, 0.07695088688120899, 0.1)
+ Vortex.Blob(0.6403962459899388 + 0.8735441302706854im, 0.27858242002877853, 0.1)
+ Vortex.Blob(0.7513126327861701 + 0.6448833539420931im, 0.07782644396003469, 0.1)
+ Vortex.Blob(0.8481854810000327 + 0.0856351682044918im, 0.5532055454580578, 0.1)
+
+julia&gt; Elements.impulse(blobs)
+0.41217890550975256 - 0.7325028967929701im</code></pre><p>Knowing that every element has the same type allows the compiler to perform more aggressive optimizations. Tuples are used when we want to mix and match <em>different</em> element types. For example:</p><pre><code class="language-julia">julia&gt; sys = (points, blobs);
+
+julia&gt; Elements.impulse(sys)
+1.7484055585275664 - 2.0146965876493814im</code></pre><p>This rest of this page documents the data types that represent these elements and some key functions that act on them. For more detailed examples, please refer to the <a href="https://github.com/darwindarak/PotentialFlow.jl/tree/master/examples">Jupyter notebooks</a>.</p><h2><a class="nav-anchor" id="Built-in-Types-1" href="#Built-in-Types-1">Built-in Types</a></h2><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Vortex.Point" href="#PotentialFlow.Vortex.Point"><code>PotentialFlow.Vortex.Point</code></a> — <span class="docstring-category">Type</span>.</div><div><div><pre><code class="language-none">Vortex.Point(z::ComplexF64, Γ::Float64)</code></pre><p>A point vortex located at <code>z</code> with circulation <code>Γ</code>.</p><p>A new point vortex can be created from an existing one by treating the existing point vortex as a function and passing in the parameter you want to change as keyword arguments. For example,</p><pre><code class="language-julia-repl">julia&gt; p = Vortex.Point(1.0, 1.0)
+Vortex.Point(1.0 + 0.0im, 1.0)
+
+julia&gt; p()
+Vortex.Point(1.0 + 0.0im, 1.0)
+
+julia&gt; p(Γ = 2.0)
+Vortex.Point(1.0 + 0.0im, 2.0)</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/Vortex.jl#L14-L33">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Vortex.Blob" href="#PotentialFlow.Vortex.Blob"><code>PotentialFlow.Vortex.Blob</code></a> — <span class="docstring-category">Type</span>.</div><div><div><pre><code class="language-none">Vortex.Blob(z::ComplexF64, Γ::Float64, δ::Float64)</code></pre><p>A regularized point vortex located at <code>z</code> with circulation <code>Γ</code> and blob radius <code>δ</code>.</p><p>A new vortex blob can be created from an existing one by treating the existing blob as a function and passing in the parameter you want to change as keyword arguments. For example,</p><pre><code class="language-julia-repl">julia&gt; b = Vortex.Blob(1.0, 1.0, 0.1)
+Vortex.Blob(1.0 + 0.0im, 1.0, 0.1)
+
+julia&gt; b()
+Vortex.Blob(1.0 + 0.0im, 1.0, 0.1)
+
+julia&gt; b(Γ = 2.0, δ = 0.01)
+Vortex.Blob(1.0 + 0.0im, 2.0, 0.01)</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/Vortex.jl#L46-L65">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Vortex.Sheet" href="#PotentialFlow.Vortex.Sheet"><code>PotentialFlow.Vortex.Sheet</code></a> — <span class="docstring-category">Type</span>.</div><div><div><pre><code class="language-none">Vortex.Sheet &lt;: Elements.Element</code></pre><p>A vortex sheet represented by vortex blob control points</p><p><strong>Fields</strong></p><ul><li><code>blobs</code>: the underlying array of vortex blobs</li><li><code>Ss</code>: the cumulated sum of circulation starting from the first control point</li><li><code>δ</code>: the blob radius of all the vortex blobs</li><li><code>zs</code>: a mapped array that accesses the position of each control point</li></ul><p><strong>Constructors:</strong></p><ul><li><code>Vortex.Sheet(blobs, Γs, δ)</code></li><li><code>Vortex.Sheet(zs, Γs, δ)</code> where <code>zs</code> is an array of positions for the control points</li></ul></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/Vortex.jl#L77-L93">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Source.Point" href="#PotentialFlow.Source.Point"><code>PotentialFlow.Source.Point</code></a> — <span class="docstring-category">Type</span>.</div><div><div><pre><code class="language-none">Source.Point(z::ComplexF64, S::Float64)</code></pre><p>A point source located at <code>z</code> with strength <code>S</code>.</p><p>A new point source can be created from an existing one by treating the existing source as a function and passing in the parameter you want to change as keyword arguments. For example,</p><pre><code class="language-julia-repl">julia&gt; p = Source.Point(1.0, 1.0)
+Source.Point(1.0 + 0.0im, 1.0)
+
+julia&gt; p()
+Source.Point(1.0 + 0.0im, 1.0)
+
+julia&gt; p(S = 2.0)
+Source.Point(1.0 + 0.0im, 2.0)</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/Source.jl#L9-L28">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Source.Blob" href="#PotentialFlow.Source.Blob"><code>PotentialFlow.Source.Blob</code></a> — <span class="docstring-category">Type</span>.</div><div><div><pre><code class="language-none">Source.Blob(z::ComplexF64, S::Float64, δ::Float64)</code></pre><p>A regularized point source located at <code>z</code> with strength <code>S</code> and blob radius <code>δ</code>.</p><p>A new blob source can be created from an existing one by treating the existing blob as a function and passing in the parameter you want to change as keyword arguments. For example,</p><pre><code class="language-julia-repl">julia&gt; b = Source.Blob(1.0, 1.0, 0.1)
+Source.Blob(1.0 + 0.0im, 1.0, 0.1)
+
+julia&gt; b()
+Source.Blob(1.0 + 0.0im, 1.0, 0.1)
+
+julia&gt; b(S = 2.0, δ = 0.01)
+Source.Blob(1.0 + 0.0im, 2.0, 0.01)</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/Source.jl#L44-L63">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Plates.Plate" href="#PotentialFlow.Plates.Plate"><code>PotentialFlow.Plates.Plate</code></a> — <span class="docstring-category">Type</span>.</div><div><div><pre><code class="language-none">Plate &lt;: Elements.Element</code></pre><p>An infinitely thin, flat plate, represented as a bound vortex sheet</p><p><strong>Constructors</strong></p><ul><li><code>Plate(N, L, c, α)</code></li></ul></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/Plates.jl#L24-L31">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Bodies.ConformalBody" href="#PotentialFlow.Bodies.ConformalBody"><code>PotentialFlow.Bodies.ConformalBody</code></a> — <span class="docstring-category">Type</span>.</div><div><div><pre><code class="language-none">ConformalBody &lt;: Elements.Element</code></pre><p>Generates a body from a conformal map. This might be a Schwarz-Christoffel map, in which case the constructor is supplied a polygon, or it might be a power- series map, in which case the constructor is given a set of complex coefficients.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; p = Bodies.Polygon([-1.0,0.2,1.0,-1.0],[-1.0,-1.0,0.5,1.0])
+Polygon with 4 vertices at
+             (-1.0,-1.0) (0.2,-1.0) (1.0,0.5) (-1.0,1.0)
+             interior angles/π = [0.5, 0.656, 0.422, 0.422]
+
+julia&gt; Bodies.ConformalBody(p)
+Body generated by: Schwarz-Christoffel map of unit circle to exterior of polygon with 4 vertices
+
+  centroid at 0.0 + 0.0im
+  angle 0.0
+
+julia&gt; a1 = 1; b1 = 0.1; ccoeff = ComplexF64[0.5(a1+b1),0,0.5(a1-b1)];
+
+julia&gt; Bodies.ConformalBody(ccoeff,ComplexF64(1.0),π/4)
+Body generated by: Power series map
+
+  centroid at 1.0 + 0.0im
+  angle 0.7854</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/Bodies.jl#L66-L95">source</a></section><h2><a class="nav-anchor" id="Element-Properties-1" href="#Element-Properties-1">Element Properties</a></h2><pre><code class="language-none">Elements.position
+Elements.circulation
+Elements.flux
+Elements.impulse</code></pre><h2><a class="nav-anchor" id="Methods-on-Vortex-Sheets-1" href="#Methods-on-Vortex-Sheets-1">Methods on Vortex Sheets</a></h2><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Sheets.append_segment!" href="#PotentialFlow.Sheets.append_segment!"><code>PotentialFlow.Sheets.append_segment!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">Sheets.append_segment!(sheet::Sheet, z, Γ)</code></pre><p>Append a new segment with circulation <code>Γ</code> extending from the end of the sheet to <code>z</code>.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia&gt; sheet.blobs[end]
+Vortex.Blob(1.0 + 0.0im, 0.5, 0.2)
+
+julia&gt; Sheets.append_segment!(sheet, 1.1, 2.0)
+
+julia&gt; sheet
+Vortex Sheet: L ≈ 1.1, Γ = 12.0, δ = 0.2
+
+julia&gt; sheet.blobs[end]
+Vortex.Blob(1.1 + 0.0im, 1.0, 0.2)</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/sheets/surgery.jl#L259-L281">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Sheets.truncate!" href="#PotentialFlow.Sheets.truncate!"><code>PotentialFlow.Sheets.truncate!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">Sheets.truncate!(sheet, n::Int)</code></pre><p>Remove segments <code>0:n</code> from <code>sheet</code>, and return the circulation in those segments.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia&gt; Sheets.truncate!(sheet, 5)
+4.0</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/sheets/surgery.jl#L65-L79">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Sheets.redistribute_points!" href="#PotentialFlow.Sheets.redistribute_points!"><code>PotentialFlow.Sheets.redistribute_points!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">Sheets.redistribute_points!(sheet, zs, Γs)</code></pre><p>Returns the modified sheet with replacement control points at positions <code>zs</code> and strength <code>Γs</code>.</p><pre><code class="language-julia-repl">julia&gt; sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia&gt; sys = (sheet,)
+(Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2,)
+
+julia&gt; Sheets.redistribute_points!(sheet, 0:0.2:2, 0.0:0.5:5)
+Vortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2
+
+julia&gt; sys[1]
+Vortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/sheets/surgery.jl#L4-L22">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Sheets.remesh" href="#PotentialFlow.Sheets.remesh"><code>PotentialFlow.Sheets.remesh</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">Sheets.remesh(sheet, Δs::Float64 , params::Tuple = ())</code></pre><p>Uniformly redistribute the control points of the sheet to have a nominal spacing of <code>Δs</code>. Material quantities that should be redistributed along with the control points can be passed in as elements of <code>params</code>.</p><p>Returns the tuple <code>(z₌, Γ₌, L [, p₌])</code> where</p><ul><li><code>z₌</code> is an array with the positions of the uniformly distributed points</li><li><code>Γ₌</code> is circulation interpolated onto <code>z₌</code></li><li><code>L</code> is total length of the sheet</li><li><code>p₌</code> is a tuple containing the material quantities from <code>params</code> interpolated onto <code>z₌</code></li></ul><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia&gt; age = collect(10.0:-1:0);
+
+julia&gt; Sheets.remesh(sheet, 0.2, (age, ))
+(Complex{Float64}[0.0+0.0im, 0.25+0.0im, 0.5+0.0im, 0.75+0.0im, 1.0+0.0im], [0.0, 2.5, 5.0, 7.5, 10.0], 1.0, ([10.0, 7.5, 5.0, 2.5, 0.0],))</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/sheets/surgery.jl#L89-L113">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Sheets.remesh!" href="#PotentialFlow.Sheets.remesh!"><code>PotentialFlow.Sheets.remesh!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">Sheets.remesh!(sheet::Sheet, Δs::Float64, params::Tuple = ())</code></pre><p>Same as <a href="#PotentialFlow.Sheets.remesh"><code>Sheets.remesh</code></a>, except <code>sheet</code> is replaced internally by a uniformly interpolated control points. Returns the tuple (sheet, L, p₌) where</p><ul><li><code>sheet</code> is the modified sheet</li><li><code>L</code> is total length of the sheet</li><li><code>p₌</code> is a tuple containing the material quantities from <code>params</code> interpolated onto the new control points of <code>sheet</code></li></ul><pre><code class="language-julia-repl">julia&gt; sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia&gt; age = collect(10.0:-1:0);
+
+julia&gt; Sheets.remesh!(sheet, 0.2, (age,));
+
+julia&gt; Elements.position.(sheet.blobs)
+5-element Array{Complex{Float64},1}:
+  0.0 + 0.0im
+ 0.25 + 0.0im
+  0.5 + 0.0im
+ 0.75 + 0.0im
+  1.0 + 0.0im
+
+julia&gt; age
+5-element Array{Float64,1}:
+ 10.0
+  7.5
+  5.0
+  2.5
+  0.0</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/sheets/surgery.jl#L146-L181">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Sheets.split!" href="#PotentialFlow.Sheets.split!"><code>PotentialFlow.Sheets.split!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">Sheets.split!(sheet, n::Int)</code></pre><p>Remove segments <code>0:n</code> from <code>sheet</code>, and return those segments as a new sheet.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia&gt; sheet₋ = Sheets.split!(sheet, 5)
+Vortex Sheet: L ≈ 0.4, Γ = 4.0, δ = 0.2
+
+julia&gt; sheet
+Vortex Sheet: L ≈ 0.6, Γ = 6.0, δ = 0.2</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/sheets/surgery.jl#L34-L51">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Sheets.filter!" href="#PotentialFlow.Sheets.filter!"><code>PotentialFlow.Sheets.filter!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">Sheets.filter!(sheet, Δs, Δf[, params])</code></pre><p>Redistribute and filter the control points of a vortex sheet</p><p><strong>Arguments</strong></p><ul><li><code>sheet</code>: the vortex sheet to be modified</li><li><code>Δs</code>: the nominal spacing between the uniform points</li><li><code>Δf</code>: the minimum length scale that the filter should allow to pass through</li><li><code>params</code>: an optional tuple of vectors containing material properties</li></ul><p><strong>Returns</strong></p><p>If <code>params</code> is passed in, then its vectors will be overwritten by their interpolated values on the new control points, and the function returns the tuple (sheet, params). Otherwise, it returns (sheet, ())</p></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/sheets/surgery.jl#L290-L309">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Sheets.filter_position!" href="#PotentialFlow.Sheets.filter_position!"><code>PotentialFlow.Sheets.filter_position!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">Sheets.filter_position!(s, Δf, L = arclength(z₌))</code></pre><p>Filter out any length scales in <code>s</code> that is smaller than <code>Δf</code>, storing the result back in <code>s</code>. <code>s</code> can be either a vector of complex positions, or a <code>Vortex.Sheet</code>.</p></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/sheets/surgery.jl#L327-L332">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Sheets.arclength" href="#PotentialFlow.Sheets.arclength"><code>PotentialFlow.Sheets.arclength</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">Sheets.arclength(s)</code></pre><p>Compute the polygonal arc length of <code>s</code>, where <code>s</code> can be either an vector of complex numbers or a <code>Vortex.Sheet</code>.</p><p><strong>Example</strong></p><p>```jldoctest julia&gt; sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2) Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2</p><p>julia&gt; Sheets.arclength(sheet) 1.0</p></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/sheets/surgery.jl#L197-L211">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Sheets.arclengths" href="#PotentialFlow.Sheets.arclengths"><code>PotentialFlow.Sheets.arclengths</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">Sheets.arclengths(s)</code></pre><p>Cumulative sum of the polygonal arc length of <code>s</code>, where <code>s</code> can be either an vector of complex numbers or a <code>Vortex.Sheet</code>.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; sheet = Vortex.Sheet(0:0.1:1, 0.0:10, 0.2)
+Vortex Sheet: L ≈ 1.0, Γ = 10.0, δ = 0.2
+
+julia&gt; Sheets.arclengths(sheet)
+11-element Array{Float64,1}:
+ 0.0
+ 0.1
+ 0.2
+ 0.3
+ 0.4
+ 0.5
+ 0.6
+ 0.7
+ 0.8
+ 0.9
+ 1.0</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/sheets/surgery.jl#L221-L247">source</a></section><h2><a class="nav-anchor" id="Methods-on-Plates-1" href="#Methods-on-Plates-1">Methods on Plates</a></h2><pre><code class="language-none">Plates.edges
+Plates.enforce_no_flow_through!
+Plates.vorticity_flux
+Plates.vorticity_flux!
+Plates.bound_circulation
+Plates.bound_circulation!
+Plates.rate_of_impulse
+Plates.force
+Plates.surface_pressure</code></pre><h2><a class="nav-anchor" id="Methods-on-Conformally-Mapped-Bodies-1" href="#Methods-on-Conformally-Mapped-Bodies-1">Methods on Conformally-Mapped Bodies</a></h2><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Bodies.enforce_no_flow_through!" href="#PotentialFlow.Bodies.enforce_no_flow_through!"><code>PotentialFlow.Bodies.enforce_no_flow_through!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">enforce_no_flow_through!(b::ConformalBody, motion, elements, t)</code></pre><p>Update the body, <code>b</code>, to enforce the no-flow-through condition given ambient vortex elements, <code>elements</code>, and while moving with kinematics specified by <code>motion</code>.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; p = Bodies.Polygon([-1.0,0.2,1.0,-1.0],[-1.0,-1.0,0.5,1.0])
+Polygon with 4 vertices at
+             (-1.0,-1.0) (0.2,-1.0) (1.0,0.5) (-1.0,1.0)
+             interior angles/π = [0.5, 0.656, 0.422, 0.422]
+
+julia&gt; b = Bodies.ConformalBody(p)
+Body generated by: Schwarz-Christoffel map of unit circle to exterior of polygon with 4 vertices
+
+  centroid at 0.0 + 0.0im
+  angle 0.0
+
+julia&gt; motion = RigidBodyMotion(1.0, 0.0);
+
+julia&gt; point = Vortex.Point(0.0 + 2im, 1.0);
+
+julia&gt; Bodies.enforce_no_flow_through!(b, motion, point, 0.0)
+
+julia&gt; b.img
+1-element Array{PotentialFlow.Points.Point,1}:
+ Vortex.Point(0.0 + 0.5im, -1.0)</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/bodies/boundary_conditions.jl#L1-L30">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Bodies.normal" href="#PotentialFlow.Bodies.normal"><code>PotentialFlow.Bodies.normal</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">normal(ζ,v,b::ConformalBody)</code></pre><p>Returns the normal component of the complex vector(s) <code>v</code> in the physical plane at a point(s) on the surface of body <code>b</code>. Each surface point is specified by its pre-image <code>ζ</code> on the unit circle. <code>v</code> and <code>ζ</code> can be arrays of points.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; p = Bodies.Polygon([-1.0,1.0,1.0,-1.0],[-1.0,-1.0,1.0,1.0]);
+
+julia&gt; b = Bodies.ConformalBody(p);
+
+julia&gt; Bodies.normal(exp(im*0),exp(im*π/4),b)
+0.7071067811865472</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/Bodies.jl#L121-L139">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Bodies.tangent" href="#PotentialFlow.Bodies.tangent"><code>PotentialFlow.Bodies.tangent</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">tangent(ζ,v,b::ConformalBody)</code></pre><p>Returns the (counter-clockwise) tangent component of the complex vector(s) <code>v</code> in the physical plane at a point(s) on the surface of body <code>b</code>. Each surface point is specified by its pre-image <code>ζ</code> on the unit circle. <code>v</code> and <code>ζ</code> can be arrays of points.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; p = Bodies.Polygon([-1.0,1.0,1.0,-1.0],[-1.0,-1.0,1.0,1.0]);
+
+julia&gt; b = Bodies.ConformalBody(p);
+
+julia&gt; Bodies.tangent(exp(im*0),exp(im*π/4),b)
+0.7071067811865478</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/Bodies.jl#L148-L166">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PotentialFlow.Bodies.transform_velocity!" href="#PotentialFlow.Bodies.transform_velocity!"><code>PotentialFlow.Bodies.transform_velocity!</code></a> — <span class="docstring-category">Function</span>.</div><div><div><pre><code class="language-none">transform_velocity!(wout, win, targets, body::ConformalBody)</code></pre><p>Transforms the velocity <code>win</code> in the circle plane of a conformal mapping to a velocity <code>wout</code> that can actually be used to transport the pre-images of elements in <code>targets</code> in this circle plane. This transformation applies the Routh correction and subtracts the relative motion of the <code>body</code>.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl">julia&gt; a1 = 1; b1 = 0.1; ccoeff = ComplexF64[0.5(a1+b1),0,0.5(a1-b1)];
+
+julia&gt; body = Bodies.ConformalBody(ccoeff);
+
+julia&gt; motion = RigidBodyMotion(0,0);
+
+julia&gt; points = Vortex.Point.([-2, 2], 1.0);
+
+julia&gt; Bodies.enforce_no_flow_through!(body, motion, points, 0);
+
+julia&gt; sys = (body,points);
+
+julia&gt; ẋ = (motion, allocate_velocity(points));
+
+julia&gt; self_induce_velocity!(ẋ, sys, 0)
+(Rigid Body Motion:
+  ċ = 0.0 + 0.0im
+  c̈ = 0.0 + 0.0im
+  α̇ = 0.0
+  α̈ = 0.0
+  Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.129977im, 0.0-0.129977im])
+
+julia&gt; Bodies.transform_velocity!(ẋ, ẋ, sys, body)
+(Rigid Body Motion:
+  ċ = 0.0 + 0.0im
+  c̈ = 0.0 + 0.0im
+  α̇ = 0.0
+  α̈ = 0.0
+  Constant (ċ = 0 + 0im, α̇ = 0), Complex{Float64}[0.0+0.785969im, 0.0-0.785969im])</code></pre><pre><code class="language-none">transform_velocity(win, target::ComplexF64, body::ConformalBody)</code></pre><p>Returns the velocity in the physical plane from the velocity <code>win</code> in the circle plane.</p><pre><code class="language-julia-repl">julia&gt; a1 = 1; b1 = 0.1; ccoeff = ComplexF64[0.5(a1+b1),0,0.5(a1-b1)];
+
+julia&gt; body = Bodies.ConformalBody(ccoeff,0.0+0.0im,π/4);
+
+julia&gt; motion = RigidBodyMotion(1,0);
+
+julia&gt; points = Vortex.Point.([-2, 2], 1.0);
+
+julia&gt; Bodies.enforce_no_flow_through!(body, motion, points, 0);
+
+julia&gt; sys = (body,points);
+
+julia&gt; ζ = exp(-im*π/4);
+
+julia&gt; w̃ = induce_velocity(ζ,sys,0);
+
+julia&gt; w = Bodies.transform_velocity(w̃,ζ,body)
+0.7497272298496697 - 0.3058889412948484im</code></pre></div></div><a class="source-link" target="_blank" href="https://github.com/darwindarak/PotentialFlow.jl/blob/d194f92a7af15031edb895aa4ab8528fc88024da/src/elements/Bodies.jl#L266-L332">source</a></section><h2><a class="nav-anchor" id="Index-1" href="#Index-1">Index</a></h2><ul><li><a href="#PotentialFlow.Bodies.ConformalBody"><code>PotentialFlow.Bodies.ConformalBody</code></a></li><li><a href="#PotentialFlow.Plates.Plate"><code>PotentialFlow.Plates.Plate</code></a></li><li><a href="#PotentialFlow.Source.Blob"><code>PotentialFlow.Source.Blob</code></a></li><li><a href="#PotentialFlow.Source.Point"><code>PotentialFlow.Source.Point</code></a></li><li><a href="#PotentialFlow.Vortex.Blob"><code>PotentialFlow.Vortex.Blob</code></a></li><li><a href="#PotentialFlow.Vortex.Point"><code>PotentialFlow.Vortex.Point</code></a></li><li><a href="#PotentialFlow.Vortex.Sheet"><code>PotentialFlow.Vortex.Sheet</code></a></li><li><a href="#PotentialFlow.Bodies.enforce_no_flow_through!"><code>PotentialFlow.Bodies.enforce_no_flow_through!</code></a></li><li><a href="#PotentialFlow.Bodies.normal"><code>PotentialFlow.Bodies.normal</code></a></li><li><a href="#PotentialFlow.Bodies.tangent"><code>PotentialFlow.Bodies.tangent</code></a></li><li><a href="#PotentialFlow.Bodies.transform_velocity!"><code>PotentialFlow.Bodies.transform_velocity!</code></a></li><li><a href="#PotentialFlow.Elements.circulation"><code>PotentialFlow.Elements.circulation</code></a></li><li><a href="#PotentialFlow.Elements.flux"><code>PotentialFlow.Elements.flux</code></a></li><li><a href="#PotentialFlow.Elements.position"><code>PotentialFlow.Elements.position</code></a></li><li><a href="#PotentialFlow.Plates.bound_circulation"><code>PotentialFlow.Plates.bound_circulation</code></a></li><li><a href="#PotentialFlow.Plates.bound_circulation!"><code>PotentialFlow.Plates.bound_circulation!</code></a></li><li><a href="#PotentialFlow.Plates.edges"><code>PotentialFlow.Plates.edges</code></a></li><li><a href="#PotentialFlow.Plates.enforce_no_flow_through!"><code>PotentialFlow.Plates.enforce_no_flow_through!</code></a></li><li><a href="#PotentialFlow.Plates.force"><code>PotentialFlow.Plates.force</code></a></li><li><a href="#PotentialFlow.Plates.rate_of_impulse"><code>PotentialFlow.Plates.rate_of_impulse</code></a></li><li><a href="#PotentialFlow.Plates.vorticity_flux"><code>PotentialFlow.Plates.vorticity_flux</code></a></li><li><a href="#PotentialFlow.Plates.vorticity_flux!"><code>PotentialFlow.Plates.vorticity_flux!</code></a></li><li><a href="#PotentialFlow.Sheets.append_segment!"><code>PotentialFlow.Sheets.append_segment!</code></a></li><li><a href="#PotentialFlow.Sheets.arclength"><code>PotentialFlow.Sheets.arclength</code></a></li><li><a href="#PotentialFlow.Sheets.arclengths"><code>PotentialFlow.Sheets.arclengths</code></a></li><li><a href="#PotentialFlow.Sheets.filter!"><code>PotentialFlow.Sheets.filter!</code></a></li><li><a href="#PotentialFlow.Sheets.filter_position!"><code>PotentialFlow.Sheets.filter_position!</code></a></li><li><a href="#PotentialFlow.Sheets.redistribute_points!"><code>PotentialFlow.Sheets.redistribute_points!</code></a></li><li><a href="#PotentialFlow.Sheets.remesh"><code>PotentialFlow.Sheets.remesh</code></a></li><li><a href="#PotentialFlow.Sheets.remesh!"><code>PotentialFlow.Sheets.remesh!</code></a></li><li><a href="#PotentialFlow.Sheets.split!"><code>PotentialFlow.Sheets.split!</code></a></li><li><a href="#PotentialFlow.Sheets.truncate!"><code>PotentialFlow.Sheets.truncate!</code></a></li></ul><footer><hr/><a class="previous" href="../quickstart/"><span class="direction">Previous</span><span class="title">Getting Started</span></a><a class="next" href="../velocities/"><span class="direction">Next</span><span class="title">Computing Velocities</span></a></footer></article></body></html>
