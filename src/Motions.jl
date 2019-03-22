@@ -237,6 +237,10 @@ function reset_velocity!(m::RigidBodyMotion, src)
     m
 end
 
+function reset_velocity!(ẋ::ComplexF64,src)
+    ẋ = zero(ComplexF64)
+end
+
 """
     advect(src::Element, velocity::ComplexF64, Δt)
 

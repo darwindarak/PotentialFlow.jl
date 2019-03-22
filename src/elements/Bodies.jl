@@ -225,6 +225,11 @@ function allocate_velocity(::ConformalBody)
     RigidBodyMotion(0.0, 0.0)
 end
 
+function allocate_velocity(::ConformalBody)
+    @warn("Body kinematics should be initialized manually.  This simply returns a stationary motion")
+    RigidBodyMotion(0.0, 0.0)
+end
+
 function self_induce_velocity!(motion, ::ConformalBody, t)
     motion.ċ, motion.c̈, motion.α̇ = motion.kin(t)
     motion
@@ -370,7 +375,13 @@ function transform_velocity!(wout,win,targ::ConformalBody,b::ConformalBody)
     wout = win
 end
 
+function transform_velocity!(wout,win,targ::Freestream,b::ConformalBody)
+    wout = win
+end
+
 transform_velocity!(wout,win,sheet::Sheet,b) = transform_velocity!(wout,win,sheet.blobs,b)
+
+
 
 include("bodies/boundary_conditions.jl")
 
@@ -449,6 +460,11 @@ function advect!(body₊::ConformalBody, body₋::ConformalBody, ṗ::RigidBodyM
     @. body₊.zs = rigid_transform(m.z,ComplexF64(c),α)
 
     return body₊
+end
+
+function advect!(f₊::Freestream,f₋::Freestream,w::ComplexF64, Δt)
+  f₊ = advect(f₋::Freestream, w, Δt)
+  return f₊
 end
 
 advect(f₋::Freestream, w::ComplexF64, Δt) = Freestream(f₋.U+w*Δt)

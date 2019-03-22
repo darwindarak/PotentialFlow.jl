@@ -21,6 +21,6 @@ Elements.flux(::Freestream) = 0.0
 
 Motions.self_induce_velocity!(vel, f::Freestream, t) = nothing
 
-Motions.allocate_velocity(::Freestream) = nothing
+Motions.allocate_velocity(::Freestream) = ComplexF64
 
 end
