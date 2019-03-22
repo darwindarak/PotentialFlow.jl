@@ -474,12 +474,14 @@ function Elements.impulse(body::ConformalBody)
 
   imp = impv[1]+im*impv[2]
   for v in img
-    ζ = image(v.z,body) # image of the img (outside of circle)
-    Γ = -v.S # strength of vortex
-    # the last terms cancel the direct contribution from
-    # the vortex, which is calculated from vortex
-    # position in inertial coordinates
-    imp += im*Γ*(m.ps.ccoeff[1]*(v.z-ζ)+(m(ζ)+c̃))
+    if typeof(v) <: Points.Point
+      ζ = image(v.z,body) # image of the img (outside of circle)
+      Γ = -v.S # strength of vortex
+      # the last terms cancel the direct contribution from
+      # the vortex, which is calculated from vortex
+      # position in inertial coordinates
+      imp += im*Γ*(m.ps.ccoeff[1]*(v.z-ζ)+(m(ζ)+c̃))
+    end
   end
 
   return imp*exp(im*α)
