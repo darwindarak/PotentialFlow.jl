@@ -225,11 +225,6 @@ function allocate_velocity(::ConformalBody)
     RigidBodyMotion(0.0, 0.0)
 end
 
-function allocate_velocity(::ConformalBody)
-    @warn("Body kinematics should be initialized manually.  This simply returns a stationary motion")
-    RigidBodyMotion(0.0, 0.0)
-end
-
 function self_induce_velocity!(motion, ::ConformalBody, t)
     motion.ċ, motion.c̈, motion.α̇ = motion.kin(t)
     motion
