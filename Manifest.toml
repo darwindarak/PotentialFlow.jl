@@ -337,6 +337,12 @@ git-tree-sha1 = "4220ceea71186db2bb45cb817984c99e563f3662"
 uuid = "f9640e96-87f6-5992-9c3b-0743c6a49ffa"
 version = "1.4.0"
 
+[[NBInclude]]
+deps = ["Compat", "JSON", "SoftGlobalScope"]
+git-tree-sha1 = "9881dd75c83eba704798dfd7185770c29ac720f8"
+uuid = "0db19996-df87-5ea3-a455-e3a50d440464"
+version = "2.1.0"
+
 [[NLSolversBase]]
 deps = ["Calculus", "DiffEqDiffTools", "DiffResults", "Distributed", "ForwardDiff", "LinearAlgebra", "Random", "SparseArrays", "Test"]
 git-tree-sha1 = "0c6f0e7f2178f78239cfb75310359eed10f2cacb"
@@ -473,6 +479,12 @@ uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
 
 [[Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
+
+[[SoftGlobalScope]]
+deps = ["Test"]
+git-tree-sha1 = "012661b70364840fcd380912d878d96f7bf95ff3"
+uuid = "b85f4697-e234-5449-a836-ec8e2f98b302"
+version = "1.0.10"
 
 [[SparseArrays]]
 deps = ["LinearAlgebra", "Random"]
