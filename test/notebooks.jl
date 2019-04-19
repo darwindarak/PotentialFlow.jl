@@ -5,8 +5,8 @@ using NBInclude
                  "Point Source Demo",
                  "Translating Plate - 20°",
                  "Translating Plate - 60°",
-                 "Vortex Sheet Roll-up"
-                 "Moving Bodies"
+                 "Vortex Sheet Roll-up",
+                 "Moving Bodies",
                  "Airfoil in uniform flow"]
 
     notebook_dir = joinpath(splitdir(@__FILE__())[1], "../binder/notebooks")
