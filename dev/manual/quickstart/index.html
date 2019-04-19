@@ -99,7 +99,7 @@ induce_velocity!(vels[1], vortices, sources)
 induce_velocity!(vels[2], sources, vortices)
 induce_velocity!(vels[2], sources, sources)</code></pre><p>This becomes difficult to keep track of when <code>sys</code> gets larger or more complicated (e.g. nested collection of elements). Instead, we can use the <code>self_induce_velocity!</code> function, which takes care of applying all the pairwise interactions (recursively if need be):</p><pre><code class="language-julia-repl">julia&gt; reset_velocity!(vels, sys);
 
-julia&gt; self_induce_velocity!(vels, sys, 0.0);</code></pre><h2><a class="nav-anchor" id="Time-Marching-1" href="#Time-Marching-1">Time Marching</a></h2><div></div><p>Now that we compute the velocities of a system of vortex elements, we can march the system forward in time to simulate its behavior. As an example, we will simulate of two clusters of vortex blobs merging.</p><div><pre><code class="language-julia">N = 200
+julia&gt; self_induce_velocity!(vels, sys, 0.0);</code></pre><h2><a class="nav-anchor" id="Time-Marching-1" href="#Time-Marching-1">Time Marching</a></h2><div></div><p>Now that we compute the velocities of a system of vortex elements, we can march the system forward in time to simulate its behavior. As an example, we will simulate of two clusters of vortex blobs merging.</p><pre><code class="language-julia">N = 200
 zs = Complex.(0.5randn(N), 0.5randn(N))
 Γs  = @. exp(-4abs2(zs))
 cluster₁ = Vortex.Blob.(zs .+ 1, Γs, 0.01)
@@ -107,10 +107,10 @@ cluster₂ = Vortex.Blob.(zs .- 1, Γs, 0.01)
 
 sys = (cluster₁, cluster₂)
 vels = allocate_velocity(sys)
-plot(sys, color = :reds, clim = (0, 1))</code></pre></div><object data="initial_clusters.svg" type="image/svg+xml"></object><p>Given an array or tuple of vortex elements and their velocities, we can compute their positions after some time interval with the <code>advect!(x₊, x, ẋ, Δt)</code> function, where</p><ul><li><code>x₊</code> is where the new states are stored</li><li><code>x</code> is the current state</li><li><code>Δt</code> is the time interval</li><li><code>ẋ</code> is the velocity.</li></ul><p>In our case, we will let <code>x₊</code> and <code>x</code> both be set to <code>sys</code>:</p><div><pre><code class="language-julia">Δt = 0.01
+plot(sys, color = :reds, clim = (0, 1))</code></pre><object data="initial_clusters.svg" type="image/svg+xml"></object><p>Given an array or tuple of vortex elements and their velocities, we can compute their positions after some time interval with the <code>advect!(x₊, x, ẋ, Δt)</code> function, where</p><ul><li><code>x₊</code> is where the new states are stored</li><li><code>x</code> is the current state</li><li><code>Δt</code> is the time interval</li><li><code>ẋ</code> is the velocity.</li></ul><p>In our case, we will let <code>x₊</code> and <code>x</code> both be set to <code>sys</code>:</p><pre><code class="language-julia">Δt = 0.01
 for t in 0:Δt:1.0
     reset_velocity!(vels, sys)
     self_induce_velocity!(vels, sys, t)
     advect!(sys, sys, vels, Δt)
 end
-plot(sys, color = :reds, clim = (0, 1))</code></pre></div><object data="final_clusters.svg" type="image/svg+xml"></object><footer><hr/><a class="previous" href="../../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../elements/"><span class="direction">Next</span><span class="title">Elements</span></a></footer></article></body></html>
+plot(sys, color = :reds, clim = (0, 1))</code></pre><object data="final_clusters.svg" type="image/svg+xml"></object><footer><hr/><a class="previous" href="../../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../elements/"><span class="direction">Next</span><span class="title">Elements</span></a></footer></article></body></html>
