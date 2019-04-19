@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Getting Started · PotentialFlow.jl</title><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link href="../../assets/documenter.css" rel="stylesheet" type="text/css"/><link href="../../assets/custom.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>PotentialFlow.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../../">Home</a></li><li><span class="toctext">Manual</span><ul><li class="current"><a class="toctext" href>Getting Started</a><ul class="internal"><li><a class="toctext" href="#Creating-Flow-Elements-1">Creating Flow Elements</a></li><li><a class="toctext" href="#Computing-Velocities-1">Computing Velocities</a></li><li><a class="toctext" href="#Time-Marching-1">Time Marching</a></li></ul></li><li><a class="toctext" href="../elements/">Elements</a></li><li><a class="toctext" href="../velocities/">Computing Velocities</a></li><li><a class="toctext" href="../timemarching/">Time Marching</a></li><li><a class="toctext" href="../noflowthrough/">Enforcing No-Flow-Through</a></li><li><a class="toctext" href="../motions/">Plate Motions</a></li></ul></li><li><span class="toctext">Internals</span><ul><li><a class="toctext" href="../../internals/properties/">Handing Pairwise Interactions</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li>Manual</li><li><a href>Getting Started</a></li></ul><a class="edit-page" href="https://github.com/darwindarak/PotentialFlow.jl/blob/master/docs/src/manual/quickstart.md"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Getting Started</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="getting-started-1" href="#getting-started-1">Getting Started</a></h1><p>This getting started guide will introduce the main components of <strong>PotentialFlow.jl</strong>. The code examples here should be directly copy-paste-able into the Julia REPL (even with the <code>julia&gt;</code> prompt and sample results).</p><h2><a class="nav-anchor" id="Creating-Flow-Elements-1" href="#Creating-Flow-Elements-1">Creating Flow Elements</a></h2><p>We start by importing the library and creating a single point vortex with unit circulation located at (1,1):</p><pre><code class="language-julia-repl">julia&gt; using PotentialFlow
+
+julia&gt; p = Vortex.Point( 1.0 + 1.0im, 1.0 )
+Vortex.Point(1.0 + 1.0im, 1.0)</code></pre><p>By convention, the arguments for element constructors are position(s), circulation/strength(s), followed by any type specific parameters. For example, a vortex blob at the same location as <code>p</code> with a blob radius of 0.1 is created with</p><pre><code class="language-julia-repl">julia&gt; Vortex.Blob(1.0 + 1.0im, 1.0, 0.1)
+Vortex.Blob(1.0 + 1.0im, 1.0, 0.1)</code></pre><p>We can use Julia&#39;s <a href="https://docs.julialang.org/en/latest/manual/functions.html#man-vectorized-1">vectorized dot syntax</a> to construct whole arrays of elements. For example, here we create five point vortices and five point sources:</p><pre><code class="language-julia-repl">julia&gt; N = 5;
+
+julia&gt; zs = Complex.(randn(N), randn(N));
+
+julia&gt; vortices = Vortex.Point.(zs .+ 1.5, rand(N))
+5-element Array{PotentialFlow.Points.Point{Float64},1}:
+ Vortex.Point(1.7972879845354617 + 0.31111133849833383im, 0.42471785049513144)
+ Vortex.Point(1.882395967790608 + 2.2950878238373105im, 0.773223048457377)
+ Vortex.Point(0.9023655232717689 - 2.2670863488005306im, 0.2811902322857298)
+ Vortex.Point(1.4895547553626243 + 0.5299655761667461im, 0.20947237319807077)
+ Vortex.Point(0.660973145611236 + 0.43142152642291204im, 0.25137920979222494)
+
+julia&gt; sources = Source.Point.(zs .- 1.5, rand(N))
+5-element Array{PotentialFlow.Points.Point{Complex{Float64}},1}:
+ Source.Point(-1.2027120154645383 + 0.31111133849833383im, 0.02037486871266725)
+ Source.Point(-1.117604032209392 + 2.2950878238373105im, 0.2877015122756894)
+ Source.Point(-2.0976344767282313 - 2.2670863488005306im, 0.859512136087661)
+ Source.Point(-1.5104452446373757 + 0.5299655761667461im, 0.07695088688120899)
+ Source.Point(-2.339026854388764 + 0.43142152642291204im, 0.6403962459899388)
+</code></pre><p>We can mix different vortex types together by grouping them in tuples. For example, a collection of vortex elements consisting of the point vortices and vortex blobs created earlier can be grouped together with:</p><pre><code class="language-julia-repl">julia&gt; sys = (vortices, sources);</code></pre><div class="admonition note"><div class="admonition-title">Note</div><div class="admonition-text"><p>The Unicode characters used in the examples can be entered in the Julia REPL (and most text editors with the appropriate plugins) via <a href="https://docs.julialang.org/en/latest/manual/unicode-input.html#Unicode-Input-1">tab completion.</a>.  For example:</p><ul><li>Γ: <code>\Gamma&lt;TAB&gt;</code></li><li>Δ: <code>\Delta&lt;TAB&gt;</code></li><li>ẋ: <code>x\dot&lt;TAB&gt;</code></li><li>🌀: <code>\:cyclone:&lt;TAB&gt;</code></li></ul></div></div><p>We can access properties of any vortex element by directly accessing its fields, for example:</p><pre><code class="language-julia-repl">julia&gt; p.z
+1.0 + 1.0im
+</code></pre><p>However, it is better practice to use accessor methods, such as:</p><pre><code class="language-julia-repl">julia&gt; Elements.position(p)
+1.0 + 1.0im
+</code></pre><p>since not all element types store their position in a <code>z</code> field but they are all required to implement a <code>Elements.position</code> method (also see <code>Elements.impulse</code> and <code>Elements.position</code>). These accessor methods, combined with the dot syntax, also make it easier to work with properties of arrays and tuples of vortex elements.</p><pre><code class="language-julia-repl">julia&gt; Elements.circulation(vortices)
+1.939982714228534
+
+julia&gt; Elements.circulation(sources)
+0.0
+
+julia&gt; Elements.circulation(sys)
+1.939982714228534
+
+julia&gt; Elements.circulation.(vortices)
+5-element Array{Float64,1}:
+ 0.42471785049513144
+ 0.773223048457377
+ 0.2811902322857298
+ 0.20947237319807077
+ 0.25137920979222494
+
+julia&gt; Elements.position.(sources)
+5-element Array{Complex{Float64},1}:
+ -1.2027120154645383 + 0.31111133849833383im
+  -1.117604032209392 + 2.2950878238373105im
+ -2.0976344767282313 - 2.2670863488005306im
+ -1.5104452446373757 + 0.5299655761667461im
+  -2.339026854388764 + 0.43142152642291204im
+</code></pre><h2><a class="nav-anchor" id="Computing-Velocities-1" href="#Computing-Velocities-1">Computing Velocities</a></h2><p>Now that we can create potential flow elements, we want to add in some dynamics. The key functions for this are the <code>induce_velocity</code> and <code>induce_velocity!</code> pair and <code>self_induce_velocity!</code>.</p><p><code>induce_velocity(target, source, t)</code> computes the complex velocity that a vortex element(s) source induces on a target at time <code>t</code>. The target can be</p><ul><li><p>a complex position</p><pre><code class="language-julia-repl">julia&gt; induce_velocity(0.0 + 0.0im , vortices, 0.0)
+0.05610938572529216 - 0.1319030126670981im
+
+julia&gt; induce_velocity(0.0 + 0.0im , sys, 0.0)
+0.14592914759546077 - 0.1264803675281937im
+</code></pre></li><li><p>a vortex element</p><pre><code class="language-julia-repl">julia&gt; induce_velocity(p, sys, 0.0)
+-0.004302294537820467 - 0.07805396403126988im
+</code></pre></li><li><p>an array/tuple of vortex elements</p><pre><code class="language-julia-repl">julia&gt; induce_velocity(vortices, sources, 0.0)
+5-element Array{Complex{Float64},1}:
+  0.06454384396015585 + 0.007898382618214123im
+ 0.053907048316969616 + 0.02790291832733651im
+   0.0706678480701265 - 0.02711822881988212im
+  0.06764122439359754 + 0.011120627964923711im
+  0.07894704527850091 + 0.01178636990942516im
+
+julia&gt; induce_velocity(sources, sys, 0.0)
+5-element Array{Complex{Float64},1}:
+    0.1406920003437716 - 0.09680661285216872im
+ -0.003388443511578354 - 0.004829334922251807im
+   0.03508222004503095 - 0.10591880362792691im
+    0.1221234594021031 - 0.04477695050245835im
+  -0.02942885432058654 - 0.03924892616438964im
+</code></pre></li></ul><p>The in-place version, <code>induce_velocity!(velocities, targets, source, t)</code>, computes the velocity and writes the results into a pre-allocated data structure. For example:</p><pre><code class="language-julia-repl">julia&gt; vel_vortices = zeros(ComplexF64, length(vortices))
+5-element Array{Complex{Float64},1}:
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+ 0.0 + 0.0im
+
+julia&gt; induce_velocity!(vel_vortices, vortices, sources, 0.0);
+
+julia&gt; vel_vortices
+5-element Array{Complex{Float64},1}:
+  0.06454384396015585 + 0.007898382618214123im
+ 0.053907048316969616 + 0.02790291832733651im
+   0.0706678480701265 - 0.02711822881988212im
+  0.06764122439359754 + 0.011120627964923711im
+  0.07894704527850091 + 0.01178636990942516im
+</code></pre><p>To make it easier to allocate velocities for more complex collections of vortex elements, the library provides the <code>allocate_velocity</code> function:</p><pre><code class="language-julia-repl">julia&gt; vels = allocate_velocity(sys);
+
+julia&gt; typeof(vels)
+Tuple{Array{Complex{Float64},1},Array{Complex{Float64},1}}</code></pre><p>The code above created a tuple containing two arrays of velocities, corresponding to the structure of <code>sys</code>. Similarly, there is also the <code>reset_velocity!(velocities, sources)</code> function, which resizes the entries in <code>velocities</code> to match the structure of <code>sources</code> if necessary, then sets all velocities to zero. We can compute the velocity that a source induces on the entire points/blobs system with:</p><pre><code class="language-julia-repl">julia&gt; src = Vortex.Point(1.0, 1.0);
+</code></pre><p>If we want the velocity that the points/blobs system induces on itself, we can call</p><pre><code class="language-julia">reset_velocity!(vels, sys)
+induce_velocity!(vels[1], vortices, vortices)
+induce_velocity!(vels[1], vortices, sources)
+induce_velocity!(vels[2], sources, vortices)
+induce_velocity!(vels[2], sources, sources)</code></pre><p>This becomes difficult to keep track of when <code>sys</code> gets larger or more complicated (e.g. nested collection of elements). Instead, we can use the <code>self_induce_velocity!</code> function, which takes care of applying all the pairwise interactions (recursively if need be):</p><pre><code class="language-julia-repl">julia&gt; reset_velocity!(vels, sys);
+
+julia&gt; self_induce_velocity!(vels, sys, 0.0);</code></pre><h2><a class="nav-anchor" id="Time-Marching-1" href="#Time-Marching-1">Time Marching</a></h2><div></div><p>Now that we compute the velocities of a system of vortex elements, we can march the system forward in time to simulate its behavior. As an example, we will simulate of two clusters of vortex blobs merging.</p><pre><code class="language-julia">N = 200
+zs = Complex.(0.5randn(N), 0.5randn(N))
+Γs  = @. exp(-4abs2(zs))
+cluster₁ = Vortex.Blob.(zs .+ 1, Γs, 0.01)
+cluster₂ = Vortex.Blob.(zs .- 1, Γs, 0.01)
+
+sys = (cluster₁, cluster₂)
+vels = allocate_velocity(sys)
+plot(sys, color = :reds, clim = (0, 1))</code></pre><object data="initial_clusters.svg" type="image/svg+xml"></object><p>Given an array or tuple of vortex elements and their velocities, we can compute their positions after some time interval with the <code>advect!(x₊, x, ẋ, Δt)</code> function, where</p><ul><li><code>x₊</code> is where the new states are stored</li><li><code>x</code> is the current state</li><li><code>Δt</code> is the time interval</li><li><code>ẋ</code> is the velocity.</li></ul><p>In our case, we will let <code>x₊</code> and <code>x</code> both be set to <code>sys</code>:</p><pre><code class="language-julia">Δt = 0.01
+for t in 0:Δt:1.0
+    reset_velocity!(vels, sys)
+    self_induce_velocity!(vels, sys, t)
+    advect!(sys, sys, vels, Δt)
+end
+plot(sys, color = :reds, clim = (0, 1))</code></pre><object data="final_clusters.svg" type="image/svg+xml"></object><footer><hr/><a class="previous" href="../../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../elements/"><span class="direction">Next</span><span class="title">Elements</span></a></footer></article></body></html>
