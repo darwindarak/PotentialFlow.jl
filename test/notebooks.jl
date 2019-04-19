@@ -6,7 +6,7 @@ using NBInclude
                  "Translating Plate - 20°",
                  "Translating Plate - 60°",
                  "Vortex Sheet Roll-up",
-                 "Moving Bodies",
+                 "Moving bodies",
                  "Airfoil in uniform flow"]
 
     notebook_dir = joinpath(splitdir(@__FILE__())[1], "../binder/notebooks")
