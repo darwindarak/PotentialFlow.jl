@@ -61,6 +61,7 @@ We'll create a stationary flat plate (bound vortex sheet) and place it in a free
 In order to enforce the Kutta condition, we also place a starting vortex at `-Inf`.
 ```@example plate-kutta
 using PotentialFlow
+using PotentialFlow.Freestreams
 using Plots
 
 c₀ = 0.0im # initial centroid position

@@ -376,8 +376,6 @@ end
 
 transform_velocity!(wout,win,sheet::Sheet,b) = transform_velocity!(wout,win,sheet.blobs,b)
 
-
-
 include("bodies/boundary_conditions.jl")
 
 function Elements.streamfunction(ζ::ComplexF64, b::ConformalBody)
