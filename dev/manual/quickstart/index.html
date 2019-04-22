@@ -107,10 +107,10 @@ cluster₂ = Vortex.Blob.(zs .- 1, Γs, 0.01)
 
 sys = (cluster₁, cluster₂)
 vels = allocate_velocity(sys)
-plot(sys, color = :reds, clim = (0, 1))</code></pre><object data="manual/initial_clusters.svg" type="image/svg+xml"></object><p>Given an array or tuple of vortex elements and their velocities, we can compute their positions after some time interval with the <code>advect!(x₊, x, ẋ, Δt)</code> function, where</p><ul><li><code>x₊</code> is where the new states are stored</li><li><code>x</code> is the current state</li><li><code>Δt</code> is the time interval</li><li><code>ẋ</code> is the velocity.</li></ul><p>In our case, we will let <code>x₊</code> and <code>x</code> both be set to <code>sys</code>:</p><pre><code class="language-julia">Δt = 0.01
+plot(sys, color = :reds, clim = (0, 1))</code></pre><object data="../../manual/initial_clusters.svg" type="image/svg+xml"></object><p>Given an array or tuple of vortex elements and their velocities, we can compute their positions after some time interval with the <code>advect!(x₊, x, ẋ, Δt)</code> function, where</p><ul><li><code>x₊</code> is where the new states are stored</li><li><code>x</code> is the current state</li><li><code>Δt</code> is the time interval</li><li><code>ẋ</code> is the velocity.</li></ul><p>In our case, we will let <code>x₊</code> and <code>x</code> both be set to <code>sys</code>:</p><pre><code class="language-julia">Δt = 0.01
 for t in 0:Δt:1.0
     reset_velocity!(vels, sys)
     self_induce_velocity!(vels, sys, t)
     advect!(sys, sys, vels, Δt)
 end
-plot(sys, color = :reds, clim = (0, 1))</code></pre><object data="manual/final_clusters.svg" type="image/svg+xml"></object><footer><hr/><a class="previous" href="../../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../elements/"><span class="direction">Next</span><span class="title">Elements</span></a></footer></article></body></html>
+plot(sys, color = :reds, clim = (0, 1))</code></pre><object data="../../manual/final_clusters.svg" type="image/svg+xml"></object><footer><hr/><a class="previous" href="../../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../elements/"><span class="direction">Next</span><span class="title">Elements</span></a></footer></article></body></html>
