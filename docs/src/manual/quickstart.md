@@ -229,7 +229,7 @@ plot(sys, color = :reds, clim = (0, 1))
 savefig("initial_clusters.svg"); nothing # hide
 ```
 ```@raw html
-<object data="initial_clusters.svg" type="image/svg+xml"></object>
+<object data="manual/initial_clusters.svg" type="image/svg+xml"></object>
 ```
 
 Given an array or tuple of vortex elements and their velocities, we can compute their positions after some time interval with the `advect!(x₊, x, ẋ, Δt)` function, where
@@ -249,5 +249,5 @@ plot(sys, color = :reds, clim = (0, 1))
 savefig("final_clusters.svg"); nothing # hide
 ```
 ```@raw html
-<object data="final_clusters.svg" type="image/svg+xml"></object>
+<object data="manual/final_clusters.svg" type="image/svg+xml"></object>
 ```

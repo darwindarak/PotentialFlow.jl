@@ -222,7 +222,7 @@ include("plates/boundary_conditions.jl")
 include("plates/circulation.jl")
 include("plates/force.jl")
 
-raw"""
+@doc raw"""
     surface_pressure(plate, motion, te_sys, Γs₋, Δt)
 
 Compute the pressure difference across the plate along Chebyshev nodes.

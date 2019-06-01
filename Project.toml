@@ -1,0 +1,30 @@
+name = "PotentialFlow"
+uuid = "73af2aaf-3f58-5b29-82a9-435ecf827f5b"
+authors = ["Darwin Darakananda <darwindarak@gmail.com>", "Jeff Eldredge <jdeldre@g.ucla.edu>"]
+repo = "https://github.com/darwindarak/PotentialFlow.jl.git"
+version = "0.1.4"
+
+[deps]
+ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
+DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+Future = "9fa8497b-333b-5362-9e8d-4d0656e87820"
+Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
+MappedArrays = "dbb5928d-eab1-5f90-85c2-b9b0edb7c900"
+PlotUtils = "995b91a9-d308-5afd-9ec6-746e21dbc043"
+RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SchwarzChristoffel = "6e93f119-a087-51f0-a155-b73ce4943121"
+
+[extras]
+NBInclude = "0db19996-df87-5ea3-a455-e3a50d440464"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
+
+[targets]
+test = ["Test", "NBInclude", "Plots", "Statistics", "PyPlot"]

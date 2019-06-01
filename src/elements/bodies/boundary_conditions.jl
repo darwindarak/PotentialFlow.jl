@@ -24,7 +24,7 @@ julia> point = Vortex.Point(0.0 + 2im, 1.0);
 julia> Bodies.enforce_no_flow_through!(b, motion, point, 0.0)
 
 julia> b.img
-1-element Array{PotentialFlow.Points.Point,1}:
+1-element Array{Element,1}:
  Vortex.Point(0.0 + 0.5im, -1.0)
 ```
 """
@@ -45,7 +45,8 @@ Elements.image(z::ComplexF64,b::ConformalBody) = 1.0/conj(z)
 
 Elements.image(s::T,b::ConformalBody) where T <: Union{Blob,Point} = Elements.image(s.z,b)
 
-
+# TODO: The `get_image` functions are causing some type instability
+# might have to fix it later
 function get_image!(b::ConformalBody, sources::T) where T <: Union{Tuple, AbstractArray}
     b.img = Elements.Element[]  #Points.Point[]
     for source in sources

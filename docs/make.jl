@@ -13,7 +13,7 @@ makedocs(
                      ],
         "Internals" => [ "internals/properties.md"]
     ],
-    assets = ["assets/custom.css"],
+    format = Documenter.HTML(assets = ["assets/custom.css"]),
 #   strict = true
 )
 

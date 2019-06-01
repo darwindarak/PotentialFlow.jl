@@ -51,8 +51,8 @@ julia> points = Vortex.Point.([1.0im, 2.0im], 1.0);
 
 julia> Elements.position.(points)
 2-element Array{Complex{Float64},1}:
- 0.0+1.0im
- 0.0+2.0im
+ 0.0 + 1.0im
+ 0.0 + 2.0im
 ```
 """
 @property begin
@@ -141,7 +141,7 @@ julia> Elements.flux(Vortex.Blob(rand(), rand(), rand()))
     stype = Float64
 end
 
-raw"""
+@doc raw"""
     Elements.impulse(src)
 
 Return the aerodynamic impulse of `src` about (0,0):
@@ -168,7 +168,7 @@ julia> Elements.impulse(sys)
     stype = ComplexF64
 end
 
-raw"""
+@doc raw"""
     Elements.angularimpulse(src)
 
 Return the aerodynamic angular impulse of `src` about (0,0):
@@ -201,7 +201,7 @@ end
     stype = Float64
 end
 
-raw"""
+@doc raw"""
     Elements.conftransform(src,body)
 
 Return the conformally transformed position of `src` via the transform defined
@@ -225,7 +225,7 @@ julia> Elements.conftransform(sys,b)
     stype = ComplexF64
 end
 
-raw"""
+@doc raw"""
     Elements.inverse_conftransform(src,body)
 
 Return the inverse conformally transformed position of `src` via the transform defined
@@ -250,7 +250,7 @@ julia> Elements.inverse_conftransform(sys,b)
 end
 
 
-raw"""
+@doc raw"""
     Elements.jacobian(src,body)
 
 Return the Jacobian of the conformal transform at the position of `src` via the transform defined
@@ -276,7 +276,7 @@ julia> Elements.jacobian(sys,b)
 end
 
 
-raw"""
+@doc raw"""
     Elements.image(src,body)
 
 Return the image position of `src` in the circle-plane representation of `body`.
