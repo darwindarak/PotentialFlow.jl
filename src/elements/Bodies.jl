@@ -15,7 +15,7 @@ using ..RigidBodyMotions
 
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
-                  self_induce_velocity!, allocate_velocity, advect!, advect, streamfunction
+                  self_induce_velocity!, allocate_velocity, advect!, advect, streamfunction, complexpotential
 import SchwarzChristoffel: Polygon, ExteriorMap, ConformalMap, PowerMap, addedmass,
                             InverseMap, DerivativeMap, coefficients
 
@@ -377,6 +377,27 @@ end
 transform_velocity!(wout,win,sheet::Sheet,b) = transform_velocity!(wout,win,sheet.blobs,b)
 
 include("bodies/boundary_conditions.jl")
+
+function Elements.complexpotential(ζ::ComplexF64, b::ConformalBody)
+  @get b (m, minv, c, α, ċ, α̇, img)
+  @get m (ps,)
+  @get ps (ccoeff,dcoeff)
+
+  #ζ = minv(z)
+  z̃ = m(ζ)
+
+  c̃̇ = ċ*exp(-im*α)
+
+  ζ⁻ˡ = 1/ζ
+  F = -c̃̇*conj(ccoeff[1])*ζ⁻ˡ + conj(c̃̇)*(z̃-ccoeff[1]*ζ-ccoeff[2]) - im*α̇*dcoeff[1]
+  for l = 2:length(dcoeff)
+      F -= im*α̇*dcoeff[l]*ζ⁻ˡ
+      ζ⁻ˡ /= ζ
+  end
+
+  return F + complexpotential(ζ,img)
+
+end
 
 function Elements.streamfunction(ζ::ComplexF64, b::ConformalBody)
   @get b (m, minv, c, α, ċ, α̇, img)

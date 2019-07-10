@@ -38,6 +38,9 @@ Elements.kind(::Type{Blob{T}}) where T = Singleton
 Elements.position(b::Blob) = b.z
 Elements.streamfunction(z::ComplexF64, b::Blob) = real(-0.5b.S*log(z - b.z)/π)
 
+Elements.complexpotential(z::ComplexF64, b::Blob) = -0.5im*b.S*log(z - b.z)/π
+
+
 blob_kernel(z, δ) = 0.5im*z/(π*(abs2(z) + δ^2))
 
 function induce_velocity(z::ComplexF64, b::Blob, t)

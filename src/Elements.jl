@@ -1,7 +1,7 @@
 module Elements
 
 export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction,
-       conftransform, inverse_conftransform, jacobian, image
+       complexpotential, conftransform, inverse_conftransform, jacobian, image
 
 using ..Properties
 
@@ -199,6 +199,12 @@ end
     signature = streamfunction(targ::Target, src::Source)
     preallocator = allocate_streamfunction
     stype = Float64
+end
+
+@property begin
+    signature = complexpotential(targ::Target, src::Source)
+    preallocator = allocate_complexpotential
+    stype = ComplexF64
 end
 
 @doc raw"""

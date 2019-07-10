@@ -167,15 +167,31 @@ function Elements.streamfunction(z::ComplexF64, p::Plate)
     z̃ = 2*(z - c)*exp(-im*α)/L
     J = z̃ - √(z̃ - 1)*√(z̃ + 1)
 
-    ψ  = -real(J)*2(A[0] - B₀)
-    ψ -= (log(abs(J)) + log(2))*(A[1] - B₁ + 2Γ/(π*L))
-    ψ -= (real(0.25J^2) - 0.5(log(abs(J)) + log(2)))*(A[1] - B₁)
+    ψ = -log(abs(J))*(2Γ/(π*L))
+    ψ -= real(J)*2(A[0] - B₀)
+    ψ -= real(0.5J^2)*(A[1] - B₁)
 
     for n in 2:N-1
-        ψ -= A[n]*0.5real(J^(n+1)/(n+1) - J^(n-1)/(n-1))
+        ψ -= A[n]*real(J^(n+1)/(n+1) - J^(n-1)/(n-1))
     end
 
-    return -ψ/4
+    return -ψ*L/4
+end
+
+function Elements.complexpotential(z::ComplexF64, p::Plate)
+    @get p (N, L, c, α, Γ, A, B₀, B₁)
+    z̃ = 2*(z - c)*exp(-im*α)/L
+    J = z̃ - √(z̃ - 1)*√(z̃ + 1)
+
+    ψ = log(J)*(2Γ/(π*L))
+    ψ += J*2(A[0] - B₀)
+    ψ += 0.5J^2*(A[1] - B₁)
+
+    for n in 2:N-1
+        ψ += A[n]*real(J^(n+1)/(n+1) - J^(n-1)/(n-1))
+    end
+
+    return im*ψ*L/4
 end
 
 function advect!(plate₊::Plate, plate₋::Plate, ṗ::RigidBodyMotion, Δt)

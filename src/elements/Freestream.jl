@@ -16,6 +16,8 @@ Motions.induce_velocity(f::Freestream, src, t) = nothing
 Motions.induce_velocity!(vel, f::Freestream, src, t) = nothing
 
 Elements.streamfunction(z::ComplexF64, f::Freestream) = -imag(f.U*z')
+Elements.complexpotential(z::ComplexF64, f::Freestream) = f.U'*z
+
 Elements.circulation(::Freestream) = 0.0
 Elements.flux(::Freestream) = 0.0
 
