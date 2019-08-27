@@ -125,7 +125,7 @@ end
     ()
 end
 
-@recipe function plot(c::Elements.Corner{N};radius=2.0) where {N}
+@recipe function plot(c::Corner{N};radius=2.0) where {N}
 
     θ0 = angle(c.n₀) - 0.5*N*π*c.ν
     θ1 = angle(c.n₀) + 0.5*N*π*c.ν

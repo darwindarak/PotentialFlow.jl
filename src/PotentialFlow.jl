@@ -45,7 +45,7 @@ include("elements/Corners.jl")
 import .Plates: Plate
 import .Bodies: ConformalBody
 
-
+import .Corners: Corner
 
 
 
