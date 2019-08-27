@@ -33,7 +33,7 @@ Elements.position(p::Point) = p.z
 
 Elements.streamfunction(z::ComplexF64, p::Point) = real(-0.5p.S*log(z - p.z)/π)
 
-Elements.complexpotential(z::ComplexF64, p::Point) = -0.5im*b.S*log(z - p.z)/π
+Elements.complexpotential(z::ComplexF64, p::Point) = -0.5im*p.S*log(z - p.z)/π
 
 
 cauchy_kernel(z) = z != zero(z) ? 0.5im/(π*conj(z)) : zero(z)
