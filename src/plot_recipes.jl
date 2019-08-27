@@ -125,6 +125,25 @@ end
     ()
 end
 
+@recipe function plot(c::Corner{N};radius=2.0) where {N}
+
+    θ0 = angle(c.n₀) - 0.5*N*π*c.ν
+    θ1 = angle(c.n₀) + 0.5*N*π*c.ν
+    θ = range(θ1-2π,θ0,length=197)
+    xv = [0;2*radius*cos.(θ);0]
+    yv = [0;2*radius*sin.(θ);0]
+    z = xv+im*yv
+
+    linecolor --> mygreen
+    fillrange --> 0
+    fillcolor --> mygreen
+    ratio --> 1
+    legend --> :none
+    x := real.(z)
+    y := imag.(z)
+    ()
+end
+
 const VortexSystem = NTuple{N, Union{Element, Tuple, Array{V} where {V <: Element}}} where N
 function RecipesBase.RecipesBase.apply_recipe(plotattributes::Dict{Symbol, Any}, sys::VortexSystem)
     series_list = RecipesBase.RecipeData[]
