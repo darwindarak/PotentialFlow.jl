@@ -22,7 +22,7 @@ include("TimeMarching.jl")
 #== Some Built-in Potential Flow Elements ==#
 
 export Vortex, Source, Sheets, Plates, Plate, Freestreams, Freestream,
-       Doublets, Doublet, Bodies, Corners, Corner
+       Doublets, Doublet, Bodies, Corners, Corner, Wedge
 
 include("elements/Points.jl")
 include("elements/Blobs.jl")
@@ -45,7 +45,7 @@ include("elements/Corners.jl")
 import .Plates: Plate
 import .Bodies: ConformalBody
 
-import .Corners: Corner
+import .Corners: Corner, Wedge
 
 
 

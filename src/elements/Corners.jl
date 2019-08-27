@@ -1,6 +1,6 @@
 module Corners
 
-export Corner
+export Corner, Wedge
 
 using ..Elements
 using ..Motions
