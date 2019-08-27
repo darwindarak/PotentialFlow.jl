@@ -33,7 +33,7 @@ Elements.streamfunction(z::ComplexF64, c::Corner) = imag(complexpotential(z,c))
 
 function Motions.induce_velocity(z::ComplexF64, c::Corner{N}, t) where {N}
     fact = exp(im*N*π/2)
-    return fact*c.σ*(z*c.n₀'/c.L).^(1/c.ν-1)*c.n₀'
+    return conj(fact*c.σ*(z*c.n₀'/c.L).^(1/c.ν-1)*c.n₀')
 end
 
 end

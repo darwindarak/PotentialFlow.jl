@@ -127,9 +127,9 @@ end
 
 @recipe function plot(c::Corner{N};radius=2.0) where {N}
 
-    θ0 = angle(c.n₀) - 0.5*N*π*c.ν
-    θ1 = angle(c.n₀) + 0.5*N*π*c.ν
-    θ = range(θ1-2π,θ0,length=197)
+    θ0 = angle(c) - 0.5*N*π*c.ν
+    θ1 = angle(c) + 0.5*N*π*c.ν
+    θ = range(θ1-2π,θ0,length=200)
     xv = [0;2*radius*cos.(θ);0]
     yv = [0;2*radius*sin.(θ);0]
     z = xv+im*yv
