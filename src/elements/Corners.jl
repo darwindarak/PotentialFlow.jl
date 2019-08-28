@@ -5,6 +5,23 @@ export Corner, Wedge
 using ..Elements
 using ..Motions
 
+"""
+    Corner{N} <: Elements.Element
+
+An immutable structure representing a corner (`N=1`)/wedge (`N=2`)
+
+## Fields
+
+- `σ::Real`: signed intensity
+- `ν::Real`: interior angle factor (angle is νπ)
+- `n₀::ComplexF64`: vector of bisector of interior angle
+- `L::Real` : characteristic length of corner
+
+## Constructors
+
+- `Corner(σ,ν,θ)` : set up a corner with a bisector at angle `θ` and length `L=1`
+- `Wedge(σ,ν,θ)`  : set up a wedge with a bisector at angle `θ` and length `L=1`
+"""
 struct Corner{N} <: Element
     σ::Real
     ν::Real
