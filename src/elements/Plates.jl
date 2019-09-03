@@ -188,7 +188,7 @@ function Elements.complexpotential(z::ComplexF64, p::Plate)
     ψ += 0.5J^2*(A[1] - B₁)
 
     for n in 2:N-1
-        ψ += A[n]*real(J^(n+1)/(n+1) - J^(n-1)/(n-1))
+        ψ += A[n]*(J^(n+1)/(n+1) - J^(n-1)/(n-1))
     end
 
     return im*ψ*L/4
