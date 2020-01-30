@@ -42,6 +42,7 @@ mutable struct RigidBodyMotion
 end
 
 RigidBodyMotion(ċ, α̇) = RigidBodyMotion(complex(ċ), 0.0im, float(α̇), 0.0, Constant(ċ, α̇))
+RigidBodyMotion(ċ, c̈, α̇, α̈) = RigidBodyMotion(complex(ċ), complex(c̈), float(α̇), float(α̈), UnsteadyTransRot(ċ, c̈, α̇, α̈))
 RigidBodyMotion(kin::Kinematics) = RigidBodyMotion(kin(0)..., kin)
 (m::RigidBodyMotion)(t) = m.kin(t)
 
@@ -66,6 +67,17 @@ end
 Constant(ċ, α̇) = Constant(complex(ċ), α̇)
 (c::Constant{C})(t) where C = c.ċ, zero(C), c.α̇, zero(C)
 show(io::IO, c::Constant) = print(io, "Constant (ċ = $(c.ċ), α̇ = $(c.α̇))")
+
+# Define Kinematic structure for unsteady translation and rotation 
+struct UnsteadyTransRot{C <: Complex, A <: Real} <: Kinematics
+    ċ::C
+    c̈::C
+    α̇::A
+    α̈::A
+end
+UnsteadyTransRot(ċ, c̈, α̇, α̈) = UnsteadyTransRot(complex(ċ), complex(c̈),  α̇, α̈)
+(c::UnsteadyTransRot{C})(t) where C = c.ċ, c.c̈, c.α̇ , c.α̈
+show(io::IO, c::UnsteadyTransRot) = print(io, "Unsteady translation and rotation  (ċ = $(c.ċ), c̈ = $(c.c̈), α̇ = $(c.α̇ ), α̈ = $(c.α̈)")
 
 """
     Pitchup <: Kinematics
