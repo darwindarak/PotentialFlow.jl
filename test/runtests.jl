@@ -1,7 +1,7 @@
 using Test
 
 using PotentialFlow
-using LinearAlgebra: norm, ⋅ 
+using LinearAlgebra: norm, ⋅
 
 @test isempty(detect_ambiguities(Vortex))
 

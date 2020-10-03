@@ -6,6 +6,7 @@ using Reexport
 
 include("Properties.jl")
 include("Utils.jl")
+include("forwarddiff.jl")
 
 include("Elements.jl")
 include("RigidBodyMotions.jl")
