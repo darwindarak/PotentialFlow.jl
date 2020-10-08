@@ -11,6 +11,9 @@ import ..Sheets
 
 #== Wrapper for a point vortex ==#
 
+@inline _promote_to_float(z) = promote_type(typeof(z),Float64)
+
+
 """
     Vortex.Point(z::ComplexF64, Γ::Float64)
 
@@ -31,7 +34,12 @@ julia> p(Γ = 2.0)
 Vortex.Point(1.0 + 0.0im, 2.0)
 ```
 """
-const Point = Points.Point{Float64}
+#const Point = Points.Point{Float64,Float64}
+const Point = Points.Point{Float64,R} where R<:Real
+Point(z::Complex{R},Γ::T) where {T<:Real,R<:Real} = Points.Point{T,R}(z,Γ)
+Point(z::Real,Γ::T) where {T<:Real} =
+    Points.Point{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),Γ)
+
 (p::Point)(; z = p.z, Γ = p.S) = Point(z, Γ)
 
 circulation(p::Point) = p.S
@@ -63,13 +71,19 @@ julia> b(Γ = 2.0, δ = 0.01)
 Vortex.Blob(1.0 + 0.0im, 2.0, 0.01)
 ```
 """
-const Blob = Blobs.Blob{Float64}
+#const Blob = Blobs.Blob{Float64,Float64}
+const Blob = Blobs.Blob{Float64,R} where R<:Real
+Blob(z::Complex{R},Γ::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{T,R}(z,Γ,δ)
+Blob(z::Real,Γ::T,δ) where {T<:Real} =
+    Blobs.Blob{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),Γ,δ)
+
+
 (b::Blob)(; z = b.z, Γ = b.S, δ = b.δ) = Blob(z, Γ, δ)
 
 circulation(b::Blob) = b.S
 flux(::Blob) = 0.0
 impulse(b::Blob) = -im*b.z*b.S
-angularimpulse(b::Blob) = 0.5*b.z*conj(b.z)*b.S
+angularimpulse(b::Blob) = -0.5*b.z*conj(b.z)*b.S
 Base.show(io::IO, s::Blob) = print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ))")
 
 #== Wrapper for a vortex sheet ==#
@@ -91,7 +105,7 @@ A vortex sheet represented by vortex blob control points
 - `Vortex.Sheet(blobs, Γs, δ)`
 - `Vortex.Sheet(zs, Γs, δ)` where `zs` is an array of positions for the control points
 """
-const Sheet = Sheets.Sheet{Float64}
+const Sheet = Sheets.Sheet{Float64,R} where R<:Real
 Sheet(blobs::Vector{Blob}, Ss::AbstractVector{Float64}, δ::Float64) = Sheets.Sheet(blobs, Ss, δ)
 Sheet(zs::AbstractVector,  Ss::AbstractVector{Float64}, δ::Float64) = Sheets.Sheet(zs, Ss, δ)
 

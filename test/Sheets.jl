@@ -27,7 +27,7 @@
         @test wb ≈ ws
         @test wb ≈ induce_velocity(sheet, sheet, 0)
 
-        sheet₊ = Vortex.Sheet(Vector{Vortex.Blob}(undef, 10), rand(10), 0.0)
+        sheet₊ = Vortex.Sheet(Vector{Vortex.Blob{Float64}}(undef, 10), rand(10), 0.0)
         Δt = 1e-2
         advect!(sheet₊, sheet, ws, Δt)
         advect!(sheet, sheet, ws, Δt)

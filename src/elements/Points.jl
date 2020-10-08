@@ -8,7 +8,7 @@ import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_veloci
 #== Type definition ==#
 
 """
-    Point{T} <: Elements.Element
+    Point{T,R} <: Elements.Element
 
 An immutable structure representing a point source/vortex
 
@@ -17,19 +17,22 @@ An immutable structure representing a point source/vortex
 - `z::ComplexF64`: position
 - `S::T`: strength/circulation
 """
-struct Point{T <: Number} <: Element
-    z::ComplexF64
+struct Point{T <: Number, R <: Number} <: Element
+    z::Complex{R}
     S::T
-    Point{T}(z, s::Real) where T <: Complex = new(z, im*s)
-    Point{T}(z, s)       where T <: Complex = new(z, s)
-    Point{T}(z, s::Real) where T <: Real = new(z, s)
+    Point{T,R}(z, s::Real) where {T <: Complex,R <: Number} = new(z, im*s)
+    Point{T,R}(z, s)       where {T <: Complex,R <: Number} = new(z, s)
+    Point{T,R}(z, s::Real) where {T <: Real, R <: Number} = new(z, s)
 end
+#Point(z::Complex{R},S::T) where {T,R} = Point{T,R}(z,S)
+
 Elements.kind(::Point) = Singleton
-Elements.kind(::Type{Point{T}}) where T = Singleton
+Elements.kind(::Type{Point{T,R}}) where {T,R} = Singleton
 
 #== Methods to be extended ==#
 
 Elements.position(p::Point) = p.z
+Elements.blobradius(p::Point) = 0.0
 
 Elements.streamfunction(z::ComplexF64, p::Point) = real(-0.5p.S*log(z - p.z)/π)
 
@@ -56,7 +59,7 @@ function mutually_induce_velocity!(ws₁, ws₂,
     nothing
 end
 
-function self_induce_velocity!(ws, points::Vector{Point{T}}, t) where T
+function self_induce_velocity!(ws, points::Vector{Point{T,R}}, t) where {T,R}
     N = length(points)
 
     for s in 1:N, t in s+1:N
@@ -67,8 +70,8 @@ function self_induce_velocity!(ws, points::Vector{Point{T}}, t) where T
     ws
 end
 
-function advect(p::Point{T}, w::ComplexF64, Δt::Float64) where T
-    Point{T}(p.z + w*Δt, p.S)
+function advect(p::Point{T,R}, w::ComplexF64, Δt::Float64) where {T,R}
+    Point{T,R}(p.z + w*Δt, p.S)
 end
 
 #function Base.show(io::IO, p::Point)

@@ -75,14 +75,6 @@ end
 
 @inline _dy_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(im*dvz - im*dvzstar)
 
-@inline function complex_dual(T,z,dz,dzstar)
-    zr, zi = reim(z)
-    drdx, didx = _dx_derivs(dz,dzstar)
-    drdy, didy = _dy_derivs(dz,dzstar)
-    return ForwardDiff.Dual{T}(zr,ForwardDiff.Partials((drdx,drdy))) +
-        im*ForwardDiff.Dual{T}(zi,ForwardDiff.Partials((didx,didy)))
-end
-
 @inline function value(z::Complex{<:ForwardDiff.Dual{T}}) where {T}
     zr, zi = reim(z)
     return value(zr)+im*value(zi)
@@ -93,6 +85,17 @@ end
     zr, zi = reim(z)
     return partials(zr), partials(zi)
 end
+
+@inline function complex_dual(::Type{T},z,dz,dzstar) where {T}
+    zr, zi = reim(z)
+    drdx, didx = _dx_derivs(dz,dzstar)
+    drdy, didy = _dy_derivs(dz,dzstar)
+    return ForwardDiff.Dual{T}(zr,ForwardDiff.Partials((drdx,drdy))) +
+        im*ForwardDiff.Dual{T}(zi,ForwardDiff.Partials((didx,didy)))
+end
+
+@inline complex_dual(d::Complex{<:ForwardDiff.Dual{T}}) where {T} = d
+
 
 @extend_unary_dual_to_complex conj
 #@extend_unary_dual_to_complex real

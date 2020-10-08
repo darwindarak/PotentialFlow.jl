@@ -1,7 +1,8 @@
 module Elements
 
 export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction,
-       complexpotential, conftransform, inverse_conftransform, jacobian, image
+       complexpotential, conftransform, inverse_conftransform, jacobian, image,
+       blobradius
 
 using ..Properties
 
@@ -58,6 +59,17 @@ julia> Elements.position.(points)
 @property begin
     signature = position(src::Source)
     stype = ComplexF64
+end
+
+"""
+    Elements.blobradius(src)
+
+Returns the blob radius of a regularized potential flow element.
+If the element is singular, returns zero.
+"""
+@property begin
+    signature = blobradius(src::Source)
+    stype = Float64
 end
 
 """

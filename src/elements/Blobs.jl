@@ -20,22 +20,25 @@ An immutable structure representing a regularized point source/vortex
 ## Constructors
 
 """
-struct Blob{T <: Number} <: Element
-    z::ComplexF64
+struct Blob{T <: Number, R <: Number} <: Element
+    z::Complex{R}
     S::T
     δ::Float64
-    Blob{T}(z, s::Real, δ) where T <: Complex = new(z, im*s, δ)
-    Blob{T}(z, s, δ)       where T <: Complex = new(z, s, δ)
-    Blob{T}(z, s::Real, δ) where T <: Real    = new(z, s, δ)
+    Blob{T,R}(z, s::Real, δ) where {T <: Complex, R <: Number} = new(z, im*s, δ)
+    Blob{T,R}(z, s, δ)       where {T <: Complex, R <: Number} = new(z, s, δ)
+    Blob{T,R}(z, s::Real, δ) where {T <: Real, R <: Number}    = new(z, s, δ)
 end
-Elements.kind(::Blob) = Singleton
-Elements.kind(::Type{Blob{T}}) where T = Singleton
 
-(b::Blob{T})(; z = b.z, S = b.S, δ = b.δ) where T = Blob{T}(z, S, δ)
+
+Elements.kind(::Blob) = Singleton
+Elements.kind(::Type{Blob{T,R}}) where {T,R} = Singleton
+
+#(b::Blob{T,R})(; z = b.z, S = b.S, δ = b.δ) where {T,R} = Blob{T,R}(z, S, δ)
 
 #== Methods to be extended ==#
 
 Elements.position(b::Blob) = b.z
+Elements.blobradius(b::Blob) = b.δ
 Elements.streamfunction(z::ComplexF64, b::Blob) = real(-0.5b.S*log(z - b.z)/π)
 
 Elements.complexpotential(z::ComplexF64, b::Blob) = -0.5im*b.S*log(z - b.z)/π
@@ -67,7 +70,7 @@ function mutually_induce_velocity!(ws₁, ws₂,
     nothing
 end
 
-function self_induce_velocity!(ws, blobs::Vector{Blob{T}}, t) where T
+function self_induce_velocity!(ws, blobs::Vector{Blob{T,R}}, t) where {T,R}
     N = length(blobs)
 
     for s in 1:N, t in s+1:N
@@ -79,8 +82,8 @@ function self_induce_velocity!(ws, blobs::Vector{Blob{T}}, t) where T
     ws
 end
 
-function advect(b::Blob{T}, w::ComplexF64, Δt::Float64) where T
-    Blob{T}(b.z + w*Δt, b.S, b.δ)
+function advect(b::Blob{T,R}, w::ComplexF64, Δt::Float64) where {T,R}
+    Blob{T,R}(b.z + w*Δt, b.S, b.δ)
 end
 #
 #function Base.show(io::IO, b::Blob)

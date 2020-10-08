@@ -6,6 +6,8 @@ import ..Elements: circulation, flux
 
 #== Wrapper for a point source ==#
 
+@inline _promote_to_float(z) = promote_type(typeof(z),Float64)
+
 """
     Source.Point(z::ComplexF64, S::Float64)
 
@@ -26,7 +28,11 @@ julia> p(S = 2.0)
 Source.Point(1.0 + 0.0im, 2.0)
 ```
 """
-const Point = Points.Point{ComplexF64}
+const Point = Points.Point{ComplexF64,R} where R <: Real
+Point(z::Complex{R},S::T) where {T<:Real,R<:Real} = Points.Point{T,R}(z,S)
+Point(z::Real,S::T) where {T<:Real} =
+    Points.Point{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),S)
+
 (p::Point)(; z = p.z, S = imag(p.S)) = Point(z, S)
 
 function Base.show(io::IO, s::Point)
@@ -61,7 +67,11 @@ julia> b(S = 2.0, δ = 0.01)
 Source.Blob(1.0 + 0.0im, 2.0, 0.01)
 ```
 """
-const Blob = Blobs.Blob{ComplexF64}
+const Blob = Blobs.Blob{ComplexF64,R} where R <: Real
+Blob(z::Complex{R},S::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{T,R}(z,S,δ)
+Blob(z::Real,S::T,δ) where {T<:Real} =
+    Blobs.Blob{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),S,δ)
+
 (b::Blob)(; z = b.z, S = imag(b.S), δ = b.δ) = Blob(z, S, δ)
 
 function Base.show(io::IO, s::Blob)

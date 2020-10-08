@@ -59,7 +59,7 @@ end
 
 @recipe function plot(points::Array{P};
                       source_marker = :xcross,
-                      vortex_marker = :circle) where {P <: Union{Points.Point{T} where T, Blobs.Blob{T} where T}}
+                      vortex_marker = :circle) where {P <: Union{Points.Point, Blobs.Blob}}
     z = Elements.position(points)
     x = real.(z)
     y = imag.(z)
