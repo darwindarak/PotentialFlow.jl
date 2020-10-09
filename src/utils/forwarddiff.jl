@@ -107,6 +107,29 @@ end
 
 @extend_binary_dual_to_complex ^
 
+"""
+    dualize(v::Vector{S},i::Int,T)
+
+Return a Dual or complex Dual form of vector `v` (depending on whether `S` is `Float64`
+or `ComplexF64`), with the partials of the `i`th component of the vector set to unit
+values (i.e., to `1` or to `1,0`, respectively).
+"""
+function dualize(v::Vector{ComplexF64},i::Int,::Type{T}) where {T}
+    @assert 1 <= i <= length(v) "Invalid index"
+    d = complex_dual(T,v[i],one(ComplexF64),zero(ComplexF64))
+    dualv = convert(Vector{typeof(d)},v)
+    dualv[i] = d
+    return dualv
+end
+
+function dualize(v::Vector{Float64},i::Int,::Type{T}) where {T}
+    @assert 1 <= i <= length(v) "Invalid index"
+    d = ForwardDiff.Dual{T}(v[i],one(Float64))
+    dualv = convert(Vector{typeof(d)},v)
+    dualv[i] = d
+    return dualv
+end
+
 
 """
     ForwardDiff.derivative(f,z::Complex)

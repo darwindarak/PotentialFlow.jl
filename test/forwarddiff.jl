@@ -4,6 +4,8 @@ const BIGEPS = 100*eps(1.0)
 
 @testset "Complex Automatic Differentiation" begin
 
+  @testset "Basic derivatives" begin
+
   z = rand(ComplexF64)
 
   dz1, dzstar1 = ForwardDiff.derivative(z -> log(sqrt(z)),z)
@@ -54,5 +56,29 @@ const BIGEPS = 100*eps(1.0)
 
   @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
   @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
+
+
+
+
+  end
+
+  @testset "Basic operations with duals" begin
+
+    pos = rand(ComplexF64,5)
+    str = rand(length(pos))
+
+    σ = 1e-2
+    blobs = Vortex.Blob.(pos,str,σ)
+    z = rand(ComplexF64)
+
+    i = 3
+
+    newblobs = Vortex.dualize_strength(blobs,i,Nothing)
+
+    @test sum(ForwardDiff.value.(Vortex.circulation.(newblobs))) -
+              ForwardDiff.value(Vortex.circulation(newblobs)) == 0
+
+
+  end
 
 end

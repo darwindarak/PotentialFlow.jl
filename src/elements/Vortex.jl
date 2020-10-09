@@ -1,9 +1,10 @@
 module Vortex
 
 import ..Elements
-import ..Elements: circulation, flux, impulse, angularimpulse
+import ..Elements: circulation, flux, impulse, angularimpulse, dualize_position,
+                    dualize_strength
 
-import ..Utils
+import ..Utils: dualize
 
 import ..Points
 import ..Blobs
@@ -35,7 +36,7 @@ Vortex.Point(1.0 + 0.0im, 2.0)
 ```
 """
 #const Point = Points.Point{Float64,Float64}
-const Point = Points.Point{Float64,R} where R<:Real
+const Point = Points.Point{T,R} where {T<: Real, R<:Real}
 Point(z::Complex{R},Γ::T) where {T<:Real,R<:Real} = Points.Point{T,R}(z,Γ)
 Point(z::Real,Γ::T) where {T<:Real} =
     Points.Point{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),Γ)
@@ -48,6 +49,14 @@ impulse(p::Point) = -im*p.z*p.S
 angularimpulse(p::Point) = -0.5*p.z*conj(p.z)*p.S
 
 Base.show(io::IO, s::Point) = print(io, "Vortex.Point($(s.z), $(s.S))")
+
+
+@inline dualize_position(v::Vector{<:Point},i::Int,::Type{T}) where {T} =
+        Point.(dualize(Elements.position(v),i,T),circulation.(v))
+
+
+@inline dualize_strength(v::Vector{<:Point},i::Int,::Type{T}) where {T} =
+        Point.(Elements.position(v),dualize(circulation.(v),i,T))
 
 #== Wrapper for a vortex blob ==#
 
@@ -72,7 +81,7 @@ Vortex.Blob(1.0 + 0.0im, 2.0, 0.01)
 ```
 """
 #const Blob = Blobs.Blob{Float64,Float64}
-const Blob = Blobs.Blob{Float64,R} where R<:Real
+const Blob = Blobs.Blob{T,R} where {T<:Real,R<:Real}
 Blob(z::Complex{R},Γ::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{T,R}(z,Γ,δ)
 Blob(z::Real,Γ::T,δ) where {T<:Real} =
     Blobs.Blob{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),Γ,δ)
@@ -85,6 +94,12 @@ flux(::Blob) = 0.0
 impulse(b::Blob) = -im*b.z*b.S
 angularimpulse(b::Blob) = -0.5*b.z*conj(b.z)*b.S
 Base.show(io::IO, s::Blob) = print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ))")
+
+@inline dualize_position(v::Vector{<:Blob},i::Int,::Type{T}) where {T} =
+    Blob.(dualize(Elements.position(v),i,T),circulation.(v),Elements.blobradius(v))
+
+@inline dualize_strength(v::Vector{<:Blob},i::Int,::Type{T}) where {T} =
+    Blob.(Elements.position(v),dualize(circulation.(v),i,T),Elements.blobradius(v))
 
 #== Wrapper for a vortex sheet ==#
 
@@ -105,7 +120,7 @@ A vortex sheet represented by vortex blob control points
 - `Vortex.Sheet(blobs, Γs, δ)`
 - `Vortex.Sheet(zs, Γs, δ)` where `zs` is an array of positions for the control points
 """
-const Sheet = Sheets.Sheet{Float64,R} where R<:Real
+const Sheet = Sheets.Sheet{T,R} where {T<:Real,R<:Real}
 Sheet(blobs::Vector{Blob}, Ss::AbstractVector{Float64}, δ::Float64) = Sheets.Sheet(blobs, Ss, δ)
 Sheet(zs::AbstractVector,  Ss::AbstractVector{Float64}, δ::Float64) = Sheets.Sheet(zs, Ss, δ)
 

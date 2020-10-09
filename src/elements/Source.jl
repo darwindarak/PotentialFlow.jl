@@ -4,6 +4,9 @@ import ..Points
 import ..Blobs
 import ..Elements: circulation, flux
 
+import ..Utils: dualize
+
+
 #== Wrapper for a point source ==#
 
 @inline _promote_to_float(z) = promote_type(typeof(z),Float64)
@@ -45,6 +48,12 @@ end
 flux(p::Point) = imag(p.S)
 circulation(::Point) = 0.0
 
+@inline dualize_position(v::Vector{<:Point},i::Int,::Type{T}) where {T} =
+        Point.(dualize(Elements.position(v),i,T),flux.(v))
+
+@inline dualize_strength(v::Vector{<:Point},i::Int,::Type{T}) where {T} =
+        Point.(Elements.position(v),dualize(flux.(v),i,T))
+
 #== Wrapper for a blob source ==#
 
 """
@@ -83,5 +92,11 @@ function Base.show(io::IO, s::Blob)
 end
 circulation(::Blob) = 0.0
 flux(b::Blob) = imag(b.S)
+
+@inline dualize_position(v::Vector{<:Blob},i::Int,::Type{T}) where {T} =
+    Blob.(dualize(Elements.position(v),i,T),flux.(v),Elements.blobradius(v))
+
+@inline dualize_strength(v::Vector{<:Blob},i::Int,::Type{T}) where {T} =
+    Blob.(Elements.position(v),dualize(flux.(v),i,T),Elements.blobradius(v))
 
 end
