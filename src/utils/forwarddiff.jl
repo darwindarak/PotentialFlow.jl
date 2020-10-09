@@ -5,6 +5,11 @@ using DiffRules
 import ForwardDiff:value,partials,derivative,extract_derivative, Dual
 const AMBIGUOUS_TYPES = (AbstractFloat, Irrational, Integer, Rational, Real, RoundingMode, ComplexF64)
 
+# ComplexComplexDual is designated for derivatives of complex functions
+# with respect to complex numbers
+const ComplexComplexDual{T,V} = Complex{Dual{T,V,2}}
+const ComplexRealDual{T,V} = Complex{Dual{T,V,1}}
+
 # preempt other function diffrules. The two entries correspond to d/dz and d/dz*
 DiffRules.@define_diffrule Base.abs2(z) = :(conj($z)), :($z)
 DiffRules.@define_diffrule Base.conj(z) = :(0), :(1)
@@ -75,13 +80,13 @@ end
 
 @inline _dy_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(im*dvz - im*dvzstar)
 
-@inline function value(z::Complex{<:Dual{T}}) where {T}
+@inline function value(z::Complex{<:Dual})
     zr, zi = reim(z)
     return value(zr)+im*value(zi)
 end
 
 # extract the partial derivatives from a complex dual number
-@inline function partials(z::Complex{<:Dual{T}}) where {T}
+@inline function partials(z::Complex{<:Dual})
     zr, zi = reim(z)
     return partials(zr), partials(zi)
 end
@@ -94,17 +99,22 @@ end
         im*ForwardDiff.Dual{T}(zi,ForwardDiff.Partials((didx,didy)))
 end
 
+#@inline complex_dual(::Type{T},z::Number,dz::Number) where {T} = complex_dual(T,z,dz,dz)
+
 @inline function complex_dual(::Type{T},z::Number,dz::Number) where {T}
     zr, zi = reim(z)
     dr, di = reim(dz)
     return ForwardDiff.Dual{T}(zr,dr) + im*ForwardDiff.Dual{T}(zi,di)
 end
 
-@inline complex_dual(d::Complex{<:Dual{T}}) where {T} = d
+
+@inline complex_dual(d::Complex{<:Dual}) = d
 
 @inline complex_dual(::Type{T},z::AbstractArray{S},dz::AbstractArray{S},dzstar::AbstractArray{S}) where {T,S<:Number} =
       map((u, v, w) -> complex_dual(T,u,v,w),z,dz,dzstar)
 
+#@inline complex_dual(::Type{T},z::AbstractArray{S},dz::AbstractArray{S}) where {T,S<:Number} =
+#       complex_dual(T,z,dz,dz)
 @inline complex_dual(::Type{T},z::AbstractArray{S},dz::AbstractArray{S}) where {T,S<:Number} =
       map((u, v) -> complex_dual(T,u,v),z,dz)
 
