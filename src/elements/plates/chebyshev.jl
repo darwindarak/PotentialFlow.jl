@@ -3,6 +3,8 @@ module Chebyshev
 using FFTW
 using Future: copy!
 
+import ..Utils: extract_derivative, complex_dual, value, Dual
+
 import Base: *, \
 struct Transform{T,I}
     dct!::FFTW.r2rFFTWPlan{T,(3,),true,1}
@@ -20,6 +22,18 @@ end
 (C::Transform{T,false} * x::Vector{T}) where T = transform(x, C.dct!)
 (C::Transform{T,true}  \ A::Vector{T}) where T = inv_transform!(A, C.dct!)
 (C::Transform{T,false} \ A::Vector{T}) where T = inv_transform(A, C.dct!)
+
+(C::Transform{Complex{T},true} * x::Vector{Complex{S}}) where {T,S <:Dual{R} where R} = transform!(x, C.dct!)
+(C::Transform{Complex{T},false} * x::Vector{Complex{S}}) where {T,S <:Dual{R} where R} = transform(x, C.dct!)
+(C::Transform{Complex{T},true} \ A::Vector{Complex{S}}) where {T,S <:Dual{R} where R} = inv_transform!(A, C.dct!)
+(C::Transform{Complex{T},false} \ A::Vector{Complex{S}}) where {T,S <:Dual{R} where R} = inv_transform(A, C.dct!)
+
+#=
+(C::Transform{T,true} * x::Vector{S}) where {T<:Real,S <:Dual{R} where R} = transform!(x, C.dct!)
+(C::Transform{T,false} * x::Vector{S}) where {T<:Real,S <:Dual{R} where R} = transform(x, C.dct!)
+(C::Transform{T,true} \ A::Vector{S}) where {T<:Real,S <:Dual{R} where R} = inv_transform!(A, C.dct!)
+(C::Transform{T,false} \ A::Vector{S}) where {T<:Real,S <:Dual{R} where R} = inv_transform(A, C.dct!)
+=#
 
 """
     Chebyshev.nodes(N, T = Float64)
@@ -143,6 +157,16 @@ function transform!(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
     x
 end
 
+function transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T} where T
+    dxdz, dxdzstar = extract_derivative(T,x)
+    xval = value.(x)
+    transform!(xval,plan!)
+    transform!(dxdz,plan!)
+    transform!(dxdzstar,plan!)
+    x .= complex_dual(T,xval,dxdz,dxdzstar)
+    return x
+end
+
 function transform!(A::T, x::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where T
     copy!(A, x)
     transform!(A, plan!)
@@ -199,6 +223,16 @@ function inv_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
     end
 
     plan!*A
+end
+
+function inv_transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T} where T
+    dxdz, dxdzstar = extract_derivative(T,x)
+    xval = value.(x)
+    inv_transform!(xval,plan!)
+    inv_transform!(dxdz,plan!)
+    inv_transform!(dxdzstar,plan!)
+    x .= complex_dual(T,xval,dxdz,dxdzstar)
+    return x
 end
 
 function inv_transform!(x::T, A::T, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00)) where T

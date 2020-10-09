@@ -2,7 +2,7 @@
 using ForwardDiff
 using DiffRules
 
-import ForwardDiff:value,partials,derivative,extract_derivative
+import ForwardDiff:value,partials,derivative,extract_derivative, Dual
 const AMBIGUOUS_TYPES = (AbstractFloat, Irrational, Integer, Rational, Real, RoundingMode, ComplexF64)
 
 # preempt other function diffrules. The two entries correspond to d/dz and d/dz*
@@ -21,11 +21,9 @@ macro extend_unary_dual_to_complex(fcn)
     f = :($fcn)
     dfz, dfzstar = DiffRules.diffrule(M,f,:v)
     fdef = quote
-        function $M.$f(z::Complex{<:ForwardDiff.Dual{T}}) where {T}
-            zr, zi = reim(z)
-            #v = value(zr)+im*value(zi)
+        function $M.$f(z::Complex{<:Dual{T}}) where {T}
             v = value(z)
-            dvz, dvzstar = _dz_derivs(partials(zr),partials(zi))
+            dvz, dvzstar = extract_derivative(T,z)
 
             # chain rule
             dfdz =     $dfz*dvz     + $dfzstar*conj(dvzstar)
@@ -47,11 +45,9 @@ macro extend_binary_dual_to_complex(fcn)
     defs = quote end
     for R in AMBIGUOUS_TYPES
         expr = quote
-            function $M.$f(z::Complex{<:ForwardDiff.Dual{T}},p::$R) where {T}
-                zr, zi = reim(z)
-                #v = value(zr)+im*value(zi)
+            function $M.$f(z::Complex{<:Dual{T}},p::$R) where {T}
                 v = value(z)
-                dvz, dvzstar = _dz_derivs(partials(zr),partials(zi))
+                dvz, dvzstar = extract_derivative(T,z)
 
                 # chain rule
                 dfdz =     $dfz*dvz     + $dfzstar*conj(dvzstar)
@@ -65,28 +61,32 @@ macro extend_binary_dual_to_complex(fcn)
     return esc(defs)
 end
 
-@inline function _dz_derivs(dvr::ForwardDiff.Partials{2},dvi::ForwardDiff.Partials{2})
+@inline function _derivs(dvr::ForwardDiff.Partials{2},dvi::ForwardDiff.Partials{2})
     dvrx, dvry = dvr
     dvix, dviy = dvi
     return 0.5*(dvrx+dviy) + 0.5*im*(dvix-dvry), 0.5*(dvrx-dviy) + 0.5*im*(dvix+dvry)
+end
+
+@inline function _derivs(dvr::ForwardDiff.Partials{1},dvi::ForwardDiff.Partials{1})
+    return dvr[1] + im*dvi[1]
 end
 
 @inline _dx_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(   dvz +    dvzstar)
 
 @inline _dy_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(im*dvz - im*dvzstar)
 
-@inline function value(z::Complex{<:ForwardDiff.Dual{T}}) where {T}
+@inline function value(z::Complex{<:Dual{T}}) where {T}
     zr, zi = reim(z)
     return value(zr)+im*value(zi)
 end
 
 # extract the partial derivatives from a complex dual number
-@inline function partials(z::Complex{<:ForwardDiff.Dual{T}}) where {T}
+@inline function partials(z::Complex{<:Dual{T}}) where {T}
     zr, zi = reim(z)
     return partials(zr), partials(zi)
 end
 
-@inline function complex_dual(::Type{T},z,dz,dzstar) where {T}
+@inline function complex_dual(::Type{T},z::Number,dz::Number,dzstar::Number) where {T}
     zr, zi = reim(z)
     drdx, didx = _dx_derivs(dz,dzstar)
     drdy, didy = _dy_derivs(dz,dzstar)
@@ -94,7 +94,10 @@ end
         im*ForwardDiff.Dual{T}(zi,ForwardDiff.Partials((didx,didy)))
 end
 
-@inline complex_dual(d::Complex{<:ForwardDiff.Dual{T}}) where {T} = d
+@inline complex_dual(d::Complex{<:Dual{T}}) where {T} = d
+
+@inline complex_dual(::Type{T},z::AbstractArray{S},dz::AbstractArray{S},dzstar::AbstractArray{S}) where {T,S<:Number} =
+      map((u, v, w) -> complex_dual(T,u,v,w),z,dz,dzstar)
 
 
 @extend_unary_dual_to_complex conj
@@ -124,7 +127,7 @@ end
 
 function dualize(v::Vector{Float64},i::Int,::Type{T}) where {T}
     @assert 1 <= i <= length(v) "Invalid index"
-    d = ForwardDiff.Dual{T}(v[i],one(Float64))
+    d = Dual{T}(v[i],one(Float64))
     dualv = convert(Vector{typeof(d)},v)
     dualv[i] = d
     return dualv
@@ -136,8 +139,23 @@ end
 
 Compute the derivative of function `f` with respect to `z` and `conj(z)`
 """
-@inline function ForwardDiff.derivative(f::F, z::C) where {F,C<:Complex}
+@inline function derivative(f::F, z::C) where {F,C<:Complex}
     T = typeof(ForwardDiff.Tag(f, C))
-    outr, outi = reim(f(complex_dual(T,z,one(z),zero(z))))
-    return _dz_derivs(partials(outr),partials(outi))
+    # making complex ensures that it gets dispatched to our extract_derivative
+    # for complex Duals rather than the native one in ForwardDiff
+    return extract_derivative(T,complex(f(complex_dual(T,z,one(z),zero(z)))))
 end
+
+"""
+    ForwardDiff.extract_derivative(T,d::Complex{<:Dual})
+
+Given a complex dual value `d` and tag `T`, extract the derivatives d/dz
+and d/dz* from the partials in `d`.
+"""
+@inline function extract_derivative(::Type{T},d::Complex{<:Dual{T}}) where T
+   dr, di = reim(d)
+   return _derivs(partials(dr),partials(di))
+end
+
+@inline extract_derivative(::Type{T},v::AbstractArray{<:Complex}) where T =
+        (d = map(x -> extract_derivative(T,x), v); return first.(d), last.(d))
