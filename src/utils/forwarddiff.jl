@@ -94,11 +94,19 @@ end
         im*ForwardDiff.Dual{T}(zi,ForwardDiff.Partials((didx,didy)))
 end
 
+@inline function complex_dual(::Type{T},z::Number,dz::Number) where {T}
+    zr, zi = reim(z)
+    dr, di = reim(dz)
+    return ForwardDiff.Dual{T}(zr,dr) + im*ForwardDiff.Dual{T}(zi,di)
+end
+
 @inline complex_dual(d::Complex{<:Dual{T}}) where {T} = d
 
 @inline complex_dual(::Type{T},z::AbstractArray{S},dz::AbstractArray{S},dzstar::AbstractArray{S}) where {T,S<:Number} =
       map((u, v, w) -> complex_dual(T,u,v,w),z,dz,dzstar)
 
+@inline complex_dual(::Type{T},z::AbstractArray{S},dz::AbstractArray{S}) where {T,S<:Number} =
+      map((u, v) -> complex_dual(T,u,v),z,dz)
 
 @extend_unary_dual_to_complex conj
 #@extend_unary_dual_to_complex real
@@ -157,5 +165,8 @@ and d/dz* from the partials in `d`.
    return _derivs(partials(dr),partials(di))
 end
 
-@inline extract_derivative(::Type{T},v::AbstractArray{<:Complex}) where T =
+@inline extract_derivative(::Type{T},v::AbstractArray{<:Complex{S}}) where S <: Dual{T,V,2} where {T,V} =
         (d = map(x -> extract_derivative(T,x), v); return first.(d), last.(d))
+
+@inline extract_derivative(::Type{T},v::AbstractArray{<:Complex{S}}) where S <: Dual{T,V,1} where {T,V} =
+        (d = map(x -> extract_derivative(T,x), v); return d)

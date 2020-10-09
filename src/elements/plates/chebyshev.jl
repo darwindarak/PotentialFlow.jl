@@ -157,13 +157,22 @@ function transform!(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
     x
 end
 
-function transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T} where T
+function transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T,V,2} where {T,V}
     dxdz, dxdzstar = extract_derivative(T,x)
     xval = value.(x)
     transform!(xval,plan!)
     transform!(dxdz,plan!)
     transform!(dxdzstar,plan!)
     x .= complex_dual(T,xval,dxdz,dxdzstar)
+    return x
+end
+
+function transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T,V,1} where {T,V}
+    dx = extract_derivative(T,x)
+    xval = value.(x)
+    transform!(xval,plan!)
+    transform!(dx,plan!)
+    x .= complex_dual(T,xval,dx)
     return x
 end
 
@@ -225,13 +234,22 @@ function inv_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
     plan!*A
 end
 
-function inv_transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T} where T
+function inv_transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T,V,2} where {T,V}
     dxdz, dxdzstar = extract_derivative(T,x)
     xval = value.(x)
     inv_transform!(xval,plan!)
     inv_transform!(dxdz,plan!)
     inv_transform!(dxdzstar,plan!)
     x .= complex_dual(T,xval,dxdz,dxdzstar)
+    return x
+end
+
+function inv_transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T,V,1} where {T,V}
+    dx = extract_derivative(T,x)
+    xval = value.(x)
+    inv_transform!(xval,plan!)
+    inv_transform!(dx,plan!)
+    x .= complex_dual(T,xval,dx)
     return x
 end
 

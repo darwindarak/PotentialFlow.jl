@@ -135,15 +135,19 @@ const TOL=5e-6
     C  = zeros(ComplexF64, N)
     induce_velocity!(C,p,blobs,0.0)
 
-    blobsx⁺ = Vortex.Blob.(Elements.position(blobs).+dz,Elements.circulation.(blobs),σ);
+    #blobsx⁺ = Vortex.Blob.(Elements.position(blobs).+dz,Elements.circulation.(blobs),σ);
     Cx⁺  = zeros(ComplexF64, N)
     induce_velocity!(Cx⁺,p,blobsx⁺,0.0)
     dwdx_fd = (Cx⁺ - C)/dz[i]
 
-    blobsy⁺ = Vortex.Blob.(Elements.position(blobs).+im*dz,Elements.circulation.(blobs),σ);
+    #blobsy⁺ = Vortex.Blob.(Elements.position(blobs).+im*dz,Elements.circulation.(blobs),σ);
     Cy⁺  = zeros(ComplexF64, N)
     induce_velocity!(Cy⁺,p,blobsy⁺,0.0)
     dwdy_fd = (Cy⁺ - C)/dz[i]
+
+    #blobsΓ⁺ = Vortex.Blob.(Elements.position(blobs),Elements.circulation.(blobs).+dΓ,σ);
+    CΓ⁺  = zeros(ComplexF64, N)
+    induce_velocity!(CΓ⁺,p,blobsΓ⁺,0.0)
 
     dwdz_fd = 0.5*(dwdx_fd - im*dwdy_fd)
     dwdzstar_fd = 0.5*(dwdx_fd + im*dwdy_fd)
@@ -151,11 +155,10 @@ const TOL=5e-6
     newblobs = Vortex.dualize_position(blobs,i,Nothing)
     C2 = zeros(typeof(complex(Dual{Nothing}(0.0,0.0,0.0))),N)
     induce_velocity!(C2,p,newblobs,0.0)
-
-    @test isapprox(norm(value.(C2) - C),0.0,atol=BIGEPS)
-
     dwdz, dwdzstar = extract_derivative(Nothing,C2)
 
+    # test that the induced velocities and their derivatives match
+    @test isapprox(norm(value.(C2) - C),0.0,atol=BIGEPS)
     @test isapprox(norm(dwdz - dwdz_fd),0.0,atol=TOL)
     @test isapprox(norm(dwdzstar - dwdzstar_fd),0.0,atol=TOL)
 
@@ -163,8 +166,10 @@ const TOL=5e-6
     dchebt! * C
     dchebt! * Cx⁺
     dchebt! * Cy⁺
+    dchebt! * CΓ⁺
     dCdx_fd = (Cx⁺ - C)/dz[i]
     dCdy_fd = (Cy⁺ - C)/dz[i]
+    dCdΓ_fd = (CΓ⁺ - C)/dΓ[i]
     dCdz_fd = 0.5*(dCdx_fd - im*dCdy_fd)
     dCdzstar_fd = 0.5*(dCdx_fd + im*dCdy_fd)
 
@@ -174,6 +179,16 @@ const TOL=5e-6
 
     @test isapprox(norm(dCdz - dCdz_fd),0.0,atol=TOL)
     @test isapprox(norm(dCdzstar - dCdzstar_fd),0.0,atol=TOL)
+
+    # diff wrt strength
+    newblobs = Vortex.dualize_strength(blobs,i,Nothing);
+    C2 = zeros(typeof(complex(Dual{Nothing}(0.0,0.0))),N)
+    induce_velocity!(C2,p,newblobs,0.0)
+    dchebt! * C2
+    dCdΓ = extract_derivative(Nothing,C2)
+
+    @test isapprox(norm(dCdΓ - dCdΓ_fd),0.0,atol=TOL)
+
 
   end
 
