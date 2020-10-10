@@ -1,7 +1,7 @@
 using LinearAlgebra
 
 import PotentialFlow.Utils: derivative, extract_derivative, value,
-          complex_dual, Dual
+          Dual,ComplexComplexDual,ComplexRealDual
 
 const BIGEPS = 1000*eps(1.0)
 const TOL=5e-6
@@ -78,7 +78,8 @@ const TOL=5e-6
     i = 3
 
 
-    dualpos = complex_dual(Nothing,Elements.position(blobs)[i],one(z),zero(z))
+    dualpos = ComplexComplexDual{Nothing}(Elements.position(blobs)[i],one(z),zero(z))
+
     newblob = Vortex.Blob(dualpos,Elements.circulation(blobs[i]),σ)
     @test value(Elements.position(newblob)) == Elements.position(blobs)[i]
 

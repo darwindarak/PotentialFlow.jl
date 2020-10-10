@@ -3,7 +3,7 @@ module Chebyshev
 using FFTW
 using Future: copy!
 
-import ..Utils: extract_derivative, complex_dual, value, Dual
+import ..Utils: extract_derivative, value, Dual, ComplexComplexDual, ComplexRealDual
 
 import Base: *, \
 struct Transform{T,I}
@@ -163,7 +163,7 @@ function transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT0
     transform!(xval,plan!)
     transform!(dxdz,plan!)
     transform!(dxdzstar,plan!)
-    x .= complex_dual(T,xval,dxdz,dxdzstar)
+    x .= ComplexComplexDual{T}(xval,dxdz,dxdzstar)
     return x
 end
 
@@ -172,7 +172,7 @@ function transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT0
     xval = value.(x)
     transform!(xval,plan!)
     transform!(dx,plan!)
-    x .= complex_dual(T,xval,dx)
+    x .= ComplexRealDual{T}(xval,dx)
     return x
 end
 
@@ -240,7 +240,7 @@ function inv_transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.RE
     inv_transform!(xval,plan!)
     inv_transform!(dxdz,plan!)
     inv_transform!(dxdzstar,plan!)
-    x .= complex_dual(T,xval,dxdz,dxdzstar)
+    x .= ComplexComplexDual{T}(xval,dxdz,dxdzstar)
     return x
 end
 
@@ -249,7 +249,7 @@ function inv_transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.RE
     xval = value.(x)
     inv_transform!(xval,plan!)
     inv_transform!(dx,plan!)
-    x .= complex_dual(T,xval,dx)
+    x .= ComplexRealDual{T}(xval,dx)
     return x
 end
 
