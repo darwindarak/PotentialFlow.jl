@@ -77,8 +77,7 @@ const TOL=5e-6
 
     i = 3
 
-
-    dualpos = ComplexComplexDual{Nothing}(Elements.position(blobs)[i],one(z),zero(z))
+    dualpos = ComplexComplexDual(Elements.position(blobs)[i],one(z),zero(z))
 
     newblob = Vortex.Blob(dualpos,Elements.circulation(blobs[i]),σ)
     @test value(Elements.position(newblob)) == Elements.position(blobs)[i]
@@ -154,7 +153,7 @@ const TOL=5e-6
     dwdzstar_fd = 0.5*(dwdx_fd + im*dwdy_fd)
 
     newblobs = Vortex.dualize_position(blobs,i,Nothing)
-    C2 = zeros(typeof(complex(Dual{Nothing}(0.0,0.0,0.0))),N)
+    C2 = zeros(typeof(ComplexComplexDual()),N)
     induce_velocity!(C2,p,newblobs,0.0)
     dwdz, dwdzstar = extract_derivative(Nothing,C2)
 
@@ -183,7 +182,7 @@ const TOL=5e-6
 
     # diff wrt strength
     newblobs = Vortex.dualize_strength(blobs,i,Nothing);
-    C2 = zeros(typeof(complex(Dual{Nothing}(0.0,0.0))),N)
+    C2 = zeros(typeof(ComplexRealDual()),N)
     induce_velocity!(C2,p,newblobs,0.0)
     dchebt! * C2
     dCdΓ = extract_derivative(Nothing,C2)

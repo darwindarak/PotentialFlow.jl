@@ -14,7 +14,59 @@ const ComplexDual{T,V,N} = Complex{Dual{T,V,N}}
 const ComplexComplexDual{T,V} = ComplexDual{T,V,2}
 const ComplexRealDual{T,V} = ComplexDual{T,V,1}
 
+@inline function ComplexComplexDual{T}(z::Number,dz::Number,dzstar::Number) where {T}
+  zr, zi = reim(z)
+  drdx, didx = _dx_derivs(complex(dz),complex(dzstar))
+  drdy, didy = _dy_derivs(complex(dz),complex(dzstar))
+  return Dual{T}(zr,ForwardDiff.Partials((drdx,drdy))) +
+      im*Dual{T}(zi,ForwardDiff.Partials((didx,didy)))
+end
 
+@inline ComplexComplexDual{T}(z::AbstractArray{S},dz::AbstractArray{S},dzstar::AbstractArray{S}) where {T,S<:Number} =
+      map((u, v, w) -> ComplexComplexDual{T}(u,v,w),z,dz,dzstar)
+
+@inline function ComplexRealDual{T}(z::Number,dz::Number) where {T}
+  zr, zi = reim(z)
+  dr, di = reim(dz)
+  return Dual{T}(zr,dr) + im*Dual{T}(zi,di)
+end
+
+@inline ComplexRealDual{T}(z::AbstractArray{S},dz::AbstractArray{S}) where {T,S<:Number} =
+      map((u, v) -> ComplexRealDual{T}(u,v),z,dz)
+
+@inline ComplexComplexDual{T}() where {T} = ComplexComplexDual{T}(0.0,0.0,0.0)
+@inline ComplexComplexDual(args...) = ComplexComplexDual{Nothing}(args...)
+
+@inline ComplexRealDual{T}() where {T} = ComplexRealDual{T}(0.0,0.0)
+@inline ComplexRealDual(args...) = ComplexRealDual{Nothing}(args...)
+
+@inline Base.one(::Type{ComplexComplexDual{T}},z::Number) where T = ComplexComplexDual{T}(z,one(z),zero(z))
+@inline Base.one(::Type{ComplexRealDual{T}},z::Number) where T = ComplexRealDual{T}(z,one(z))
+
+@inline function _derivs(dvr::ForwardDiff.Partials{2},dvi::ForwardDiff.Partials{2})
+    dvrx, dvry = dvr
+    dvix, dviy = dvi
+    return 0.5*(dvrx+dviy) + 0.5*im*(dvix-dvry), 0.5*(dvrx-dviy) + 0.5*im*(dvix+dvry)
+end
+
+@inline function _derivs(dvr::ForwardDiff.Partials{1},dvi::ForwardDiff.Partials{1})
+    return dvr[1] + im*dvi[1]
+end
+
+@inline _dx_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(   dvz +    dvzstar)
+
+@inline _dy_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(im*dvz - im*dvzstar)
+
+@inline function value(z::ComplexDual)
+    zr, zi = reim(z)
+    return value(zr)+im*value(zi)
+end
+
+# extract the partial derivatives from a complex dual number
+@inline function partials(z::ComplexDual)
+    zr, zi = reim(z)
+    return partials(zr), partials(zi)
+end
 
 
 # preempt other function diffrules. The two entries correspond to d/dz and d/dz*
@@ -75,56 +127,8 @@ macro extend_binary_dual_to_complex(fcn)
     return esc(defs)
 end
 
-@inline function _derivs(dvr::ForwardDiff.Partials{2},dvi::ForwardDiff.Partials{2})
-    dvrx, dvry = dvr
-    dvix, dviy = dvi
-    return 0.5*(dvrx+dviy) + 0.5*im*(dvix-dvry), 0.5*(dvrx-dviy) + 0.5*im*(dvix+dvry)
-end
 
-@inline function _derivs(dvr::ForwardDiff.Partials{1},dvi::ForwardDiff.Partials{1})
-    return dvr[1] + im*dvi[1]
-end
 
-@inline _dx_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(   dvz +    dvzstar)
-
-@inline _dy_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(im*dvz - im*dvzstar)
-
-@inline function value(z::ComplexDual)
-    zr, zi = reim(z)
-    return value(zr)+im*value(zi)
-end
-
-# extract the partial derivatives from a complex dual number
-@inline function partials(z::ComplexDual)
-    zr, zi = reim(z)
-    return partials(zr), partials(zi)
-end
-
-@inline ComplexComplexDual{T}() where {T} = complex(Dual{T}(0.0,0.0,0.0))
-@inline ComplexComplexDual() = ComplexComplexDual{Nothing}()
-
-@inline ComplexRealDual{T}() where {T} = complex(Dual{T}(0.0,0.0))
-@inline ComplexRealDual() = ComplexRealDual{Nothing}()
-
-@inline function ComplexComplexDual{T}(z::Number,dz::Number,dzstar::Number) where {T}
-  zr, zi = reim(z)
-  drdx, didx = _dx_derivs(dz,dzstar)
-  drdy, didy = _dy_derivs(dz,dzstar)
-  return Dual{T}(zr,ForwardDiff.Partials((drdx,drdy))) +
-      im*Dual{T}(zi,ForwardDiff.Partials((didx,didy)))
-end
-
-@inline ComplexComplexDual{T}(z::AbstractArray{S},dz::AbstractArray{S},dzstar::AbstractArray{S}) where {T,S<:Number} =
-      map((u, v, w) -> ComplexComplexDual{T}(u,v,w),z,dz,dzstar)
-
-@inline function ComplexRealDual{T}(z::Number,dz::Number) where {T}
-  zr, zi = reim(z)
-  dr, di = reim(dz)
-  return Dual{T}(zr,dr) + im*Dual{T}(zi,di)
-end
-
-@inline ComplexRealDual{T}(z::AbstractArray{S},dz::AbstractArray{S}) where {T,S<:Number} =
-      map((u, v) -> ComplexRealDual{T}(u,v),z,dz)
 
 @extend_unary_dual_to_complex conj
 #@extend_unary_dual_to_complex real
@@ -145,7 +149,7 @@ values (i.e., to `1` or to `1,0`, respectively).
 """
 function dualize(v::Vector{ComplexF64},i::Int,::Type{T}) where {T}
     @assert 1 <= i <= length(v) "Invalid index"
-    d = ComplexComplexDual{T}(v[i],one(ComplexF64),zero(ComplexF64))
+    d = one(ComplexComplexDual{T},v[i])
     dualv = convert(Vector{typeof(d)},v)
     dualv[i] = d
     return dualv
@@ -169,7 +173,7 @@ Compute the derivative of function `f` with respect to `z` and `conj(z)`
     T = typeof(ForwardDiff.Tag(f, C))
     # making complex ensures that it gets dispatched to our extract_derivative
     # for complex Duals rather than the native one in ForwardDiff
-    return extract_derivative(T,complex(f(ComplexComplexDual{T}(z,one(z),zero(z)))))
+    return extract_derivative(T,complex(f(one(ComplexComplexDual{T},z))))
 end
 
 """
