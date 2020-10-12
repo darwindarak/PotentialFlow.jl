@@ -35,27 +35,15 @@ end
       map((u, v) -> ComplexRealDual{T}(u,v),z,dz)
 
 @inline ComplexComplexDual{T}() where {T} = ComplexComplexDual{T}(0.0,0.0,0.0)
+@inline ComplexComplexDual{T}(z) where {T} = ComplexComplexDual{T}(z,0.0,0.0)
 @inline ComplexComplexDual(args...) = ComplexComplexDual{Nothing}(args...)
 
 @inline ComplexRealDual{T}() where {T} = ComplexRealDual{T}(0.0,0.0)
+@inline ComplexRealDual{T}(z) where {T} = ComplexRealDual{T}(z,0.0)
 @inline ComplexRealDual(args...) = ComplexRealDual{Nothing}(args...)
 
 @inline Base.one(::Type{ComplexComplexDual{T}},z::Number) where T = ComplexComplexDual{T}(z,one(z),zero(z))
 @inline Base.one(::Type{ComplexRealDual{T}},z::Number) where T = ComplexRealDual{T}(z,one(z))
-
-@inline function _derivs(dvr::ForwardDiff.Partials{2},dvi::ForwardDiff.Partials{2})
-    dvrx, dvry = dvr
-    dvix, dviy = dvi
-    return 0.5*(dvrx+dviy) + 0.5*im*(dvix-dvry), 0.5*(dvrx-dviy) + 0.5*im*(dvix+dvry)
-end
-
-@inline function _derivs(dvr::ForwardDiff.Partials{1},dvi::ForwardDiff.Partials{1})
-    return dvr[1] + im*dvi[1]
-end
-
-@inline _dx_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(   dvz +    dvzstar)
-
-@inline _dy_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(im*dvz - im*dvzstar)
 
 @inline function value(z::ComplexDual)
     zr, zi = reim(z)
@@ -67,6 +55,27 @@ end
     zr, zi = reim(z)
     return partials(zr), partials(zi)
 end
+
+
+# assemble the derivatives d/dz and d/dz* from the partials
+@inline function _derivs(dvr::ForwardDiff.Partials{2},dvi::ForwardDiff.Partials{2})
+    dvrx, dvry = dvr
+    dvix, dviy = dvi
+    return 0.5*(dvrx+dviy) + 0.5*im*(dvix-dvry), 0.5*(dvrx-dviy) + 0.5*im*(dvix+dvry)
+end
+
+# assemble the derivative from the partials
+@inline function _derivs(dvr::ForwardDiff.Partials{1},dvi::ForwardDiff.Partials{1})
+    return dvr[1] + im*dvi[1]
+end
+
+# get the d/dx derivatives from d/dz and d/dz*
+@inline _dx_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(   dvz +    dvzstar)
+
+# get the d/dy derivatives from d/dz and d/dz*
+@inline _dy_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(im*dvz - im*dvzstar)
+
+
 
 
 # preempt other function diffrules. The two entries correspond to d/dz and d/dz*

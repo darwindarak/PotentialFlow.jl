@@ -1,6 +1,6 @@
 using LinearAlgebra
 
-import PotentialFlow.Utils: derivative, extract_derivative, value,
+import PotentialFlow.Utils: derivative, extract_derivative, value, partials,
           Dual,ComplexComplexDual,ComplexRealDual
 
 const BIGEPS = 1000*eps(1.0)
@@ -66,18 +66,24 @@ const TOL=5e-6
 
   end
 
+  pos = rand(ComplexF64,5)
+  str = rand(length(pos))
+
+  σ = 1e-2
+  blobs = Vortex.Blob.(pos,str,σ)
+  z = rand(ComplexF64)
+
+  i = 3
+
+
   @testset "Basic operations with duals" begin
 
-    pos = rand(ComplexF64,5)
-    str = rand(length(pos))
 
-    σ = 1e-2
-    blobs = Vortex.Blob.(pos,str,σ)
-    z = rand(ComplexF64)
+    dualpos = one(ComplexComplexDual{Nothing},Elements.position(blobs)[i])
 
-    i = 3
-
-    dualpos = ComplexComplexDual(Elements.position(blobs)[i],one(z),zero(z))
+    @test value(dualpos) == Elements.position(blobs)[i]
+    pr, pi = partials(dualpos)
+    @test pr == [1.0,0.0] && pi == [0.0,1.0]
 
     newblob = Vortex.Blob(dualpos,Elements.circulation(blobs[i]),σ)
     @test value(Elements.position(newblob)) == Elements.position(blobs)[i]
@@ -135,17 +141,14 @@ const TOL=5e-6
     C  = zeros(ComplexF64, N)
     induce_velocity!(C,p,blobs,0.0)
 
-    #blobsx⁺ = Vortex.Blob.(Elements.position(blobs).+dz,Elements.circulation.(blobs),σ);
     Cx⁺  = zeros(ComplexF64, N)
     induce_velocity!(Cx⁺,p,blobsx⁺,0.0)
     dwdx_fd = (Cx⁺ - C)/dz[i]
 
-    #blobsy⁺ = Vortex.Blob.(Elements.position(blobs).+im*dz,Elements.circulation.(blobs),σ);
     Cy⁺  = zeros(ComplexF64, N)
     induce_velocity!(Cy⁺,p,blobsy⁺,0.0)
     dwdy_fd = (Cy⁺ - C)/dz[i]
 
-    #blobsΓ⁺ = Vortex.Blob.(Elements.position(blobs),Elements.circulation.(blobs).+dΓ,σ);
     CΓ⁺  = zeros(ComplexF64, N)
     induce_velocity!(CΓ⁺,p,blobsΓ⁺,0.0)
 
@@ -188,6 +191,26 @@ const TOL=5e-6
     dCdΓ = extract_derivative(Nothing,C2)
 
     @test isapprox(norm(dCdΓ - dCdΓ_fd),0.0,atol=TOL)
+
+    # Now with enforce_no_flow_through
+    Plates.enforce_no_flow_through!(p, motion, blobs, 0.0)
+
+    newblobs = Vortex.dualize_position(blobs,i,Nothing)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
+    dCdz, dCdzstar = extract_derivative(Nothing,pdual.C)
+
+    @test isapprox(norm(dCdz - dCdz_fd),0.0,atol=TOL)
+    @test isapprox(norm(dCdzstar - dCdzstar_fd),0.0,atol=TOL)
+
+    n = rand(0:N-1)
+    @test p.A[n] == value(pdual.A[n])
+
+    # note that we need to wrap A in complex to ensure it gets dispatched
+    # to the correct extract_derivative.
+    dAdz, dAdzstar = extract_derivative(Nothing,complex(pdual.A[n]))
+    @test dAdz == -0.5im*(dCdz[n+1] - conj(dCdzstar[n+1]))
+    @test dAdzstar == conj(dAdz)
 
 
   end

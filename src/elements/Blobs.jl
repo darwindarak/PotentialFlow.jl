@@ -33,6 +33,10 @@ end
 Elements.kind(::Blob) = Singleton
 Elements.kind(::Type{Blob{T,R}}) where {T,R} = Singleton
 
+Elements.promote_property_type(::Blob{T,R}) where {T,R} = promote_type(T,R)
+Elements.promote_property_type(::Type{Blob{T,R}}) where {T,R} = promote_type(T,R)
+
+
 #(b::Blob{T,R})(; z = b.z, S = b.S, δ = b.δ) where {T,R} = Blob{T,R}(z, S, δ)
 
 #== Methods to be extended ==#

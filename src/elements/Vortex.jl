@@ -14,7 +14,6 @@ import ..Sheets
 
 @inline _promote_to_float(z) = promote_type(typeof(z),Float64)
 
-
 """
     Vortex.Point(z::ComplexF64, Γ::Float64)
 

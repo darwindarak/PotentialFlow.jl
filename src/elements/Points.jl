@@ -29,6 +29,9 @@ end
 Elements.kind(::Point) = Singleton
 Elements.kind(::Type{Point{T,R}}) where {T,R} = Singleton
 
+Elements.promote_property_type(::Point{T,R}) where {T,R} = promote_type(T,R)
+Elements.promote_property_type(::Type{Point{T,R}}) where {T,R} = promote_type(T,R)
+
 #== Methods to be extended ==#
 
 Elements.position(p::Point) = p.z

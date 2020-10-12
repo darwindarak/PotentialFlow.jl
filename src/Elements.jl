@@ -320,7 +320,7 @@ julia> Elements.image(sys,b)
 end
 
 """
-        dualize_position(v::Vector{Element},i::Int,T)
+    dualize_position(v::Vector{Element},i::Int,T)
 
 Given a collection `v` of points or blobs, create a copy of the collection with
 the `i`th element's position replaced by a complex unit dual. The entire output
@@ -331,7 +331,7 @@ to `Nothing`.
 function dualize_position end
 
 """
-        dualize_strength(v::Vector{Element},i::Int,T)
+    dualize_strength(v::Vector{Element},i::Int,T)
 
 Given a collection `v` of points or blobs, create a copy of the collection with
 the `i`th element's strength replaced by a unit dual. The entire output
@@ -340,5 +340,12 @@ partials; the others have partials equal to zero. `T` is a `Tag`, and can be set
 to `Nothing`.
 """
 function dualize_strength end
+
+"""
+    promote_property_type(::Element)
+
+Return the promoted type of the properties of the element.
+"""
+function promote_property_type end
 
 end

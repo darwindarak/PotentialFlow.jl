@@ -18,9 +18,21 @@ import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, 
                   self_induce_velocity!, allocate_velocity, advect!
 
 import ..Utils
-import ..Utils:@get, MappedVector
+import ..Utils:@get, MappedVector, Dual, ComplexComplexDual, ComplexRealDual, 
+              value, extract_derivative
 
 include("plates/chebyshev.jl")
+
+@inline function _chebyshev_coefficient(C::ComplexComplexDual{T}) where {T}
+    A = imag(value(C))
+    dCdz, dCdzstar = extract_derivative(T,C)
+    dAdz = -0.5im*(dCdz - conj(dCdzstar))
+    return real(ComplexComplexDual{T}(A,dAdz,conj(dAdz)))
+end
+
+@inline _chebyshev_coefficient(C::ComplexRealDual{T}) where {T} = imag(C)
+
+@inline _chebyshev_coefficient(C::ComplexF64) = imag(C)
 
 """
     Plate <: Elements.Element
@@ -30,7 +42,7 @@ An infinitely thin, flat plate, represented as a bound vortex sheet
 # Constructors
 - `Plate(N, L, c, α)`
 """
-mutable struct Plate <: Element
+mutable struct Plate{T} <: Element
     "chord length"
     L::Float64
     "centroid"
@@ -39,7 +51,7 @@ mutable struct Plate <: Element
     α::Float64
 
     "total circulation"
-    Γ::Float64
+    Γ::T
 
     "number of control points"
     N::Int
@@ -48,9 +60,9 @@ mutable struct Plate <: Element
     "control point coordinates"
     zs::Vector{ComplexF64}
     "Chebyshev coefficients of the normal component of velocity induced along the plate by ambient vorticity"
-    A::MappedVector{Float64, Vector{ComplexF64}, typeof(imag)}
+    A::MappedVector{T, Vector{Complex{T}}, typeof(_chebyshev_coefficient)}
     "Chebyshev coefficients of the velocity induced along the plate by ambient vorticity"
-    C::Vector{ComplexF64}
+    C::Vector{Complex{T}}
     "zeroth Chebyshev coefficient associated with body motion"
     B₀::Float64
     "first Chebyshev coefficient associated with body motion"
@@ -68,19 +80,25 @@ end
 #    Plate(fields..., dchebt!)
 #end
 
-function Plate(N, L, c, α)
+function Plate{T}(N, L, c, α) where {T}
     ss = Chebyshev.nodes(N)
     zs = c .+ 0.5L*ss*exp(im*α)
 
-    C  = zeros(ComplexF64, N)
-    A = MappedVector(imag, C, 1)
+    C  = zeros(Complex{T}, N)
+    A = MappedVector(_chebyshev_coefficient, C, 1)
 
-    dchebt! = Chebyshev.plan_transform!(C)
+    # set up the transform for ComplexF64, regardless of T
+    dchebt! = Chebyshev.plan_transform!(zeros(ComplexF64, N))
 
-    Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0, dchebt!)
+    Plate{T}(L, c, α, zero(T), N, ss, zs, A, C, 0.0, 0.0, dchebt!)
 end
 
+Plate(args...) = Plate{Float64}(args...)
+
+
 Base.length(p::Plate) = p.N
+
+
 
 circulation(p::Plate) = p.Γ
 function impulse(p::Plate)
