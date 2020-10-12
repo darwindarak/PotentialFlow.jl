@@ -212,6 +212,62 @@ const TOL=5e-6
     @test dAdz == -0.5im*(dCdz[n+1] - conj(dCdzstar[n+1]))
     @test dAdzstar == conj(dAdz)
 
+    @test extract_derivative(Nothing,pdual.Γ) == 0.0
+
+    # with dualized strength
+    newblobs = Vortex.dualize_strength(blobs,i,Nothing);
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
+    dCdΓ = extract_derivative(Nothing,pdual.C)
+
+    @test isapprox(norm(dCdΓ - dCdΓ_fd),0.0,atol=TOL)
+
+    n = rand(0:N-1)
+    @test p.A[n] == value(pdual.A[n])
+
+    @test extract_derivative(Nothing,pdual.Γ) == -1.0
+    @test extract_derivative(Nothing,pdual.A[n]) == imag(dCdΓ[n+1])
+
+    # Now apply the full differentiation to evaluate sensitivity of induced velocity
+    # First, by finite difference
+    px⁺ = deepcopy(p)
+    Plates.enforce_no_flow_through!(px⁺, motion, blobsx⁺, 0.0)
+    py⁺ = deepcopy(p)
+    Plates.enforce_no_flow_through!(py⁺, motion, blobsy⁺, 0.0)
+    pΓ⁺ = deepcopy(p)
+    Plates.enforce_no_flow_through!(pΓ⁺, motion, blobsΓ⁺, 0.0)
+
+    w_fd =  induce_velocity(z,(p,blobs),0.0)
+    wx⁺_fd = induce_velocity(z,(px⁺,blobsx⁺),0.0)
+    wy⁺_fd = induce_velocity(z,(py⁺,blobsy⁺),0.0)
+    wΓ⁺_fd = induce_velocity(z,(pΓ⁺,blobsΓ⁺),0.0)
+
+    dwdx_fd = (wx⁺_fd - w_fd)/dz[i]
+    dwdy_fd = (wy⁺_fd - w_fd)/dz[i]
+    dwdz_fd = 0.5*(dwdx_fd - im*dwdy_fd)
+    dwdzstar_fd = 0.5*(dwdx_fd + im*dwdy_fd)
+    dwdΓ_fd = (wΓ⁺_fd - w_fd)/dΓ[i]
+
+    # now autodiff
+    newblobs = Vortex.dualize_position(blobs,i,Nothing);
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
+    w = induce_velocity(z,(pdual,newblobs),0.0)
+
+    dwdz, dwdzstar = extract_derivative(Nothing,w)
+
+    @test isapprox(abs(dwdz-dwdz_fd),0.0,atol=TOL)
+    @test isapprox(abs(dwdzstar-dwdzstar_fd),0.0,atol=TOL)
+
+    newblobs = Vortex.dualize_strength(blobs,i,Nothing);
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
+    w = induce_velocity(z,(pdual,newblobs),0.0)
+    dwdΓ = extract_derivative(Nothing,w)
+    
+    @test isapprox(abs(dwdΓ-dwdΓ_fd),0.0,atol=TOL)
+
+
 
   end
 
