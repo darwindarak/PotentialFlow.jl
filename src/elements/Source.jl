@@ -2,14 +2,15 @@ module Source
 
 import ..Points
 import ..Blobs
-import ..Elements: circulation, flux
+import ..Elements: circulation, flux, kind
 
 import ..Utils: dualize
 
 
-#== Wrapper for a point source ==#
-
 @inline _promote_to_float(z) = promote_type(typeof(z),Float64)
+
+
+#== Wrapper for a point source ==#
 
 """
     Source.Point(z::ComplexF64, S::Float64)

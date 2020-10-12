@@ -2,7 +2,7 @@ module Vortex
 
 import ..Elements
 import ..Elements: circulation, flux, impulse, angularimpulse, dualize_position,
-                    dualize_strength
+                    dualize_strength, kind
 
 import ..Utils: dualize
 
@@ -10,9 +10,9 @@ import ..Points
 import ..Blobs
 import ..Sheets
 
-#== Wrapper for a point vortex ==#
-
 @inline _promote_to_float(z) = promote_type(typeof(z),Float64)
+
+#== Wrapper for a point vortex ==#
 
 """
     Vortex.Point(z::ComplexF64, Γ::Float64)

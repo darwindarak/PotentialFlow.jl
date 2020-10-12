@@ -264,10 +264,60 @@ const TOL=5e-6
     Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
     w = induce_velocity(z,(pdual,newblobs),0.0)
     dwdΓ = extract_derivative(Nothing,w)
-    
+
     @test isapprox(abs(dwdΓ-dwdΓ_fd),0.0,atol=TOL)
 
 
+    # Now check the self-induced velocity
+    wself_fd = zeros(ComplexF64,length(blobs))
+    self_induce_velocity!(wself_fd,blobs, 0.0)
+    induce_velocity!(wself_fd, blobs, p, 0.0)
+
+    px⁺ = deepcopy(p)
+    Plates.enforce_no_flow_through!(px⁺, motion, blobsx⁺, 0.0)
+    py⁺ = deepcopy(p)
+    Plates.enforce_no_flow_through!(py⁺, motion, blobsy⁺, 0.0)
+    pΓ⁺ = deepcopy(p)
+    Plates.enforce_no_flow_through!(pΓ⁺, motion, blobsΓ⁺, 0.0)
+
+    wselfx⁺_fd = zeros(ComplexF64,length(blobs))
+    self_induce_velocity!(wselfx⁺_fd,blobsx⁺, 0.0)
+    induce_velocity!(wselfx⁺_fd, blobsx⁺, px⁺, 0.0)
+
+    wselfy⁺_fd = zeros(ComplexF64,length(blobs))
+    self_induce_velocity!(wselfy⁺_fd,blobsy⁺, 0.0)
+    induce_velocity!(wselfy⁺_fd, blobsy⁺, py⁺, 0.0)
+
+    wselfΓ⁺_fd = zeros(ComplexF64,length(blobs))
+    self_induce_velocity!(wselfΓ⁺_fd,blobsΓ⁺, 0.0)
+    induce_velocity!(wselfΓ⁺_fd, blobsΓ⁺, pΓ⁺, 0.0)
+
+    dwdx_fd = (wselfx⁺_fd - wself_fd)/dz[i]
+    dwdy_fd = (wselfy⁺_fd - wself_fd)/dz[i]
+    dwdz_fd = 0.5*(dwdx_fd - im*dwdy_fd)
+    dwdzstar_fd = 0.5*(dwdx_fd + im*dwdy_fd)
+    dwdΓ_fd = (wselfΓ⁺_fd - wself_fd)/dΓ[i]
+
+    newblobs = Vortex.dualize_position(blobs,i,Nothing)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
+    wself = zeros(typeof(ComplexComplexDual()),length(newblobs))
+    self_induce_velocity!(wself,newblobs, 0.0)
+    induce_velocity!(wself, newblobs, pdual, 0.0)
+    dwdz, dwdzstar  = extract_derivative(Nothing,wself)
+
+    @test isapprox(norm(dwdz-dwdz_fd),0.0,atol=TOL)
+    @test isapprox(norm(dwdzstar-dwdzstar_fd),0.0,atol=TOL)
+
+    newblobs = Vortex.dualize_strength(blobs,i,Nothing)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
+    wself = zeros(typeof(ComplexRealDual()),length(newblobs))
+    self_induce_velocity!(wself,newblobs, 0.0)
+    induce_velocity!(wself, newblobs, pdual, 0.0)
+    dwdΓ = extract_derivative(Nothing,wself)
+
+    @test isapprox(norm(dwdΓ-dwdΓ_fd),0.0,atol=TOL)
 
   end
 

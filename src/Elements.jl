@@ -6,6 +6,8 @@ export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction
 
 using ..Properties
 
+import ..Utils: ComplexDual, Dual
+
 abstract type Element end
 
 #== Trait definitions ==#
@@ -23,8 +25,12 @@ macro kind(element, k)
 end
 
 @kind ComplexF64 Singleton
-kind(::AbstractArray{T}) where {T <: Union{Element, ComplexF64}} = Group
+
+kind(::ComplexDual) = Singleton
+kind(::Dual) = Singleton
+kind(::AbstractArray{T}) where {T <: Union{Element, ComplexF64, Dual, ComplexDual}} = Group
 kind(::Tuple) = Group
+
 
 # Convenience functions to define wrapper types
 # e.g. vortex sheets as a wrapper around vortex blobs

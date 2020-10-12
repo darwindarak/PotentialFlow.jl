@@ -43,14 +43,14 @@ Elements.promote_property_type(::Type{Blob{T,R}}) where {T,R} = promote_type(T,R
 
 Elements.position(b::Blob) = b.z
 Elements.blobradius(b::Blob) = b.δ
-Elements.streamfunction(z::ComplexF64, b::Blob) = real(-0.5b.S*log(z - b.z)/π)
+Elements.streamfunction(z::Complex{T}, b::Blob) where {T} = real(-0.5b.S*log(z - b.z)/π)
 
-Elements.complexpotential(z::ComplexF64, b::Blob) = -0.5im*b.S*log(z - b.z)/π
+Elements.complexpotential(z::Complex{T}, b::Blob) where {T} = -0.5im*b.S*log(z - b.z)/π
 
 
 blob_kernel(z, δ) = 0.5im*z/(π*(abs2(z) + δ^2))
 
-function induce_velocity(z::ComplexF64, b::Blob, t)
+function induce_velocity(z::Complex{T}, b::Blob, t) where {T}
     b.S*blob_kernel(z - b.z, b.δ)
 end
 

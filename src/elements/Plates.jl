@@ -18,7 +18,7 @@ import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, 
                   self_induce_velocity!, allocate_velocity, advect!
 
 import ..Utils
-import ..Utils:@get, MappedVector, Dual, ComplexComplexDual, ComplexRealDual, 
+import ..Utils:@get, MappedVector, Dual, ComplexComplexDual, ComplexRealDual,
               value, extract_derivative
 
 include("plates/chebyshev.jl")
@@ -123,7 +123,7 @@ end
 normal(z, α) = imag(exp(-im*α)*z)
 tangent(z, α) = real(exp(-im*α)*z)
 
-function induce_velocity(z::ComplexF64, p::Plate, t)
+function induce_velocity(z::Complex{T}, p::Plate, t) where {T}
     @get p (α, L, c, B₀, B₁, Γ, A)
 
     z̃ = conj(2*(z - c)*exp(-im*α)/L)
@@ -181,7 +181,7 @@ end
 induce_velocity!(m::RigidBodyMotion, target::Plate, source, t) = m
 
 
-function Elements.streamfunction(z::ComplexF64, p::Plate)
+function Elements.streamfunction(z::Complex{T}, p::Plate) where {T}
     @get p (N, L, c, α, Γ, A, B₀, B₁)
     z̃ = 2*(z - c)*exp(-im*α)/L
     J = z̃ - √(z̃ - 1)*√(z̃ + 1)
@@ -197,7 +197,7 @@ function Elements.streamfunction(z::ComplexF64, p::Plate)
     return -ψ*L/4
 end
 
-function Elements.complexpotential(z::ComplexF64, p::Plate)
+function Elements.complexpotential(z::Complex{T}, p::Plate) where {T}
     @get p (N, L, c, α, Γ, A, B₀, B₁)
     z̃ = 2*(z - c)*exp(-im*α)/L
     J = z̃ - √(z̃ - 1)*√(z̃ + 1)
@@ -246,7 +246,7 @@ end
 Compute the impulse per unit circulation of `src` and its associated bound vortex sheet on `plate` (its image vortex)
 `src` can be either a `ComplexF64` or a subtype of `Vortex.PointSource`.
 """
-function unit_impulse(z::ComplexF64, plate::Plate)
+function unit_impulse(z::Complex{T}, plate::Plate) where {T}
     z̃ = 2(z - plate.c)*exp(-im*plate.α)/plate.L
     unit_impulse(z̃)
 end
@@ -338,7 +338,7 @@ include("plates/pressure.jl")
 function Base.show(io::IO, p::Plate)
     lesp, tesp = suction_parameters(p)
     println(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(round(rad2deg(p.α); digits=2))ᵒ")
-    print(io, "       LESP = $(round(lesp; digits=2)), TESP = $(round(tesp; digits=2))")
+    print(io, "       LESP = $(round(value(lesp); digits=2)), TESP = $(round(value(tesp); digits=2))")
 end
 
 end

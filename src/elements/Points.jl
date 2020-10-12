@@ -37,14 +37,14 @@ Elements.promote_property_type(::Type{Point{T,R}}) where {T,R} = promote_type(T,
 Elements.position(p::Point) = p.z
 Elements.blobradius(p::Point) = 0.0
 
-Elements.streamfunction(z::ComplexF64, p::Point) = real(-0.5p.S*log(z - p.z)/π)
+Elements.streamfunction(z::Complex{T}, p::Point) where {T} = real(-0.5p.S*log(z - p.z)/π)
 
-Elements.complexpotential(z::ComplexF64, p::Point) = -0.5im*p.S*log(z - p.z)/π
+Elements.complexpotential(z::Complex{T}, p::Point) where {T} = -0.5im*p.S*log(z - p.z)/π
 
 
 cauchy_kernel(z) = z != zero(z) ? 0.5im/(π*conj(z)) : zero(z)
 
-function induce_velocity(z::ComplexF64, p::Point, t)
+function induce_velocity(z::Complex{T}, p::Point, t) where {T}
     p.S'*cauchy_kernel(z - p.z)
 end
 
