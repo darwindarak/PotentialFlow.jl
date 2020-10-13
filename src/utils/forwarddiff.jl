@@ -80,12 +80,14 @@ end
 
 # preempt other function diffrules. The two entries correspond to d/dz and d/dz*
 DiffRules.@define_diffrule Base.abs2(z) = :(conj($z)), :($z)
-DiffRules.@define_diffrule Base.conj(z) = :(0), :(1)
+#DiffRules.@define_diffrule Base.conj(z) = :(0), :(1)
 #DiffRules.@define_diffrule Base.real(z) = :(0.5), :(0.5)
 #DiffRules.@define_diffrule Base.imag(z) = :(0.5im), :(-0.5im)
+
 DiffRules.@define_diffrule Base.sqrt(z) = :(inv(2 * sqrt($z))), :(0)
 DiffRules.@define_diffrule Base.log(z) = :(inv($z)), :(0)
 DiffRules.@define_diffrule Base.:^(z,p) = :($p * ($z^($p - 1))), :(0)
+
 DiffRules.@define_diffrule Base.abs(z) = :(0.5*conj($z)*inv(abs($z))), :(0.5*$z*inv(abs($z)))
 
 # Extend functions of a single complex argument to accept dual argument
@@ -139,12 +141,14 @@ end
 
 
 
-@extend_unary_dual_to_complex conj
+#@extend_unary_dual_to_complex conj
 #@extend_unary_dual_to_complex real
 #@extend_unary_dual_to_complex imag
+
 @extend_unary_dual_to_complex abs2
 @extend_unary_dual_to_complex sqrt
 @extend_unary_dual_to_complex log
+
 @extend_unary_dual_to_complex abs
 
 @extend_binary_dual_to_complex ^
