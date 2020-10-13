@@ -13,70 +13,69 @@ const BIGTOL=1e-5
 
   @testset "Basic derivatives" begin
 
-  z = rand(ComplexF64)
+    z = rand(ComplexF64)
 
-  dz1, dzstar1 = derivative(z -> log(sqrt(z)),z)
+    dz1, dzstar1 = derivative(z -> log(sqrt(z)),z)
 
-  dzex = 1/(2*z)
+    dzex = 1/(2*z)
 
-  @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
-  @test isapprox(abs(dzstar1),0,atol=BIGEPS)
+    @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
+    @test isapprox(abs(dzstar1),0,atol=BIGEPS)
 
-  dz1, dzstar1 = derivative(z -> conj(z),z)
-  @test dzstar1 == one(z) && dz1 == zero(z)
+    dz1, dzstar1 = derivative(z -> conj(z),z)
+    @test dzstar1 == one(z) && dz1 == zero(z)
 
-  f(z) = 0.5im/(π*conj(z))
+    f(z) = 0.5im/(π*conj(z))
 
-  dz1, dzstar1 = derivative(f,z)
-  dzstarex = -0.5im/(pi*conj(z)^2)
+    dz1, dzstar1 = derivative(f,z)
+    dzstarex = -0.5im/(pi*conj(z)^2)
 
-  @test isapprox(abs(dz1),0,atol=BIGEPS)
-  @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
+    @test isapprox(abs(dz1),0,atol=BIGEPS)
+    @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
 
-  z0 = rand(ComplexF64)
-  dz1, dzstar1 = derivative(z -> f(z-z0),z)
+    z0 = rand(ComplexF64)
+    dz1, dzstar1 = derivative(z -> f(z-z0),z)
 
-  dzstarex = -0.5im/(pi*conj(z-z0)^2)
+    dzstarex = -0.5im/(pi*conj(z-z0)^2)
 
-  @test isapprox(abs(dz1),0,atol=BIGEPS)
-  @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
+    @test isapprox(abs(dz1),0,atol=BIGEPS)
+    @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
 
-  dz1, dzstar1 = derivative(abs,z)
+    dz1, dzstar1 = derivative(abs,z)
 
-  dzex = 0.5*conj(z)/abs(z)
-  dzstarex = 0.5*z/abs(z)
-  @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
-  @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
+    dzex = 0.5*conj(z)/abs(z)
+    dzstarex = 0.5*z/abs(z)
+    @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
+    @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
 
-  dz1, dzstar1 = derivative(z -> z + sqrt(log(z)) - 1/z^2,z)
+    dz1, dzstar1 = derivative(z -> z + sqrt(log(z)) - 1/z^2,z)
 
-  dzex = 1 + 1/(2*sqrt(log(z))*z) + 2/z^3
-  dzstarex = 0.0
+    dzex = 1 + 1/(2*sqrt(log(z))*z) + 2/z^3
+    dzstarex = 0.0
 
-  @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
-  @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
+    @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
+    @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
 
-  dz1, dzstar1 = derivative(z -> real(z - √(z - 1)*√(z + 1)),z)
+    dz1, dzstar1 = derivative(z -> real(z - √(z - 1)*√(z + 1)),z)
 
-  dzex = 0.5*(1 - 0.5*sqrt((z+1)/(z-1)) - 0.5*sqrt((z-1)/(z+1)))
-  dzstarex = 0.5*conj(1 - 0.5*sqrt((z+1)/(z-1)) - 0.5*sqrt((z-1)/(z+1)))
+    dzex = 0.5*(1 - 0.5*sqrt((z+1)/(z-1)) - 0.5*sqrt((z-1)/(z+1)))
+    dzstarex = 0.5*conj(1 - 0.5*sqrt((z+1)/(z-1)) - 0.5*sqrt((z-1)/(z+1)))
 
-  @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
-  @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
-
-
-
+    @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
+    @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
 
   end
 
-  pos = rand(ComplexF64,5)
+  nblob = 5
+  pos = rand(ComplexF64,nblob)
   str = rand(length(pos))
 
   σ = 1e-2
   blobs = Vortex.Blob.(pos,str,σ)
   z = rand(ComplexF64)
 
-  i = 3
+  i = rand(1:nblob)
+
   # For finite difference approximations
   dz = zeros(ComplexF64,length(blobs))
   dz[i] = DELTA
@@ -86,17 +85,7 @@ const BIGTOL=1e-5
   blobsy⁺ = Vortex.Blob.(Elements.position(blobs).+im*dz,Elements.circulation.(blobs),σ)
   blobsΓ⁺ = Vortex.Blob.(Elements.position(blobs),Elements.circulation.(blobs).+dΓ,σ)
 
-  N = 7
-  p = PotentialFlow.Plate(N,2.0,complex(0),0.0)
-  motion = PotentialFlow.RigidBodyMotion(complex(0),0.0)
 
-  Plates.enforce_no_flow_through!(p, motion, blobs, 0.0)
-  px⁺ = deepcopy(p)
-  Plates.enforce_no_flow_through!(px⁺, motion, blobsx⁺, 0.0)
-  py⁺ = deepcopy(p)
-  Plates.enforce_no_flow_through!(py⁺, motion, blobsy⁺, 0.0)
-  pΓ⁺ = deepcopy(p)
-  Plates.enforce_no_flow_through!(pΓ⁺, motion, blobsΓ⁺, 0.0)
 
   @testset "Basic operations with duals" begin
 
@@ -145,6 +134,23 @@ end
     @test isapprox(abs(dwdΓ-dwdΓ_fd),0.0,atol=TOL)
 
 end
+
+N = 7
+L = 2.0
+c = complex(0)
+α = 0.0
+ċ = complex(0.0)
+α̇ = 0.0
+p = PotentialFlow.Plate(N,L,c,α)
+motion = PotentialFlow.RigidBodyMotion(ċ,α̇)
+
+Plates.enforce_no_flow_through!(p, motion, blobs, 0.0)
+px⁺ = deepcopy(p)
+Plates.enforce_no_flow_through!(px⁺, motion, blobsx⁺, 0.0)
+py⁺ = deepcopy(p)
+Plates.enforce_no_flow_through!(py⁺, motion, blobsy⁺, 0.0)
+pΓ⁺ = deepcopy(p)
+Plates.enforce_no_flow_through!(pΓ⁺, motion, blobsΓ⁺, 0.0)
 
 @testset "Induced velocity at plate points" begin
 
@@ -207,7 +213,7 @@ end
 
     # Now with enforce_no_flow_through
     newblobs = Vortex.dualize_position(blobs,i,Nothing)
-    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,L,c,α)
     Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
     dCdz, dCdzstar = extract_derivative(Nothing,pdual.C)
 
@@ -227,7 +233,7 @@ end
 
     # with dualized strength
     newblobs = Vortex.dualize_strength(blobs,i,Nothing);
-    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,L,c,α)
     Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
     dCdΓ = extract_derivative(Nothing,pdual.C)
 
@@ -259,7 +265,7 @@ end
 
     # now autodiff
     newblobs = Vortex.dualize_position(blobs,i,Nothing);
-    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,L,c,α)
     Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
     w = induce_velocity(z,(pdual,newblobs),0.0)
 
@@ -269,7 +275,7 @@ end
     @test isapprox(abs(dwdzstar-dwdzstar_fd),0.0,atol=TOL)
 
     newblobs = Vortex.dualize_strength(blobs,i,Nothing);
-    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,L,c,α)
     Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
     w = induce_velocity(z,(pdual,newblobs),0.0)
     dwdΓ = extract_derivative(Nothing,w)
@@ -303,7 +309,7 @@ end
     dwdΓ_fd = (wselfΓ⁺_fd - wself_fd)/dΓ[i]
 
     newblobs = Vortex.dualize_position(blobs,i,Nothing)
-    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,L,c,α)
     Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
     wself = zeros(typeof(ComplexComplexDual()),length(newblobs))
     self_induce_velocity!(wself,newblobs, 0.0)
@@ -314,7 +320,7 @@ end
     @test isapprox(norm(dwdzstar-dwdzstar_fd),0.0,atol=TOL)
 
     newblobs = Vortex.dualize_strength(blobs,i,Nothing)
-    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,L,c,α)
     Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
     wself = zeros(typeof(ComplexRealDual()),length(newblobs))
     self_induce_velocity!(wself,newblobs, 0.0)
@@ -326,7 +332,6 @@ end
 
 @testset "Acceleration induced on plate" begin
 
-    ċ = complex(0.0)
     targvel = fill(ċ, length(p))
 
     wself_fd = zeros(ComplexF64,length(blobs))
@@ -360,7 +365,7 @@ end
     dĊdΓ_fd = (ĊΓ⁺_fd - Ċ_fd)/dΓ[i]
 
     newblobs = Vortex.dualize_position(blobs,i,Nothing);
-    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,L,c,α)
     Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0);
     wself = zeros(typeof(ComplexComplexDual()),length(newblobs))
     self_induce_velocity!(wself,newblobs, 0.0)
@@ -374,7 +379,7 @@ end
     @test isapprox(norm(dĊdzstar-dĊdzstar_fd),0.0,atol=BIGTOL)
 
     newblobs = Vortex.dualize_strength(blobs,i,Nothing);
-    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    pdual = PotentialFlow.Plate{Elements.promote_property_type(eltype(newblobs))}(N,L,c,α)
     Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0);
     wself = zeros(typeof(ComplexRealDual()),length(newblobs))
     self_induce_velocity!(wself,newblobs, 0.0)
