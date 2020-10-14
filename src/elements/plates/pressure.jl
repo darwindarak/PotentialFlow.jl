@@ -26,6 +26,8 @@ function surface_pressure_inst(p::Plate, ṗ, ambient_sys, z_new, t, Δt, lesp, 
     # Get Ċ from movement of existing vortex blobs (without vortex shedding)
     enforce_no_flow_through!(p, ṗ, ambient_sys, t)
 
+    srcvel = zeros(typeof(PotentialFlow.Utils.ComplexComplexDual()),length(ambient_sys))
+
     srcvel = self_induce_velocity(ambient_sys, t)
     induce_velocity!(srcvel, ambient_sys, p, t)
 
@@ -46,7 +48,7 @@ function surface_pressure_inst(p::Plate, ṗ, ambient_sys, z_new, t, Δt, lesp, 
 
     @. Ċ += (∂C₊ + ∂C₋)/Δt - im*α̇*C
 
-    Ȧ = MappedVector(imag, Ċ, 1)
+    Ȧ = MappedVector(_chebyshev_coefficient, Ċ, 1)
 
     # Plate is moving at a fixed velocity and angle of attack
     Ḃ₀ = Ḃ₁ = 0.0

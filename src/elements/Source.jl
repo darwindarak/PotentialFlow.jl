@@ -50,10 +50,12 @@ flux(p::Point) = imag(p.S)
 circulation(::Point) = 0.0
 
 @inline dualize_position(v::Vector{<:Point},i::Int,::Type{T}) where {T} =
-        Point.(dualize(Elements.position(v),i,T),flux.(v))
+        Point.(dualize(Elements.position(v),i,T),
+        convert(Vector{RealComplexDual{Nothing,Float64}},flux.(v)))
 
 @inline dualize_strength(v::Vector{<:Point},i::Int,::Type{T}) where {T} =
-        Point.(Elements.position(v),dualize(flux.(v),i,T))
+        Point.(convert(Vector{ComplexRealDual{Nothing,Float64}},Elements.position(v)),
+               dualize(flux.(v),i,T))
 
 #== Wrapper for a blob source ==#
 
@@ -95,9 +97,12 @@ circulation(::Blob) = 0.0
 flux(b::Blob) = imag(b.S)
 
 @inline dualize_position(v::Vector{<:Blob},i::Int,::Type{T}) where {T} =
-    Blob.(dualize(Elements.position(v),i,T),flux.(v),Elements.blobradius(v))
+    Blob.(dualize(Elements.position(v),i,T),
+          convert(Vector{RealComplexDual{Nothing,Float64}},flux.(v)),
+          Elements.blobradius(v))
 
 @inline dualize_strength(v::Vector{<:Blob},i::Int,::Type{T}) where {T} =
-    Blob.(Elements.position(v),dualize(flux.(v),i,T),Elements.blobradius(v))
+    Blob.(convert(Vector{ComplexRealDual{Nothing,Float64}},Elements.position(v)),
+           dualize(flux.(v),i,T),Elements.blobradius(v))
 
 end

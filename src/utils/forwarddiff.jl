@@ -2,7 +2,7 @@
 using ForwardDiff
 using DiffRules
 
-import ForwardDiff:value,partials,derivative,extract_derivative, Dual
+import ForwardDiff:value,partials,derivative,extract_derivative, Dual, seed!
 const AMBIGUOUS_TYPES = (AbstractFloat, Irrational, Integer, Rational, Real, RoundingMode, ComplexF64)
 
 # ComplexComplexDual is designated for derivatives of complex functions
@@ -13,6 +13,8 @@ const AMBIGUOUS_TYPES = (AbstractFloat, Irrational, Integer, Rational, Real, Rou
 const ComplexDual{T,V,N} = Complex{Dual{T,V,N}}
 const ComplexComplexDual{T,V} = ComplexDual{T,V,2}
 const ComplexRealDual{T,V} = ComplexDual{T,V,1}
+const RealComplexDual{T,V} = Dual{T,V,2}
+
 
 @inline function ComplexComplexDual{T}(z::Number,dz::Number,dzstar::Number) where {T}
   zr, zi = reim(z)
@@ -96,7 +98,7 @@ macro extend_unary_dual_to_complex(fcn)
     f = :($fcn)
     dfz, dfzstar = DiffRules.diffrule(M,f,:v)
     fdef = quote
-        function $M.$f(z::ComplexDual{T}) where {T}
+        function $M.$f(z::ComplexComplexDual{T}) where {T}
             v = value(z)
             dvz, dvzstar = extract_derivative(T,z)
 
@@ -105,6 +107,16 @@ macro extend_unary_dual_to_complex(fcn)
             dfdzstar = $dfz*dvzstar + $dfzstar*conj(dvz)
 
             return ComplexComplexDual{T}($M.$f(v),dfdz,dfdzstar)
+
+        end
+        function $M.$f(z::ComplexRealDual{T}) where {T}
+            v = value(z)
+            dv = extract_derivative(T,z)
+
+            # chain rule
+            df =     $dfz*dv     + $dfzstar*conj(dv)
+
+            return ComplexRealDual{T}($M.$f(v),df)
 
         end
     end
@@ -121,7 +133,7 @@ macro extend_binary_dual_to_complex(fcn)
     defs = quote end
     for R in AMBIGUOUS_TYPES
         expr = quote
-            function $M.$f(z::ComplexDual{T},p::$R) where {T}
+            function $M.$f(z::ComplexComplexDual{T},p::$R) where {T}
                 v = value(z)
                 dvz, dvzstar = extract_derivative(T,z)
 
@@ -132,13 +144,21 @@ macro extend_binary_dual_to_complex(fcn)
                 return ComplexComplexDual{T}($M.$f(v,p),dfdz,dfdzstar)
 
             end
+            function $M.$f(z::ComplexRealDual{T},p::$R) where {T}
+                v = value(z)
+                dv = extract_derivative(T,z)
+
+                # chain rule
+                df =     $dfz*dv     + $dfzstar*conj(dv)
+
+                return ComplexRealDual{T}($M.$f(v,p),df)
+
+            end
         end
         append!(defs.args, expr.args)
     end
     return esc(defs)
 end
-
-
 
 
 #@extend_unary_dual_to_complex conj
@@ -148,7 +168,6 @@ end
 @extend_unary_dual_to_complex abs2
 @extend_unary_dual_to_complex sqrt
 @extend_unary_dual_to_complex log
-
 @extend_unary_dual_to_complex abs
 
 @extend_binary_dual_to_complex ^
@@ -175,7 +194,6 @@ function dualize(v::Vector{Float64},i::Int,::Type{T}) where {T}
     dualv[i] = d
     return dualv
 end
-
 
 """
     ForwardDiff.derivative(f,z::Complex)

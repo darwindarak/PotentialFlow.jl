@@ -139,8 +139,10 @@ function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
         K₁ = (A₂₋*b₊ - A₂₊*b₋)/detA
         K₂ = (A₁₊*b₋ - A₁₋*b₊)/detA
     end
+    ∂C₁ = ∂C₁*K₁
+    ∂C₂ = ∂C₂*K₁
 
-    return K₁*Γ₁, K₂*Γ₂, rmul!(∂C₁, K₁), rmul!(∂C₂, K₂)
+    return K₁*Γ₁, K₂*Γ₂, ∂C₁, ∂C₂ #rmul!(∂C₁, K₁), rmul!(∂C₂, K₂)
 end
 
 """
