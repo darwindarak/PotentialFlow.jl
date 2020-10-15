@@ -17,20 +17,31 @@ An immutable structure representing a point source/vortex
 - `z::ComplexF64`: position
 - `S::T`: strength/circulation
 """
-struct Point{T <: Number, R <: Number} <: Element
+struct Point{S <: Number,R <: Real} <: Element
     z::Complex{R}
-    S::T
-    Point{T,R}(z, s::Real) where {T <: Complex,R <: Number} = new(z, im*s)
-    Point{T,R}(z, s)       where {T <: Complex,R <: Number} = new(z, s)
-    Point{T,R}(z, s::Real) where {T <: Real, R <: Number} = new(z, s)
+    S::Union{R,Complex{R}}
+    Point{S}(z::Complex{R}, s::T)           where {S <: Complex, T <: Real, R <: Real} = (U = promote_type(R,T); new{Complex{U},U}(z, im*convert(U,s)))
+    Point{S}(z::Complex{R}, s::Complex{T})  where {S <: Complex, T <: Real, R <: Real} = (U = promote_type(R,T); new{Complex{U},U}(z, convert(Complex{U},s)))
+    Point{S}(z::Complex{R}, s::T)           where {S <: Real, T <: Real, R <: Real}    = (U = promote_type(R,T); new{U,U}(z, convert(U,s)))
 end
+# struct Point{T <: Number, R <: Number} <: Element
+#     z::Complex{R}
+#     S::T
+#     Point{T,R}(z, s::Real) where {T <: Complex,R <: Number} = new(z, im*s)
+#     Point{T,R}(z, s)       where {T <: Complex,R <: Number} = new(z, s)
+#     Point{T,R}(z, s::Real) where {T <: Real, R <: Number} = new(z, s)
+# end
+
 #Point(z::Complex{R},S::T) where {T,R} = Point{T,R}(z,S)
 
 Elements.kind(::Point) = Singleton
 Elements.kind(::Type{Point{T,R}}) where {T,R} = Singleton
 
-Elements.promote_property_type(::Point{T,R}) where {T,R} = promote_type(T,R)
-Elements.promote_property_type(::Type{Point{T,R}}) where {T,R} = promote_type(T,R)
+Elements.property_type(::Point{T,R}) where {T,R} = R
+Elements.property_type(::Type{Point{T,R}}) where {T,R} = R
+
+#Elements.promote_property_type(::Point{T,R}) where {T,R} = promote_type(T,R)
+#Elements.promote_property_type(::Type{Point{T,R}}) where {T,R} = promote_type(T,R)
 
 #== Methods to be extended ==#
 
@@ -73,8 +84,8 @@ function self_induce_velocity!(ws, points::Vector{Point{T,R}}, t) where {T,R}
     ws
 end
 
-function advect(p::Point{T,R}, w::ComplexF64, Δt::Float64) where {T,R}
-    Point{T,R}(p.z + w*Δt, p.S)
+function advect(p::Point{T}, w::ComplexF64, Δt::Float64) where {T}
+    Point{T}(p.z + w*Δt, p.S)
 end
 
 #function Base.show(io::IO, p::Point)

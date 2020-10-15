@@ -348,10 +348,10 @@ to `Nothing`.
 function dualize_strength end
 
 """
-    promote_property_type(::Element)
+    property_type(::Element)
 
-Return the promoted type of the properties of the element.
+Return the type of the properties of the element.
 """
-function promote_property_type end
+function property_type end
 
 end

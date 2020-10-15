@@ -22,7 +22,7 @@ Elements.unwrap(s::Sheet) = s.blobs
 
 function Sheet(zs::AbstractVector{Complex{T}}, Ss::AbstractVector{S}, δ::Float64) where {T <: Number, S <: Number}
     dSs = compute_trapezoidal_weights(Ss)
-    blobs = Blob{S,T}.(zs, dSs, δ)
+    blobs = Blob{S}.(zs, dSs, δ)
 
     zs = mappedarray(Elements.position, blobs)
 

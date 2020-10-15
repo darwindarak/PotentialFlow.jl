@@ -36,9 +36,10 @@ Vortex.Point(1.0 + 0.0im, 2.0)
 """
 #const Point = Points.Point{Float64,Float64}
 const Point = Points.Point{T,R} where {T<: Real, R<:Real}
-Point(z::Complex{R},Γ::T) where {T<:Real,R<:Real} = Points.Point{T,R}(z,Γ)
-Point(z::Real,Γ::T) where {T<:Real} =
-    Points.Point{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),Γ)
+Point(z::Complex{R},Γ::T) where {T<:Real,R<:Real} = Points.Point{T}(z,Γ)
+Point(z::Real,Γ::T) where {T} = Points.Point{T}(complex(z),Γ)
+#Point(z::Real,Γ::T) where {T<:Real} =
+#    Points.Point{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),Γ)
 
 (p::Point)(; z = p.z, Γ = p.S) = Point(z, Γ)
 
@@ -83,9 +84,10 @@ Vortex.Blob(1.0 + 0.0im, 2.0, 0.01)
 """
 #const Blob = Blobs.Blob{Float64,Float64}
 const Blob = Blobs.Blob{T,R} where {T<:Real,R<:Real}
-Blob(z::Complex{R},Γ::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{T,R}(z,Γ,δ)
-Blob(z::Real,Γ::T,δ) where {T<:Real} =
-    Blobs.Blob{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),Γ,δ)
+Blob(z::Complex{R},Γ::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{T}(z,Γ,δ)
+Blob(z::Real,Γ::T,δ) where {T<:Real} = Blobs.Blob{T}(complex(z),Γ,δ)
+#Blob(z::Real,Γ::T,δ) where {T<:Real} =
+#        Blobs.Blob{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),Γ,δ)
 
 
 (b::Blob)(; z = b.z, Γ = b.S, δ = b.δ) = Blob(z, Γ, δ)

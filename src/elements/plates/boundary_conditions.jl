@@ -102,9 +102,9 @@ julia> Γ # should equal -πULsin(α) = -π
 -3.1415926535897927
 ```
 """
-function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
-                        ∂C₁ = Vector{ComplexF64}(undef,plate.N),
-                        ∂C₂ = Vector{ComplexF64}(undef,plate.N))
+function vorticity_flux(plate::Plate{T}, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
+                        ∂C₁ = Vector{Complex{T}}(undef,plate.N),
+                        ∂C₂ = Vector{Complex{T}}(undef,plate.N)) where {T}
 
     @get plate (N, α, B₀, B₁, L, A, Γ)
 
@@ -139,10 +139,9 @@ function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
         K₁ = (A₂₋*b₊ - A₂₊*b₋)/detA
         K₂ = (A₁₊*b₋ - A₁₋*b₊)/detA
     end
-    ∂C₁ = ∂C₁*K₁
-    ∂C₂ = ∂C₂*K₁
 
-    return K₁*Γ₁, K₂*Γ₂, ∂C₁, ∂C₂ #rmul!(∂C₁, K₁), rmul!(∂C₂, K₂)
+    return K₁*Γ₁, K₂*Γ₂, rmul!(∂C₁, K₁), rmul!(∂C₂, K₂)
+
 end
 
 """
@@ -157,9 +156,9 @@ modify `plate.C` with those changes so that no-flow-through is
 enforced in the presence of `v₁` and `v₂` with strengths that satisfy
 the suction parameters.
 """
-function vorticity_flux!(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
-                        ∂C₁ = Vector{ComplexF64}(undef, plate.N),
-                        ∂C₂ = Vector{ComplexF64}(undef, plate.N))
+function vorticity_flux!(plate::Plate{T}, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
+                        ∂C₁ = Vector{Complex{T}}(undef, plate.N),
+                        ∂C₂ = Vector{Complex{T}}(undef, plate.N)) where {T}
     Γ₁, Γ₂, _, _ = vorticity_flux(plate, v₁, v₂, t, lesp, tesp, ∂C₁, ∂C₂)
     @. plate.C += ∂C₁ + ∂C₂
     plate.Γ -= Γ₁ + Γ₂

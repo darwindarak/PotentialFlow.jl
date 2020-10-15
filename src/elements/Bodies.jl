@@ -182,11 +182,11 @@ end
 
 Elements.conftransform(ζ::ComplexF64,b::ConformalBody) = b.c + b.m(ζ)*exp(im*b.α)
 
-Elements.conftransform(s::Point{T,R},b::ConformalBody) where {T,R} =
-                Point{T,R}(Elements.conftransform(s.z,b),s.S)
+Elements.conftransform(s::Point{T},b::ConformalBody) where {T} =
+                Point{T}(Elements.conftransform(s.z,b),s.S)
 
-Elements.conftransform(s::Blob{T,R},b::ConformalBody) where {T,R} =
-                Blob{T,R}(Elements.conftransform(s.z,b),s.S,s.δ)
+Elements.conftransform(s::Blob{T},b::ConformalBody) where {T} =
+                Blob{T}(Elements.conftransform(s.z,b),s.S,s.δ)
 
 Elements.conftransform(f::Freestream,b::ConformalBody) =
       Freestream(f.U/conj(b.m.ps.ccoeff[1])*exp(im*b.α))
@@ -198,11 +198,11 @@ end
 
 Elements.inverse_conftransform(z::ComplexF64,b::ConformalBody) = b.minv((z-b.c)*exp(-im*b.α))
 
-Elements.inverse_conftransform(s::Point{T,R},b::ConformalBody) where {T,R} =
-                Point{T,R}(Elements.inverse_conftransform(s.z,b),s.S)
+Elements.inverse_conftransform(s::Point{T},b::ConformalBody) where {T} =
+                Point{T}(Elements.inverse_conftransform(s.z,b),s.S)
 
-Elements.inverse_conftransform(s::Blob{T,R},b::ConformalBody) where {T,R} =
-                Blob{T,R}(Elements.inverse_conftransform(s.z,b),s.S,s.δ)
+Elements.inverse_conftransform(s::Blob{T},b::ConformalBody) where {T} =
+                Blob{T}(Elements.inverse_conftransform(s.z,b),s.S,s.δ)
 
 Elements.inverse_conftransform(f::Freestream,b::ConformalBody) =
         Freestream(f.U*conj(b.m.ps.ccoeff[1])*exp(-im*b.α))
@@ -439,8 +439,8 @@ function induce_velocity!(ws::Vector, b::ConformalBody, src, t)
 end
 
 # Note that we are assuming here that the blobs/points are in the circle plane
-function _singular_velocity!(ws, b, src::Blob{T,R}, t, ::Type{Singleton}) where {T,R}
-    induce_velocity!(ws, b.zetas, Point{T,R}(src.z, src.S), t)
+function _singular_velocity!(ws, b, src::Blob{T}, t, ::Type{Singleton}) where {T}
+    induce_velocity!(ws, b.zetas, Point{T}(src.z, src.S), t)
 end
 
 function _singular_velocity!(ws, b, src, t, ::Type{Singleton})

@@ -20,13 +20,13 @@ julia> sys[1]
 Vortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2
 ```
 """
-function redistribute_points!(sheet::Sheet{T,R}, zs, Ss) where {T,R}
+function redistribute_points!(sheet::Sheet{T}, zs, Ss) where {T}
     if !(sheet.Ss === Ss)
         resize!(sheet.Ss, length(Ss))
         copy!(sheet.Ss, Ss)
     end
 
-    sheet.blobs = Blob{T,R}.(zs, compute_trapezoidal_weights(Ss), sheet.δ)
+    sheet.blobs = Blob{T}.(zs, compute_trapezoidal_weights(Ss), sheet.δ)
     sheet.zs = mappedarray(Elements.position, sheet.blobs)
     sheet
 end
@@ -49,15 +49,15 @@ julia> sheet
 Vortex Sheet: L ≈ 0.6, Γ = 6.0, δ = 0.2
 ```
 """
-function split!(sheet::Sheet{T,R}, n::Int) where {T,R}
+function split!(sheet::Sheet{T}, n::Int) where {T}
     @assert 2 < n < length(sheet) - 2
 
     blobs = splice!(sheet.blobs, 1:n-1)
     Ss = splice!(sheet.Ss, 1:n-1)
     push!(Ss, sheet.Ss[1])
-    push!(blobs, Blob{T,R}(sheet.blobs[1].z, 0.5(Ss[end] - Ss[end-1]), sheet.δ))
+    push!(blobs, Blob{T}(sheet.blobs[1].z, 0.5(Ss[end] - Ss[end-1]), sheet.δ))
 
-    sheet.blobs[1] = Blob{T,R}(sheet.blobs[1].z, 0.5(sheet.Ss[2] - sheet.Ss[1]), sheet.δ)
+    sheet.blobs[1] = Blob{T}(sheet.blobs[1].z, 0.5(sheet.Ss[2] - sheet.Ss[1]), sheet.δ)
 
     Sheet(blobs, Ss, sheet.δ)
 end
@@ -77,12 +77,12 @@ julia> Sheets.truncate!(sheet, 5)
 4.0
 ```
 """
-function truncate!(sheet::Sheet{T,R}, n::Int) where {T,R}
+function truncate!(sheet::Sheet{T}, n::Int) where {T}
     @assert 2 ≤ n ≤ length(sheet)-1
     ΔS = sheet.Ss[n] - sheet.Ss[1]
     splice!(sheet.Ss, 1:n-1)
     splice!(sheet.blobs, 1:n-1)
-    sheet.blobs[1] = Blob{T,R}(sheet.blobs[1].z, 0.5(sheet.Ss[2] - sheet.Ss[1]), sheet.δ)
+    sheet.blobs[1] = Blob{T}(sheet.blobs[1].z, 0.5(sheet.Ss[2] - sheet.Ss[1]), sheet.δ)
     return ΔS
 end
 
@@ -279,10 +279,10 @@ julia> sheet.blobs[end]
 Vortex.Blob(1.1 + 0.0im, 1.0, 0.2)
 ```
 """
-function append_segment!(sheet::Sheet{T,R}, z, S::T) where {T,R}
+function append_segment!(sheet::Sheet{T}, z, S::T) where {T}
     b₋ = sheet.blobs[end]
-    sheet.blobs[end] = Blob{T,R}(b₋.z, b₋.S + 0.5S, b₋.δ)
-    push!(sheet.blobs, Blob{T,R}(z, 0.5S, sheet.δ))
+    sheet.blobs[end] = Blob{T}(b₋.z, b₋.S + 0.5S, b₋.δ)
+    push!(sheet.blobs, Blob{T}(z, 0.5S, sheet.δ))
     push!(sheet.Ss, sheet.Ss[end] + S)
     nothing
 end
