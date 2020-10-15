@@ -68,6 +68,50 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
 
   end
 
+  @testset "Nested derivatives" begin
+
+    z0 = rand(ComplexF64)
+    y0 = rand(ComplexF64)
+    dyz, dystarz, dyzstar, dystarzstar = derivative(y -> derivative(z -> 1/(z-y),z0),y0)
+
+    dyzex = -2/(z0-y0)^3
+    @test isapprox(abs(dyz-dyzex),0,atol=BIGEPS)
+    @test isapprox(abs(dystarz),0,atol=BIGEPS)
+    @test isapprox(abs(dyzstar),0,atol=BIGEPS)
+    @test isapprox(abs(dystarzstar),0,atol=BIGEPS)
+
+    z0 = rand(ComplexF64)
+    y0 = rand(ComplexF64)
+    dyz, dystarz, dyzstar, dystarzstar = derivative(y -> derivative(z -> 1/(z-conj(y)),z0),y0)
+
+    dystarzex = -2/(z0-conj(y0))^3
+    @test isapprox(abs(dyz),0,atol=BIGEPS)
+    @test isapprox(abs(dystarz-dystarzex),0,atol=BIGEPS)
+    @test isapprox(abs(dyzstar),0,atol=BIGEPS)
+    @test isapprox(abs(dystarzstar),0,atol=BIGEPS)
+
+    z0 = rand(ComplexF64)
+    y0 = rand(ComplexF64)
+    dyz, dystarz, dyzstar, dystarzstar = derivative(y -> derivative(z -> 1/(conj(z)-y),z0),y0)
+
+    dyzstarex = -2/(conj(z0)-y0)^3
+    @test isapprox(abs(dyz),0,atol=BIGEPS)
+    @test isapprox(abs(dystarz),0,atol=BIGEPS)
+    @test isapprox(abs(dyzstar-dyzstarex),0,atol=BIGEPS)
+    @test isapprox(abs(dystarzstar),0,atol=BIGEPS)
+
+    z0 = rand(ComplexF64)
+    y0 = rand(ComplexF64)
+    dyz, dystarz, dyzstar, dystarzstar = derivative(y -> derivative(z -> 1/conj(z-y),z0),y0)
+
+    dystarzstarex = -2/conj(z0-y0)^3
+    @test isapprox(abs(dyz),0,atol=BIGEPS)
+    @test isapprox(abs(dystarz),0,atol=BIGEPS)
+    @test isapprox(abs(dyzstar),0,atol=BIGEPS)
+    @test isapprox(abs(dystarzstar-dystarzstarex),0,atol=BIGEPS)
+
+  end
+
   nblob = 5
   pos = rand(ComplexF64,nblob)
   str = rand(length(pos))

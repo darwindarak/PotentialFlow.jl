@@ -204,7 +204,7 @@ Compute the derivative of function `f` with respect to `z` and `conj(z)`
     T = typeof(ForwardDiff.Tag(f, C))
     # making complex ensures that it gets dispatched to our extract_derivative
     # for complex Duals rather than the native one in ForwardDiff
-    return extract_derivative(T,complex(f(one(ComplexComplexDual{T},z))))
+    return extract_derivative(T,complex.(f(one(ComplexComplexDual{T},z))))
 end
 
 """
@@ -218,6 +218,19 @@ and d/dz* from the partials in `d`.
    return _derivs(partials(dr),partials(di))
 end
 
+# If the function outputs a tuple of duals, as would be the case for
+# nested derivatives, then we deal with each one by one and assemble an overall
+# list of derivatives
+@inline function extract_derivative(::Type{T},dlist::NTuple{N,ComplexDual{T}}) where {N,T}
+   out = ()
+   for d in dlist
+        out = (out...,extract_derivative(T,d)...)
+    end
+    out
+end
+
+# These are meant for array-valued outputs of functions, where each array
+# element will be a derivative (or tuple of derivatives d/dz, d/dz*)
 @inline extract_derivative(::Type{T},v::AbstractArray{<:ComplexComplexDual{T}}) where {T} =
         (d = map(x -> extract_derivative(T,x), v); return first.(d), last.(d))
 
