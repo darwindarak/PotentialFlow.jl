@@ -173,6 +173,34 @@ end
 @extend_binary_dual_to_complex ^
 
 """
+    dualize(T,v::S)
+
+Return a Dual or complex Dual form of vector `v` (depending on whether `S` is `Float64`
+or `ComplexF64`).
+"""
+@inline dualize(::Type{T},v::Complex{S}) where {T, S<:Real} = convert(ComplexComplexDual{T,S},v)
+@inline dualize(::Type{T},v::S) where {T, S<:Real} = convert(Dual{T,S,1},v)
+
+"""
+    seed(T,v::Vector{S},i::Int)
+
+Return a Dual or complex Dual form of vector `v` (depending on whether `S` is `Float64`
+or `ComplexF64`), with the partials of the `i`th component of the vector set to unit
+values (i.e., to `1` or to `1,0`, respectively).
+"""
+function seed(::Type{T},v::Vector{Complex{S}},i::Int) where {T, S<:Real}
+    d = dualize.(T,v)
+    d[i] = one(ComplexComplexDual{T},v[i])
+    return d
+end
+function seed(::Type{T},v::Vector{S},i::Int) where {T, S<:Real}
+    d = dualize.(T,v)
+    d[i] = Dual{T}(v[i],one(S))
+    return d
+end
+
+#=
+"""
     dualize(v::Vector{S},i::Int,T)
 
 Return a Dual or complex Dual form of vector `v` (depending on whether `S` is `Float64`
@@ -194,6 +222,7 @@ function dualize(v::Vector{Float64},i::Int,::Type{T}) where {T}
     dualv[i] = d
     return dualv
 end
+=#
 
 """
     ForwardDiff.derivative(f,z::Complex)
@@ -202,7 +231,7 @@ Compute the derivative of function `f` with respect to `z` and `conj(z)`
 """
 @inline function derivative(f::F, z::C) where {F,C<:Complex}
     T = typeof(ForwardDiff.Tag(f, C))
-    # making complex ensures that it gets dispatched to our extract_derivative
+    # making f output complex ensures that it gets dispatched to our extract_derivative
     # for complex Duals rather than the native one in ForwardDiff
     return extract_derivative(T,complex.(f(one(ComplexComplexDual{T},z))))
 end

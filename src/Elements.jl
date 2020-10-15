@@ -6,7 +6,7 @@ export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction
 
 using ..Properties
 
-import ..Utils: ComplexDual, Dual
+import ..Utils: ComplexDual, Dual, dualize
 
 abstract type Element end
 
@@ -325,8 +325,9 @@ julia> Elements.image(sys,b)
     stype = ComplexF64
 end
 
+
 """
-    dualize_position(v::Vector{Element},i::Int,T)
+    seed_position(T,v::Vector{Element},i::Int)
 
 Given a collection `v` of points or blobs, create a copy of the collection with
 the `i`th element's position replaced by a complex unit dual. The entire output
@@ -334,10 +335,10 @@ collection has positions of `Dual` type, but only the replaced element has unit
 partials; the others have partials equal to zero. `T` is a `Tag`, and can be set
 to `Nothing`.
 """
-function dualize_position end
+function seed_position end
 
 """
-    dualize_strength(v::Vector{Element},i::Int,T)
+    seed_strength(T,v::Vector{Element},i::Int)
 
 Given a collection `v` of points or blobs, create a copy of the collection with
 the `i`th element's strength replaced by a unit dual. The entire output
@@ -345,7 +346,7 @@ collection has positions of `Dual` type, but only the replaced element has unit
 partials; the others have partials equal to zero. `T` is a `Tag`, and can be set
 to `Nothing`.
 """
-function dualize_strength end
+function seed_strength end
 
 """
     property_type(::Element)
