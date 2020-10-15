@@ -3,7 +3,8 @@ module Points
 export Point
 
 using ..Elements
-import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect
+import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect,
+                  allocate_velocity
 
 #== Type definition ==#
 
@@ -54,6 +55,9 @@ Elements.complexpotential(z::Complex{T}, p::Point) where {T} = -0.5im*p.S*log(z 
 
 
 cauchy_kernel(z) = z != zero(z) ? 0.5im/(π*conj(z)) : zero(z)
+
+# ensures that the velocity is of same type as position
+allocate_velocity(v::Vector{Point{T,R}}) where {T,R} = zeros(Complex{R},length(v))
 
 function induce_velocity(z::Complex{T}, p::Point, t) where {T}
     p.S'*cauchy_kernel(z - p.z)

@@ -10,8 +10,6 @@ import ..Points
 import ..Blobs
 import ..Sheets
 
-@inline _promote_to_float(z) = promote_type(typeof(z),Float64)
-
 #== Wrapper for a point vortex ==#
 
 """
@@ -38,8 +36,6 @@ Vortex.Point(1.0 + 0.0im, 2.0)
 const Point = Points.Point{T,R} where {T<: Real, R<:Real}
 Point(z::Complex{R},Γ::T) where {T<:Real,R<:Real} = Points.Point{T}(z,Γ)
 Point(z::Real,Γ::T) where {T} = Points.Point{T}(complex(z),Γ)
-#Point(z::Real,Γ::T) where {T<:Real} =
-#    Points.Point{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),Γ)
 
 (p::Point)(; z = p.z, Γ = p.S) = Point(z, Γ)
 
@@ -84,8 +80,7 @@ Vortex.Blob(1.0 + 0.0im, 2.0, 0.01)
 const Blob = Blobs.Blob{T,R} where {T<:Real,R<:Real}
 Blob(z::Complex{R},Γ::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{T}(z,Γ,δ)
 Blob(z::Real,Γ::T,δ) where {T<:Real} = Blobs.Blob{T}(complex(z),Γ,δ)
-#Blob(z::Real,Γ::T,δ) where {T<:Real} =
-#        Blobs.Blob{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),Γ,δ)
+
 
 
 (b::Blob)(; z = b.z, Γ = b.S, δ = b.δ) = Blob(z, Γ, δ)

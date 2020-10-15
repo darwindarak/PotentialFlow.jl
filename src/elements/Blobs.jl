@@ -3,7 +3,8 @@ module Blobs
 export Blob
 
 using ..Elements
-import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect
+import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect,
+                  allocate_velocity
 
 #== Type definition ==#
 
@@ -60,6 +61,9 @@ Elements.complexpotential(z::Complex{T}, b::Blob) where {T} = -0.5im*b.S*log(z -
 
 
 blob_kernel(z, δ) = 0.5im*z/(π*(abs2(z) + δ^2))
+
+# ensures that the velocity is of same type as position
+allocate_velocity(v::Vector{Blob{T,R}}) where {T,R} = zeros(Complex{R},length(v))
 
 function induce_velocity(z::Complex{T}, b::Blob, t) where {T}
     b.S*blob_kernel(z - b.z, b.δ)

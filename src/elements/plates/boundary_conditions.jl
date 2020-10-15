@@ -46,7 +46,7 @@ end
 
 Compute in-place the change in plate's Chebyshev coefficients `∂A` by a vortex element `v`
 """
-function influence_on_plate!(∂A::Vector{ComplexF64}, plate::Plate, v, t)
+function influence_on_plate!(∂A::Vector{Complex{T}}, plate::Plate{T}, v, t) where {T}
     fill!(∂A, zero(ComplexF64))
     induce_velocity!(∂A, plate, v, t)
     rmul!(∂A, exp(-im*plate.α))
@@ -54,8 +54,8 @@ function influence_on_plate!(∂A::Vector{ComplexF64}, plate::Plate, v, t)
     nothing
 end
 
-function influence_on_plate(plate::Plate, v, t)
-    ∂A = Vector{ComplexF64}(undef, plate.N)
+function influence_on_plate(plate::Plate{T}, v, t) where {T}
+    ∂A = Vector{Complex{T}}(undef, plate.N)
     influence_on_plate!(∂A, plate, v, t)
     return ∂A
 end

@@ -7,7 +7,9 @@ const DELTA=1e-9
 const BIGEPS = 1000*eps(1.0)
 const TOL=5e-6
 const BIGTOL=1e-5
+const BIGGESTTOL=1e-3
 
+safenorm(a) = norm(filter(x -> ~isnan(x),a))
 
 @testset "Complex Automatic Differentiation" begin
 
@@ -391,6 +393,43 @@ end
 
     @test isapprox(norm(dĊdΓ-dĊdΓ_fd),0.0,atol=BIGTOL)
 
+
+  end
+
+  Δt = 0.01
+  lesp = 0.2
+  tesp = 0.0
+  z₊ = rand()
+  z₋ = rand()
+
+  @testset "Pressure" begin
+
+
+    press_fd = Plates.surface_pressure_inst(p,motion,blobs,(z₊,z₋),0.0,Δt,lesp,tesp)
+    pressx⁺_fd = Plates.surface_pressure_inst(px⁺,motion,blobsx⁺,(z₊,z₋),0.0,Δt,lesp,tesp)
+    pressy⁺_fd = Plates.surface_pressure_inst(py⁺,motion,blobsy⁺,(z₊,z₋),0.0,Δt,lesp,tesp)
+    pressΓ⁺_fd = Plates.surface_pressure_inst(pΓ⁺,motion,blobsΓ⁺,(z₊,z₋),0.0,Δt,lesp,tesp)
+
+    dpdx_fd = (pressx⁺_fd - press_fd)/dz[i]
+    dpdy_fd = (pressy⁺_fd - press_fd)/dz[i]
+    dpdz_fd = 0.5*(dpdx_fd - im*dpdy_fd)
+    dpdzstar_fd = 0.5*(dpdx_fd + im*dpdy_fd)
+    dpdΓ_fd = (pressΓ⁺_fd - press_fd)/dΓ[i]
+
+    newblobs = Vortex.dualize_position(blobs,i,Nothing)
+    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,L,c,α)
+    press = Plates.surface_pressure_inst(pdual,motion,newblobs,(z₊,z₋),0.0,Δt,lesp,tesp)
+    dpdz,dpdzstar = extract_derivative(Nothing,complex(press))
+
+    @test isapprox(safenorm(dpdz-dpdz_fd)/safenorm(dpdz),0.0,atol=BIGTOL)
+    @test isapprox(safenorm(dpdzstar-dpdzstar_fd)/safenorm(dpdzstar),0.0,atol=BIGTOL)
+
+    newblobs = Vortex.dualize_strength(blobs,i,Nothing)
+    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,L,c,α)
+    press = Plates.surface_pressure_inst(pdual,motion,newblobs,(z₊,z₋),0.0,Δt,lesp,tesp)
+    dpdΓ = extract_derivative(Nothing,press)
+
+    @test isapprox(safenorm(dpdΓ-dpdΓ_fd)/safenorm(dpdΓ),0.0,atol=BIGTOL)
 
 
   end

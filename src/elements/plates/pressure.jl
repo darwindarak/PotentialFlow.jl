@@ -19,20 +19,18 @@ function induce_acc(z::Complex{T}, ż::Complex{T},
                blob_vel)
 end
 
-function surface_pressure_inst(p::Plate, ṗ, ambient_sys, z_new, t, Δt, lesp, tesp)
+function surface_pressure_inst(p::Plate{T}, ṗ, ambient_sys, z_new, t, Δt, lesp, tesp) where {T}
     @get p (L, C, ss, α, dchebt!)
     @get ṗ (ċ, α̇)
 
     # Get Ċ from movement of existing vortex blobs (without vortex shedding)
     enforce_no_flow_through!(p, ṗ, ambient_sys, t)
 
-    srcvel = zeros(typeof(PotentialFlow.Utils.ComplexComplexDual()),length(ambient_sys))
-
     srcvel = self_induce_velocity(ambient_sys, t)
     induce_velocity!(srcvel, ambient_sys, p, t)
 
     targvel = fill(ċ, length(p))
-    Ċ = zero(targvel)
+    Ċ = zeros(Complex{T},length(targvel))
 
     induce_acc!(Ċ, p.zs, targvel, ambient_sys, srcvel)
 

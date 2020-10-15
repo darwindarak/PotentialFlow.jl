@@ -8,10 +8,10 @@ Compute the bound vortex sheet strength of the plate.
 """
 strength(plate) = strength(plate, plate.ss)
 
-function strength(plate, s::Real)
+function strength(plate::Plate{T}, s::Real) where {T}
     @get plate (A, α, B₀, B₁, L, Γ, N)
 
-    γ = 0.0
+    γ = zero(T)
 
     U₋ = 1.0
     U  = 2s
@@ -33,8 +33,8 @@ function strength(plate, s::Real)
     return γ
 end
 
-function strength(plate, ss::AbstractArray{T}) where {T <: Real}
-    γs = zeros(Float64, length(ss))
+function strength(plate::Plate{R}, ss::AbstractArray{T}) where {R, T <: Real}
+    γs = zeros(R, length(ss))
     strength!(γs, plate, ss)
     return γs
 end
@@ -72,7 +72,7 @@ end
 function _bound_circulation(A, B₀, B₁, L, Γ, s)
     N = length(A)
 
-    Γₛ = 0.0
+    Γₛ = zero(eltype(A))
 
 
     Γₛ  = 2(A[0] - B₀)
@@ -93,8 +93,8 @@ function _bound_circulation(A, B₀, B₁, L, Γ, s)
     return Γₛ
 end
 
-function bound_circulation(plate, ss::AbstractArray{T}) where {T <: Real}
-    Γs = zeros(Float64, length(ss))
+function bound_circulation(plate::Plate{R}, ss::AbstractArray{T}) where {R,T <: Real}
+    Γs = zeros(R, length(ss))
     bound_circulation!(Γs, plate, ss)
     return Γs
 end

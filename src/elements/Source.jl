@@ -7,9 +7,6 @@ import ..Elements: circulation, flux, kind
 import ..Utils: dualize
 
 
-@inline _promote_to_float(z) = promote_type(typeof(z),Float64)
-
-
 #== Wrapper for a point source ==#
 
 """
@@ -35,10 +32,6 @@ Source.Point(1.0 + 0.0im, 2.0)
 const Point = Points.Point{T,R} where {T<:Complex, R <: Real}
 Point(z::Complex{R},S::T) where {T<:Real,R<:Real} = Points.Point{Complex{T}}(z,S)
 Point(z::Real,S::T) where {T} = Points.Point{Complex{T}}(complex(z),S)
-
-#Point(z::Complex{R},S::T) where {T<:Real,R<:Real} = Points.Point{T,R}(z,S)
-#Point(z::Real,S::T) where {T<:Real} =
-#    Points.Point{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),S)
 
 (p::Point)(; z = p.z, S = imag(p.S)) = Point(z, S)
 
@@ -84,9 +77,6 @@ const Blob = Blobs.Blob{T,R} where {T<:Complex, R <: Real}
 Blob(z::Complex{R},S::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{Complex{T}}(z,S,δ)
 Blob(z::Real,S::T,δ) where {T<:Real} = Blobs.Blob{Complex{T}}(complex(z),S,δ)
 
-#Blob(z::Complex{R},S::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{T,R}(z,S,δ)
-#Blob(z::Real,S::T,δ) where {T<:Real} =
-#    Blobs.Blob{T,_promote_to_float(z)}(convert(complex(_promote_to_float(z)),z),S,δ)
 
 (b::Blob)(; z = b.z, S = imag(b.S), δ = b.δ) = Blob(z, S, δ)
 
