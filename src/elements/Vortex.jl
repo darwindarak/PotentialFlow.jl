@@ -52,13 +52,11 @@ Base.show(io::IO, s::Point) = print(io, "Vortex.Point($(s.z), $(s.S))")
 
 
 @inline dualize_position(v::Vector{<:Point},i::Int,::Type{T}) where {T} =
-        Point.(dualize(Elements.position(v),i,T),
-               convert(Vector{RealComplexDual{Nothing,Float64}},circulation.(v)))
+        Point.(dualize(Elements.position(v),i,T),circulation.(v))
 
 
 @inline dualize_strength(v::Vector{<:Point},i::Int,::Type{T}) where {T} =
-        Point.(convert(Vector{ComplexRealDual{Nothing,Float64}},Elements.position(v)),
-               dualize(circulation.(v),i,T))
+        Point.(Elements.position(v),dualize(circulation.(v),i,T))
 
 #== Wrapper for a vortex blob ==#
 
@@ -99,13 +97,10 @@ angularimpulse(b::Blob) = -0.5*b.z*conj(b.z)*b.S
 Base.show(io::IO, s::Blob) = print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ))")
 
 @inline dualize_position(v::Vector{<:Blob},i::Int,::Type{T}) where {T} =
-    Blob.(dualize(Elements.position(v),i,T),
-          convert(Vector{RealComplexDual{Nothing,Float64}},circulation.(v)),
-          Elements.blobradius(v))
+    Blob.(dualize(Elements.position(v),i,T),circulation.(v),Elements.blobradius(v))
 
 @inline dualize_strength(v::Vector{<:Blob},i::Int,::Type{T}) where {T} =
-    Blob.(convert(Vector{ComplexRealDual{Nothing,Float64}},Elements.position(v)),
-          dualize(circulation.(v),i,T),Elements.blobradius(v))
+    Blob.(Elements.position(v),dualize(circulation.(v),i,T),Elements.blobradius(v))
 
 #== Wrapper for a vortex sheet ==#
 
