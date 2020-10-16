@@ -5,6 +5,12 @@ using DiffRules
 import ForwardDiff:value,partials,derivative,extract_derivative, Dual, seed!
 const AMBIGUOUS_TYPES = (AbstractFloat, Irrational, Integer, Rational, Real, RoundingMode, ComplexF64)
 
+# The philosophy followed here is a bit different from that used by
+# ForwardDiff. Here, the number of partials is limited to 1 or 2, even for
+# arrays of vortex elements. For ComplexComplex cases, there are two partials,
+# corresponding to differentiation with respect to the real and imaginary parts
+# of the differentiation variable. For ComplexReal cases, there is one partial, since the
+# differentiation variable is real.
 # ComplexComplexDual is designated for derivatives of complex functions
 # with respect to complex numbers
 # ComplexRealDual is for derivatives of complex functions with respect to
@@ -14,6 +20,7 @@ const ComplexDual{T,V,N} = Complex{Dual{T,V,N}}
 const ComplexComplexDual{T,V} = ComplexDual{T,V,2}
 const ComplexRealDual{T,V} = ComplexDual{T,V,1}
 const RealComplexDual{T,V} = Dual{T,V,2}
+
 
 
 @inline function ComplexComplexDual{T}(z::Number,dz::Number,dzstar::Number) where {T}
@@ -44,8 +51,10 @@ end
 @inline ComplexRealDual{T}(z) where {T} = ComplexRealDual{T}(z,0.0)
 @inline ComplexRealDual(args...) = ComplexRealDual{Nothing}(args...)
 
-@inline Base.one(::Type{ComplexComplexDual{T}},z::Number) where T = ComplexComplexDual{T}(z,one(z),zero(z))
-@inline Base.one(::Type{ComplexRealDual{T}},z::Number) where T = ComplexRealDual{T}(z,one(z))
+@inline Base.one(::Type{<:ComplexComplexDual{T}},z::Number) where T = ComplexComplexDual{T}(z,one(z),zero(z))
+@inline Base.one(::Type{<:ComplexRealDual{T}},z::Number) where T = ComplexRealDual{T}(z,one(z))
+@inline Base.one(::Type{<:Dual{T}},z::Number) where T = Dual{T}(z,one(z))
+
 
 @inline function value(z::ComplexDual)
     zr, zi = reim(z)
@@ -173,31 +182,32 @@ end
 @extend_binary_dual_to_complex ^
 
 """
-    dualize(T,v::S)
+    dualize(T::Tag,v::S,::Type{Number})
 
-Return a Dual or complex Dual form of vector `v` (depending on whether `S` is `Float64`
-or `ComplexF64`).
+Return a Dual (if the last argument is real) or complex Dual (if last argument is
+complex) form of `v`.
 """
-@inline dualize(::Type{T},v::Complex{S}) where {T, S<:Real} = convert(ComplexComplexDual{T,S},v)
-@inline dualize(::Type{T},v::S) where {T, S<:Real} = convert(Dual{T,S,1},v)
+@inline dualize(::Type{T},v::Complex{S},::Type{R}) where {T, S<:Real,R<:Complex} = convert(ComplexComplexDual{T,S},v)
+@inline dualize(::Type{T},v::Complex{S},::Type{R}) where {T, S<:Real,R<:Real} = convert(ComplexRealDual{T,S},v)
+@inline dualize(::Type{T},v::S,::Type{R}) where {T, S<:Real,R<:Real} = convert(Dual{T,S,1},v)
+@inline dualize(::Type{T},v::S,::Type{R}) where {T, S<:Real,R<:Complex} = dualize(T,complex(v),R)
+
+#@inline dualize(::Type{T},v::Complex{S}) where {T, S<:Real} = convert(ComplexComplexDual{T,S},v)
+#@inline dualize(::Type{T},v::S) where {T, S<:Real} = convert(Dual{T,S,1},v)
 
 """
-    seed(T,v::Vector{S},i::Int)
+    seed(T,v::Vector{S},R::Type{Number},i::Int)
 
-Return a Dual or complex Dual form of vector `v` (depending on whether `S` is `Float64`
-or `ComplexF64`), with the partials of the `i`th component of the vector set to unit
-values (i.e., to `1` or to `1,0`, respectively).
+Return a Dual (if R is real) or complex (if R is complex) Dual form of vector `v`,
+with the partials of the `i`th component of the vector set to unit
+values (i.e., to `1` or to `1, 0`, respectively).
 """
-function seed(::Type{T},v::Vector{Complex{S}},i::Int) where {T, S<:Real}
-    d = dualize.(T,v)
-    d[i] = one(ComplexComplexDual{T},v[i])
+function seed(::Type{T},v::Vector{S},::Type{R},i::Int) where {T, S <: Number, R<:Number}
+    d = dualize.(T,v,R)
+    d[i] = one(eltype(d),v[i])
     return d
 end
-function seed(::Type{T},v::Vector{S},i::Int) where {T, S<:Real}
-    d = dualize.(T,v)
-    d[i] = Dual{T}(v[i],one(S))
-    return d
-end
+
 
 #=
 """

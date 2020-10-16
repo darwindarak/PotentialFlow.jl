@@ -45,14 +45,14 @@ end
 flux(p::Point) = imag(p.S)
 circulation(::Point) = 0.0
 
-@inline dualize(::Type{T},v::Vector{<:Point}) where {T} =
-        Point.(dualize.(T,Elements.position(v)),dualize.(T,flux.(v)))
+@inline dualize(::Type{T},v::Vector{<:Point},::Type{R}) where {T,R<:Number} =
+        Point.(dualize.(T,Elements.position(v),R),dualize.(T,flux.(v),R))
 
 @inline seed_position(::Type{T},v::Vector{<:Point},i::Int) where {T} =
-        Point.(seed(T,Elements.position(v),i),flux.(v))
+        Point.(seed(T,Elements.position(v),ComplexF64,i),flux.(v))
 
 @inline seed_strength(::Type{T},v::Vector{<:Point},i::Int) where {T} =
-        Point.(Elements.position(v),seed(T,flux.(v),i))
+        Point.(Elements.position(v),seed(T,flux.(v),Float64,i))
 
 
 #== Wrapper for a blob source ==#
@@ -94,14 +94,14 @@ end
 circulation(::Blob) = 0.0
 flux(b::Blob) = imag(b.S)
 
-@inline dualize(::Type{T},v::Vector{<:Blob}) where {T} =
-        Blob.(dualize.(T,Elements.position(v)),dualize.(T,flux.(v)),Elements.blobradius(v))
+@inline dualize(::Type{T},v::Vector{<:Blob},::Type{R}) where {T,R<:Number} =
+        Blob.(dualize.(T,Elements.position(v),R),dualize.(T,flux.(v),R),Elements.blobradius(v))
 
 @inline seed_position(::Type{T},v::Vector{<:Blob},i::Int) where {T} =
-    Blob.(seed(T,Elements.position(v),i),flux.(v),Elements.blobradius(v))
+    Blob.(seed(T,Elements.position(v),ComplexF64,i),flux.(v),Elements.blobradius(v))
 
 @inline seed_strength(::Type{T},v::Vector{<:Blob},i::Int) where {T} =
-    Blob.(Elements.position(v),seed(T,flux.(v),i),Elements.blobradius(v))
+    Blob.(Elements.position(v),seed(T,flux.(v),Float64,i),Elements.blobradius(v))
 
 
 end

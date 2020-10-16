@@ -46,14 +46,14 @@ angularimpulse(p::Point) = -0.5*p.z*conj(p.z)*p.S
 
 Base.show(io::IO, s::Point) = print(io, "Vortex.Point($(s.z), $(s.S))")
 
-@inline dualize(::Type{T},v::Vector{<:Point}) where {T} =
-        Point.(dualize.(T,Elements.position(v)),dualize.(T,circulation.(v)))
+@inline dualize(::Type{T},v::Vector{<:Point},::Type{R}) where {T,R <: Number} =
+        Point.(dualize.(T,Elements.position(v),R),dualize.(T,circulation.(v),R))
 
 @inline seed_position(::Type{T},v::Vector{<:Point},i::Int) where {T} =
-        Point.(seed(T,Elements.position(v),i),circulation.(v))
+        Point.(seed(T,Elements.position(v),ComplexF64,i),circulation.(v))
 
 @inline seed_strength(::Type{T},v::Vector{<:Point},i::Int) where {T} =
-        Point.(Elements.position(v),seed(T,circulation.(v),i))
+        Point.(Elements.position(v),seed(T,circulation.(v),Float64,i))
 
 #== Wrapper for a vortex blob ==#
 
@@ -92,14 +92,14 @@ impulse(b::Blob) = -im*b.z*b.S
 angularimpulse(b::Blob) = -0.5*b.z*conj(b.z)*b.S
 Base.show(io::IO, s::Blob) = print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ))")
 
-@inline dualize(::Type{T},v::Vector{<:Blob}) where {T} =
-        Blob.(dualize.(T,Elements.position(v)),dualize.(T,circulation.(v)),Elements.blobradius(v))
+@inline dualize(::Type{T},v::Vector{<:Blob},::Type{R}) where {T,R<:Number} =
+        Blob.(dualize.(T,Elements.position(v),R),dualize.(T,circulation.(v),R),Elements.blobradius(v))
 
 @inline seed_position(::Type{T},v::Vector{<:Blob},i::Int) where {T} =
-    Blob.(seed(T,Elements.position(v),i),circulation.(v),Elements.blobradius(v))
+    Blob.(seed(T,Elements.position(v),ComplexF64,i),circulation.(v),Elements.blobradius(v))
 
 @inline seed_strength(::Type{T},v::Vector{<:Blob},i::Int) where {T} =
-    Blob.(Elements.position(v),seed(T,circulation.(v),i),Elements.blobradius(v))
+    Blob.(Elements.position(v),seed(T,circulation.(v),Float64,i),Elements.blobradius(v))
 
 #== Wrapper for a vortex sheet ==#
 
