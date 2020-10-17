@@ -446,6 +446,9 @@ end
   z₊ = rand()
   z₋ = rand()
 
+  plesp⁺ = deepcopy(p)
+  dlesp = DELTA
+
   @testset "Pressure" begin
 
 
@@ -474,6 +477,18 @@ end
     dpdΓ = extract_derivative(Nothing,press)
 
     @test isapprox(safenorm(dpdΓ-dpdΓ_fd)/safenorm(dpdΓ),0.0,atol=BIGTOL)
+
+    presslesp⁺_fd = Plates.surface_pressure_inst(plesp⁺,motion,blobs,(z₊,z₋),0.0,Δt,lesp+dlesp,tesp)
+    dpdlesp_fd = (presslesp⁺_fd - press_fd)/dlesp
+
+
+    newblobs = Vortex.dualize(Nothing,blobs,Float64);
+    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    newlesp = one(PotentialFlow.Utils.Dual{Nothing},lesp)
+    press = Plates.surface_pressure_inst(pdual,motion,newblobs,(z₊,z₋),0.0,0.01,newlesp,tesp)
+    dpdlesp = extract_derivative(Nothing,press)
+
+    @test isapprox(safenorm(dpdlesp-dpdlesp_fd)/safenorm(dpdlesp),0.0,atol=BIGTOL)
 
 
   end
