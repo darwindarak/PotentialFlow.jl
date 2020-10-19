@@ -10,7 +10,6 @@ end
 function induce_acc(z::ComplexF64, ż::ComplexF64,
                     p::Vortex.Point, point_vel::ComplexF64)
     -circulation(p)*Points.cauchy_kernel((z - p.z)^2)*conj(ż - point_vel)
-    # -circulation(p)*Points.cauchy_kernel((z - p.z)^2)*conj(ż)# - point_vel)
 end
 
 function induce_acc(z::ComplexF64, ż::ComplexF64,
