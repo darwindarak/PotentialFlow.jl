@@ -3,7 +3,7 @@ module Chebyshev
 using FFTW
 using Future: copy!
 
-import ..Utils: extract_derivative, value, Dual, ComplexComplexDual, ComplexRealDual
+import ..Utils: extract_gradient!, value, Dual, ComplexDual, Partials
 
 import Base: *, \
 struct Transform{T,I}
@@ -157,16 +157,25 @@ function transform!(x, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00))
     x
 end
 
-function transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T,V,2} where {T,V}
-    dxdz, dxdzstar = extract_derivative(T,x)
+function transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T,V,N} where {T,V,N}
+    dxdz = similar(x, Complex{valtype(S)})
+    dxdzstar = similar(x, Complex{valtype(S)})
+    #dxdz, dxdzstar = extract_derivative(T,x)
+    extract_gradient!(dxdz,dxdzstar,x)
     xval = value.(x)
     transform!(xval,plan!)
-    transform!(dxdz,plan!)
-    transform!(dxdzstar,plan!)
-    x .= ComplexComplexDual{T}(xval,dxdz,dxdzstar)
+    for d in dxdz
+        transform!(d,plan!)
+    end
+    for d in dxdzstar
+        transform!(d,plan!)
+    end
+    #transform!(dxdzstar,plan!)
+    x .= ComplexDual{T}(xval,Partials(tuple(dxdz...)),Partials(tuple(dxdzstar...)))
     return x
 end
 
+#=
 function transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T,V,1} where {T,V}
     dx = extract_derivative(T,x)
     xval = value.(x)
@@ -175,6 +184,7 @@ function transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT0
     x .= ComplexRealDual{T}(xval,dx)
     return x
 end
+=#
 
 function transform!(A::T, x::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where T
     copy!(A, x)
@@ -234,16 +244,23 @@ function inv_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
     plan!*A
 end
 
-function inv_transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T,V,2} where {T,V}
-    dxdz, dxdzstar = extract_derivative(T,x)
+function inv_transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T,V,N} where {T,V,N}
+    dxdz = similar(x, Complex{valtype(S)})
+    dxdzstar = similar(x, Complex{valtype(S)})
+    extract_gradient!(dxdz,dxdzstar,x)
     xval = value.(x)
     inv_transform!(xval,plan!)
-    inv_transform!(dxdz,plan!)
-    inv_transform!(dxdzstar,plan!)
-    x .= ComplexComplexDual{T}(xval,dxdz,dxdzstar)
+    for d in dxdz
+        inv_transform!(d,plan!)
+    end
+    for d in dxdzstar
+        inv_transform!(d,plan!)
+    end
+    x .= ComplexDual{T}(xval,Partials(tuple(dxdz...)),Partials(tuple(dxdzstar...)))
     return x
 end
 
+#=
 function inv_transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where S <:Dual{T,V,1} where {T,V}
     dx = extract_derivative(T,x)
     xval = value.(x)
@@ -252,6 +269,7 @@ function inv_transform!(x::Vector{Complex{S}}, plan! = FFTW.plan_r2r!(x, FFTW.RE
     x .= ComplexRealDual{T}(xval,dx)
     return x
 end
+=#
 
 function inv_transform!(x::T, A::T, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00)) where T
     copy!(x, A)

@@ -6,7 +6,7 @@ export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction
 
 using ..Properties
 
-import ..Utils: ComplexDual, Dual, dualize
+import ..Utils: ComplexDual, Dual
 
 abstract type Element end
 

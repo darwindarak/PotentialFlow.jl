@@ -1,4 +1,5 @@
 [deps]
+DiffRules = "b552c78f-8df3-52c6-915a-8e097449b14b"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

@@ -18,19 +18,20 @@ import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, 
                   self_induce_velocity!, allocate_velocity, advect!
 
 import ..Utils
-import ..Utils:@get, MappedVector, Dual, ComplexComplexDual, ComplexRealDual,
-              value, extract_derivative
+import ..Utils:@get, MappedVector, Dual, ComplexDual,
+              value, dz_partials #extract_derivative
 
 include("plates/chebyshev.jl")
 
-@inline function _chebyshev_coefficient(C::ComplexComplexDual{T}) where {T}
+@inline function _chebyshev_coefficient(C::ComplexDual{T}) where {T}
     A = imag(value(C))
-    dCdz, dCdzstar = extract_derivative(T,C)
+    #dCdz, dCdzstar = extract_derivative(T,C)
+    dCdz, dCdzstar = dz_partials(C)
     dAdz = -0.5im*(dCdz - conj(dCdzstar))
-    return real(ComplexComplexDual{T}(A,dAdz,conj(dAdz)))
+    return real(ComplexDual{T}(A,dAdz,conj(dAdz)))
 end
 
-@inline _chebyshev_coefficient(C::ComplexRealDual{T}) where {T} = imag(C)
+#@inline _chebyshev_coefficient(C::ComplexRealDual{T}) where {T} = imag(C)
 
 @inline _chebyshev_coefficient(C::ComplexF64) = imag(C)
 
