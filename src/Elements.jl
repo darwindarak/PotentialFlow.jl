@@ -6,7 +6,7 @@ export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction
 
 using ..Properties
 
-import ..Utils: ComplexDual, Dual
+import ..Utils: ComplexDual, Dual, ComplexGradientConfig
 
 abstract type Element end
 
@@ -354,5 +354,8 @@ function seed_strength end
 Return the type of the properties of the element.
 """
 function property_type end
+
+ComplexGradientConfig(f::F,v::Vector{<:Element},w...) where {F} =
+      ComplexGradientConfig(f,Elements.position(v),w...)
 
 end

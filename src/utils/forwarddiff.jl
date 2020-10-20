@@ -24,11 +24,15 @@ const ComplexDual{T,V,N} = Complex{Dual{T,V,N}}
 #const ComplexRealDual{T,V} = ComplexDual{T,V,1}
 #const RealComplexDual{T,V} = Dual{T,V,2}
 
+
 # Constructor for ComplexDual based on real Partials for dreal and dimag
-@inline function ComplexDual{T}(z::Number,dr::Partials{N,V},di::Partials{N,V}) where {T,N,V<:Real}
+@inline function ComplexDual{T,V,N}(z::Number,dr::Partials{N,V},di::Partials{N,V}) where {T,N,V<:Real}
     zr, zi = reim(z)
     return Dual{T}(zr,dr) + im*Dual{T}(zi,di)
 end
+
+@inline ComplexDual{T}(z::Number,u::Partials{N,V},v::Partials{N,V}) where {T,N,V} =
+    ComplexDual{T,V,N}(z,u,v)
 
 # Constructor for ComplexDual based on complex Partials for dz and dz*
 @inline function ComplexDual{T}(z::Number,dz::Partials{N,V},dzstar::Partials{N,V}) where {T,N,V<:Complex}
@@ -176,7 +180,7 @@ function ComplexGradientConfig(f::F,
                         x::AbstractArray{Complex{V}},
                         ::Chunk{N} = Chunk(x),
                         ::T = Tag(f, V)) where {F,V,N,T}
-    rseeds, iseeds = construct_complex_seeds(ForwardDiff.Partials{2N,V})
+    rseeds, iseeds = construct_complex_seeds(Partials{2N,V})
     duals = similar(x, ComplexDual{T,V,2N})
     return ComplexGradientConfig{T,V,N,typeof(duals),2N}(rseeds, iseeds, duals)
 end
