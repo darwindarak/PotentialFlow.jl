@@ -504,9 +504,9 @@ end
 
     cfg = ComplexGradientConfig(z -> (),ComplexF64[lesp]);
     newblobs = Vortex.seed(blobs,cfg)
-    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,2.0,complex(0),0.0)
+    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,L,c,α)
     newlesp = real(one(eltype(cfg.duals),complex(lesp)))
-    press = Plates.surface_pressure_inst(pdual,motion,newblobs,(z₊,z₋),0.0,0.01,newlesp,tesp)
+    press = Plates.surface_pressure_inst(pdual,motion,newblobs,(z₊,z₋),0.0,Δt,newlesp,tesp)
     dpdz, dpdzstar = dz_partials(complex(press),1)
     dpdlesp = real(dpdz + dpdzstar)
 
