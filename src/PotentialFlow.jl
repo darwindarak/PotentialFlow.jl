@@ -47,6 +47,8 @@ import .Bodies: ConformalBody
 
 import .Corners: Corner, Wedge
 
+import .Doublets: Doublet
+
 import .Freestreams: Freestream
 
 

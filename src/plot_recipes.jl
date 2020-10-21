@@ -35,7 +35,7 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
         @series begin
           seriestype --> :contour
             grid --> :none
-            ratio --> 1
+            aspect_ratio --> 1
             linewidth --> 1
             legend --> :none
             seriescolor --> [:black, :black]
@@ -118,7 +118,7 @@ end
     linecolor --> mygreen
     fillrange --> 0
     fillcolor --> mygreen
-    ratio --> 1
+    aspect_ratio --> 1
     legend --> :none
     x := real.(z)
     y := imag.(z)
@@ -137,7 +137,7 @@ end
     linecolor --> mygreen
     fillrange --> 0
     fillcolor --> mygreen
-    ratio --> 1
+    aspect_ratio --> 1
     legend --> :none
     x := real.(z)
     y := imag.(z)
