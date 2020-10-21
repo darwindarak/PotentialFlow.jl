@@ -6,7 +6,7 @@ using MappedArrays
 
 using ..Blobs
 using ..Elements
-using Future: copy!
+using Base: copy!
 import ..Motions: position, mutually_induce_velocity!, self_induce_velocity!, advect!
 
 const MappedPositions{T,R} = MappedArrays.ReadonlyMappedArray{ComplexF64,1,Array{Blob{T,R},1},typeof(Elements.position)} where {T,R}

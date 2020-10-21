@@ -1,7 +1,7 @@
 module Chebyshev
 
 using FFTW
-using Future: copy!
+using Base: copy!
 
 import ..Utils: dz_partials, value, Dual, ComplexDual, Partials, valtype
 

@@ -326,16 +326,7 @@ julia> Elements.image(sys,b)
 end
 
 
-"""
-    seed_position(T,v::Vector{Element},i::Int)
 
-Given a collection `v` of points or blobs, create a copy of the collection with
-the `i`th element's position replaced by a complex unit dual. The entire output
-collection has positions of `Dual` type, but only the replaced element has unit
-partials; the others have partials equal to zero. `T` is a `Tag`, and can be set
-to `Nothing`.
-"""
-function seed_position end
 
 """
     seed_strength(T,v::Vector{Element},i::Int)
@@ -356,45 +347,56 @@ Return the type of the properties of the element.
 function property_type end
 
 ComplexGradientConfig(f::F,v::Vector{<:Element},w...) where {F} =
-      ComplexGradientConfig(f,Elements.position(v),w...)
+      ComplexGradientConfig(f,position(v),w...)
 
-#=
-seed is designed to form duals of the positions and strengths of the
-type given in cfg
-=#
+
+"""
+    seed(v::Vector{Element},cfg::ComplexGradientConfig)
+
+Given a collection `v` of points or blobs, create a copy of the collection with
+the element's positions and strengths replaced by complex duals with zeros.
+`cfg` specifies the type and size of duals. The use of complex duals (in spite of the real-valued
+strength) ensures correct treatment for gradient calculation, since some
+calculations will be complex-valued.
+"""
 function seed(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
-  posduals = convert.(eltype(cfg.duals),Elements.position(v))
+  posduals = convert.(eltype(cfg.duals),position(v))
   strduals = convert.(eltype(cfg.duals),complex(strength.(v)))
   return posduals, real(strduals)
 end
 
-#=
-seed_position will create complex duals with of the positions, with 1s in
-the partials. It will also create complex duals of the strengths, even though
-these are real-valued, since there is the possibility for strengths'
-partials to become complex (e.g. via edge conditions), and we need to ensure
-that operations on these duals get dispatched to our suite of ComplexDual tools.
-=#
+"""
+    seed_position(v::Vector{Element},cfg::ComplexGradientConfig)
+
+Given a collection `v` of points or blobs, create a copy of the collection with
+the element's positions replaced by complex duals with unit seeds and with
+the element's strengths replaced by complex duals with zeros. `cfg` specifies
+the type and size of duals. The length of the partials in these duals is twice
+the number of elements, to enable computation of gradients with respect to
+all positions.
+"""
 function seed_position(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
   posduals = copy(cfg.duals)
   strduals = copy(cfg.duals)
-  seed!(posduals,Elements.position(v),cfg.rseeds,cfg.iseeds)
+  seed!(posduals,position(v),cfg.rseeds,cfg.iseeds)
   seed!(strduals,complex(strength.(v)))
   return posduals, real(strduals)
 end
 
-#=
-seed_strength will create complex duals with of the strengths, with 1s in
-the partials. It does this even though the strengths are themselves real,
-since there is the possibility for strengths' partials to become complex
-(e.g. via edge conditions), and we need to ensure
-that operations on these duals get dispatched to our suite of ComplexDual tools.
-It will also create complex duals of the positions.
-=#
+"""
+    seed_strength(v::Vector{Element},cfg::ComplexGradientConfig)
+
+Given a collection `v` of points or blobs, create a copy of the collection with
+the element's strengths replaced by complex duals with unit seeds and with
+the element's positions replaced by complex duals with zeros. `cfg` specifies
+the type and size of duals. The use of complex duals (in spite of the real-valued
+strength) ensures correct treatment for gradient calculation, since some
+calculations will be complex-valued.
+"""
 function seed_strength(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
   posduals = copy(cfg.duals)
   strduals = copy(cfg.duals)
-  seed!(posduals,Elements.position(v))
+  seed!(posduals,position(v))
   seed!(strduals,complex(strength.(v)),cfg.rseeds,cfg.iseeds)
   return posduals, real(strduals)
 end
