@@ -3,6 +3,11 @@ function seed(v::Vector{<:Point},cfg::ComplexGradientConfig)
   circduals = convert.(eltype(cfg.duals),complex(flux.(v)))
   Point.(posduals,real(circduals))
 end
+function seed(v::Vector{<:Blob},cfg::ComplexGradientConfig)
+    posduals = convert.(eltype(cfg.duals),Elements.position(v))
+    circduals = convert.(eltype(cfg.duals),complex(flux.(v)))
+    Blob.(posduals,real(circduals),Elements.blobradius(v))
+end
 
 function seed_position(v::Vector{<:Point},cfg::ComplexGradientConfig)
     posduals = copy(cfg.duals)
@@ -20,11 +25,7 @@ function seed_strength(v::Vector{<:Point},cfg::ComplexGradientConfig)
     Point.(posduals,real(circduals))
 end
 
-function seed(v::Vector{<:Blob},cfg::ComplexGradientConfig)
-    posduals = convert.(eltype(cfg.duals),Elements.position(v))
-    circduals = convert.(eltype(cfg.duals),complex(flux.(v)))
-    Blob.(posduals,real(circduals),Elements.blobradius(v))
-end
+
 
 
 function seed_position(v::Vector{<:Blob},cfg::ComplexGradientConfig)
