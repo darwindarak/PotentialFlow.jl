@@ -35,6 +35,11 @@ end
 
 @inline _chebyshev_coefficient(C::ComplexF64) = imag(C)
 
+@inline _dct_data(::Type{Dual{T,V,N}},M) where {T,V,N} =
+                  Array{Complex{V}}(undef,M,N+1)
+
+@inline _dct_data(::Type{Float64},M) = Vector{ComplexF64}(undef,M)
+
 """
     Plate <: Elements.Element
 
@@ -89,7 +94,7 @@ function Plate{T}(N, L, c, α) where {T}
     A = MappedVector(_chebyshev_coefficient, C, 1)
 
     # set up the transform for ComplexF64, regardless of T
-    dchebt! = Chebyshev.plan_transform!(zeros(ComplexF64, N))
+    dchebt! = Chebyshev.plan_transform!(_dct_data(T,N))
 
     Plate{T}(L, c, α, zero(T), N, ss, zs, A, C, 0.0, 0.0, dchebt!)
 end

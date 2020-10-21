@@ -80,6 +80,7 @@ end
     return Partials(tuple(first.(tmp)...)), Partials(tuple(last.(tmp)...))
 end
 
+# For the dz and dz* partials with respect to the ith element
 @inline Base.@propagate_inbounds function dz_partials(d::ComplexDual, i)
     dr, di = partials(d)
     return _derivs(dr[2i-1], dr[2i], di[2i-1],di[2i])
@@ -87,6 +88,16 @@ end
 
 @inline Base.@propagate_inbounds dz_partials(::Type{T}, d::ComplexDual{T}, i...) where T = dz_partials(d, i...)
 
+# For dealing with arrays of complex duals, return the dz and dz*
+# partials as separate arrays
+@inline dz_partials(d::AbstractVector{ComplexDual{T,V,N}}) where {T,V,N} =
+  (tmp = dz_partials.(d); return first.(tmp), last.(tmp))
+
+# For the dz and dz* partials with respect to the ith element
+@inline Base.@propagate_inbounds dz_partials(d::AbstractVector{ComplexDual{T,V,N}},i) where {T,V,N} =
+  (tmp = dz_partials.(d,i); return first.(tmp), last.(tmp))
+
+@inline Base.@propagate_inbounds dz_partials(::Type{T}, d::AbstractVector{ComplexDual{T,V,N}}, i...) where {T,V,N} = dz_partials(d, i...)
 
 
 # Given a complex dual, return dz and dzstar as Partial types. Ugly way of doing
