@@ -47,6 +47,7 @@ import .Bodies: ConformalBody
 
 import .Corners: Corner, Wedge
 
+import .Freestreams: Freestream
 
 
 #== Plot Recipes ==#
