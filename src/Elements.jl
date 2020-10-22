@@ -6,7 +6,8 @@ export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction
 
 using ..Properties
 
-import ..Utils: ComplexDual, Dual, ComplexGradientConfig, seed!
+import ..Utils: ComplexDual, Dual, ComplexGradientConfig, seed!,
+                vector_mode_gradient, checktag
 
 abstract type Element end
 
@@ -400,5 +401,23 @@ function seed_strength(strength::F,v::Vector{<:Element},cfg::ComplexGradientConf
   seed!(strduals,complex(strength.(v)),cfg.rseeds,cfg.iseeds)
   return posduals, real(strduals)
 end
+
+function gradient_position(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
+    checktag(T, f, property_type(eltype(v)))
+    vector_mode_gradient(f,v,cfg,vector_mode_dual_eval_position)
+end
+
+function gradient_strength(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
+    checktag(T, f, property_type(eltype(v)))
+    dz, dzstar = vector_mode_gradient(f,v,cfg,vector_mode_dual_eval_strength)
+    return dz + dzstar
+end
+
+@inline vector_mode_dual_eval_position(f::F, v::Vector{<:Element},
+          cfg::ComplexGradientConfig) where {F} = f(seed_position(v,cfg))
+
+@inline vector_mode_dual_eval_strength(f::F, v::Vector{<:Element},
+          cfg::ComplexGradientConfig) where {F} = f(seed_strength(v,cfg))
+
 
 end

@@ -3,7 +3,8 @@ using ForwardDiff
 using DiffRules
 
 import ForwardDiff: Dual, Partials, single_seed, partials, Chunk, Tag, seed!, value,
-              gradient, valtype, extract_gradient!, derivative,extract_derivative
+              gradient, valtype, extract_gradient!, derivative,extract_derivative,
+              checktag, vector_mode_gradient
 
 const AMBIGUOUS_TYPES = (AbstractFloat, Irrational, Integer, Rational,
                          Real, RoundingMode, ComplexF64)
@@ -182,11 +183,18 @@ function dualize(::Type{T},x::AbstractArray{<:Complex{V}}) where {T,V}
 end
 
 # =====  Configurations =====  #
+"""
+    ComplexGradientConfig(f,z)
+
+Create a configuration for calculation of the gradient of a function
+`f` with respect to complex array `z` by automatic differentiation.
+"""
 struct ComplexGradientConfig{T,V,N,D,M} <: ForwardDiff.AbstractConfig{N}
     rseeds::NTuple{N,Partials{M,V}}
     iseeds::NTuple{N,Partials{M,V}}
     duals::D
 end
+
 function ComplexGradientConfig(f::F,
                         x::AbstractArray{Complex{V}},
                         ::Chunk{N} = Chunk(x),
@@ -201,14 +209,14 @@ end
 # Given a function f of z and a complex array z, evaluate the gradient wrt z at z
 function gradient(f, z::AbstractArray{Complex{V}},
             cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, z)) where {T, V}
-    # Should put the checking back in.
     #CHK && checktag(T, f, z)
     checktag(T, f, z)
-    ForwardDiff.vector_mode_gradient(f, z, cfg)
+    vector_mode_gradient(f, z, cfg)
 end
 
-function ForwardDiff.vector_mode_gradient(f::F, z, cfg::ComplexGradientConfig{T}) where {T, F}
-    ydual = ForwardDiff.vector_mode_dual_eval(f, z, cfg)
+function vector_mode_gradient(f::F, z, cfg::ComplexGradientConfig{T},
+                evalfcn=ForwardDiff.vector_mode_dual_eval) where {T, F}
+    ydual = evalfcn(f, z, cfg)
     dz = similar(z, Complex{valtype(ydual)})
     dzstar = similar(z, Complex{valtype(ydual)})
     return extract_gradient!(T, dz, dzstar,ydual)
@@ -235,20 +243,19 @@ Compute the derivative of function `f` with respect to `z` and `conj(z)`
     return extract_derivative(T,complex.(f(one(ComplexDual{T},z))))
 end
 
-
+# ======== Extension of diff rules to complex functions ==========#
 
 
 # preempt other function diffrules. The two entries correspond to d/dz and d/dz*
 DiffRules.@define_diffrule Base.abs2(z) = :(conj($z)), :($z)
-#DiffRules.@define_diffrule Base.conj(z) = :(0), :(1)
-#DiffRules.@define_diffrule Base.real(z) = :(0.5), :(0.5)
-#DiffRules.@define_diffrule Base.imag(z) = :(0.5im), :(-0.5im)
-
 DiffRules.@define_diffrule Base.sqrt(z) = :(inv(2 * sqrt($z))), :(0)
 DiffRules.@define_diffrule Base.log(z) = :(inv($z)), :(0)
 DiffRules.@define_diffrule Base.:^(z,p) = :($p * ($z^($p - 1))), :(0)
 
 DiffRules.@define_diffrule Base.abs(z) = :(0.5*conj($z)*inv(abs($z))), :(0.5*$z*inv(abs($z)))
+
+# ======== Train functions to deal with complex duals ==========#
+
 
 # Extend functions of a single complex argument to accept dual argument
 macro extend_unary_dual_to_complex(fcn)
@@ -266,18 +273,6 @@ macro extend_unary_dual_to_complex(fcn)
 
             return ComplexDual{T}($M.$f(v),dfdz,dfdzstar)
         end
-        #=
-        function $M.$f(z::ComplexRealDual{T}) where {T}
-            v = value(z)
-            dv = extract_derivative(T,z)
-
-            # chain rule
-            df =     $dfz*dv     + $dfzstar*conj(dv)
-
-            return ComplexRealDual{T}($M.$f(v),df)
-
-        end
-        =#
     end
     return esc(fdef)
 end
@@ -303,28 +298,11 @@ macro extend_binary_dual_to_complex(fcn)
                 return ComplexDual{T}($M.$f(v,p),dfdz,dfdzstar)
 
             end
-            #=
-            function $M.$f(z::ComplexRealDual{T},p::$R) where {T}
-                v = value(z)
-                dv = extract_derivative(T,z)
-
-                # chain rule
-                df =     $dfz*dv     + $dfzstar*conj(dv)
-
-                return ComplexRealDual{T}($M.$f(v,p),df)
-
-            end
-            =#
         end
         append!(defs.args, expr.args)
     end
     return esc(defs)
 end
-
-
-#@extend_unary_dual_to_complex conj
-#@extend_unary_dual_to_complex real
-#@extend_unary_dual_to_complex imag
 
 @extend_unary_dual_to_complex abs2
 @extend_unary_dual_to_complex sqrt
@@ -332,140 +310,3 @@ end
 @extend_unary_dual_to_complex abs
 
 @extend_binary_dual_to_complex ^
-
-
-
-
-# ===== Old stuff below here ===== #
-
-#=
-
-
-@inline function ComplexComplexDual{T}(z::Number,dz::Number,dzstar::Number) where {T}
-  zr, zi = reim(z)
-  drdx, didx = _dx_derivs(complex(dz),complex(dzstar))
-  drdy, didy = _dy_derivs(complex(dz),complex(dzstar))
-  return Dual{T}(zr,ForwardDiff.Partials((drdx,drdy))) +
-      im*Dual{T}(zi,ForwardDiff.Partials((didx,didy)))
-end
-
-@inline ComplexComplexDual{T}(z::AbstractArray{S},dz::AbstractArray{S},dzstar::AbstractArray{S}) where {T,S<:Number} =
-      map((u, v, w) -> ComplexComplexDual{T}(u,v,w),z,dz,dzstar)
-
-@inline function ComplexRealDual{T}(z::Number,dz::Number) where {T}
-  zr, zi = reim(z)
-  dr, di = reim(dz)
-  return Dual{T}(zr,dr) + im*Dual{T}(zi,di)
-end
-
-@inline ComplexRealDual{T}(z::AbstractArray{S},dz::AbstractArray{S}) where {T,S<:Number} =
-      map((u, v) -> ComplexRealDual{T}(u,v),z,dz)
-
-@inline ComplexComplexDual{T}() where {T} = ComplexComplexDual{T}(0.0,0.0,0.0)
-@inline ComplexComplexDual{T}(z) where {T} = ComplexComplexDual{T}(z,0.0,0.0)
-@inline ComplexComplexDual(args...) = ComplexComplexDual{Nothing}(args...)
-
-@inline ComplexRealDual{T}() where {T} = ComplexRealDual{T}(0.0,0.0)
-@inline ComplexRealDual{T}(z) where {T} = ComplexRealDual{T}(z,0.0)
-@inline ComplexRealDual(args...) = ComplexRealDual{Nothing}(args...)
-
-@inline Base.one(::Type{<:ComplexComplexDual{T}},z::Number) where T = ComplexComplexDual{T}(z,one(z),zero(z))
-@inline Base.one(::Type{<:ComplexRealDual{T}},z::Number) where T = ComplexRealDual{T}(z,one(z))
-@inline Base.one(::Type{<:Dual{T}},z::Number) where T = Dual{T}(z,one(z))
-
-
-@inline function _derivs(dvr::ForwardDiff.Partials{2},dvi::ForwardDiff.Partials{2})
-    dvrx, dvry = dvr
-    dvix, dviy = dvi
-    return 0.5*(dvrx+dviy) + 0.5*im*(dvix-dvry), 0.5*(dvrx-dviy) + 0.5*im*(dvix+dvry)
-end
-
-# assemble the derivative from the partials
-@inline function _derivs(dvr::ForwardDiff.Partials{1},dvi::ForwardDiff.Partials{1})
-    return dvr[1] + im*dvi[1]
-end
-
-
-# get the d/dx derivatives from d/dz and d/dz*
-@inline _dx_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(   dvz +    dvzstar)
-
-# get the d/dy derivatives from d/dz and d/dz*
-@inline _dy_derivs(dvz::Complex{T},dvzstar::Complex{T}) where {T} = reim(im*dvz - im*dvzstar)
-
-
-
-
-
-
-"""
-    dualize(T::Tag,v::S,::Type{Number})
-
-Return a Dual (if the last argument is real) or complex Dual (if last argument is
-complex) form of `v`.
-"""
-@inline dualize(::Type{T},v::Complex{S},::Type{R}) where {T, S<:Real,R<:Complex} = convert(ComplexComplexDual{T,S},v)
-@inline dualize(::Type{T},v::Complex{S},::Type{R}) where {T, S<:Real,R<:Real} = convert(ComplexRealDual{T,S},v)
-@inline dualize(::Type{T},v::S,::Type{R}) where {T, S<:Real,R<:Real} = convert(Dual{T,S,1},v)
-@inline dualize(::Type{T},v::S,::Type{R}) where {T, S<:Real,R<:Complex} = dualize(T,complex(v),R)
-
-#@inline dualize(::Type{T},v::Complex{S}) where {T, S<:Real} = convert(ComplexComplexDual{T,S},v)
-#@inline dualize(::Type{T},v::S) where {T, S<:Real} = convert(Dual{T,S,1},v)
-
-"""
-    seed(T,v::Vector{S},R::Type{Number},i::Int)
-
-Return a Dual (if R is real) or complex (if R is complex) Dual form of vector `v`,
-with the partials of the `i`th component of the vector set to unit
-values (i.e., to `1` or to `1, 0`, respectively).
-"""
-function seed(::Type{T},v::Vector{S},::Type{R},i::Int) where {T, S <: Number, R<:Number}
-    d = dualize.(T,v,R)
-    d[i] = one(eltype(d),v[i])
-    return d
-end
-
-
-"""
-    ForwardDiff.derivative(f,z::Complex)
-
-Compute the derivative of function `f` with respect to `z` and `conj(z)`
-"""
-@inline function derivative(f::F, z::C) where {F,C<:Complex}
-    T = typeof(ForwardDiff.Tag(f, C))
-    # making f output complex ensures that it gets dispatched to our extract_derivative
-    # for complex Duals rather than the native one in ForwardDiff
-    return extract_derivative(T,complex.(f(one(ComplexComplexDual{T},z))))
-end
-
-"""
-    ForwardDiff.extract_derivative(T,d::ComplexDual)
-
-Given a complex dual value `d` and tag `T`, extract the derivatives d/dz
-and d/dz* from the partials in `d`.
-"""
-@inline function extract_derivative(::Type{T},d::ComplexDual{T}) where T
-   dr, di = reim(d)
-   return _derivs(partials(dr),partials(di))
-end
-
-# If the function outputs a tuple of duals, as would be the case for
-# nested derivatives, then we deal with each one by one and assemble an overall
-# list of derivatives
-@inline function extract_derivative(::Type{T},dlist::NTuple{N,ComplexDual{T}}) where {N,T}
-   out = ()
-   for d in dlist
-        out = (out...,extract_derivative(T,d)...)
-    end
-    out
-end
-
-# These are meant for array-valued outputs of functions, where each array
-# element will be a derivative (or tuple of derivatives d/dz, d/dz*)
-@inline extract_derivative(::Type{T},v::AbstractArray{<:ComplexComplexDual{T}}) where {T} =
-        (d = map(x -> extract_derivative(T,x), v); return first.(d), last.(d))
-
-@inline extract_derivative(::Type{T},v::AbstractArray{<:ComplexRealDual{T}}) where {T} =
-        (d = map(x -> extract_derivative(T,x), v); return d)
-
-
-=#
