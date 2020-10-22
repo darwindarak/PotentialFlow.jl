@@ -7,7 +7,7 @@ export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction
 using ..Properties
 
 import ..Utils: ComplexDual, Dual, ComplexGradientConfig, seed!,
-                vector_mode_gradient, checktag
+                vector_mode_gradient, vector_mode_jacobian, checktag
 
 abstract type Element end
 
@@ -410,7 +410,7 @@ end
 function gradient_strength(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
     checktag(T, f, property_type(eltype(v)))
     dz, dzstar = vector_mode_gradient(f,v,cfg,vector_mode_dual_eval_strength)
-    return dz + dzstar
+    return dz .+ dzstar
 end
 
 @inline vector_mode_dual_eval_position(f::F, v::Vector{<:Element},
@@ -418,6 +418,18 @@ end
 
 @inline vector_mode_dual_eval_strength(f::F, v::Vector{<:Element},
           cfg::ComplexGradientConfig) where {F} = f(seed_strength(v,cfg))
+
+
+function jacobian_position(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
+    checktag(T, f, property_type(eltype(v)))
+    vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_position)
+end
+
+function jacobian_strength(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
+    checktag(T, f, property_type(eltype(v)))
+    dz, dzstar = vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_strength)
+    return dz .+ dzstar
+end
 
 
 end

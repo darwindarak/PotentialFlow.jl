@@ -4,7 +4,7 @@ using DiffRules
 
 import ForwardDiff: Dual, Partials, single_seed, partials, Chunk, Tag, seed!, value,
               gradient, valtype, extract_gradient!, derivative,extract_derivative,
-              checktag, vector_mode_gradient
+              checktag, vector_mode_gradient, vector_mode_jacobian
 
 const AMBIGUOUS_TYPES = (AbstractFloat, Irrational, Integer, Rational,
                          Real, RoundingMode, ComplexF64)
@@ -49,6 +49,8 @@ end
 
 @inline valtype(::ComplexDual{T,V,N}) where {T,V,N} = V
 @inline valtype(::Type{ComplexDual{T,V,N}}) where {T,V,N} = V
+@inline valtype(::Array{<:ComplexDual{T,V,N}}) where {T,V,N} = V
+@inline valtype(::Type{<:Array{<:ComplexDual{T,V,N}}}) where {T,V,N} = V
 
 
 # ==== extensions of Partials ==== #
@@ -114,6 +116,18 @@ end
 @inline extract_gradient!(::Type{T},dz,dzstar,d::ComplexDual{T,V,N}) where {T,V,N} =
           extract_gradient!(dz,dzstar,d)
 
+
+function extract_jacobian!(::Type{T}, dz::AbstractArray, dzstar::AbstractArray,
+                ydual::AbstractArray{<:ComplexDual{T,V,N}}, n) where {T,V,N}
+    @assert size(dz) == size(dzstar) "Inconsistent result sizes"
+
+    dz_reshaped = reshape(dz, length(ydual), n)
+    dzstar_reshaped = reshape(dzstar, length(ydual), n)
+    for col in 1:size(dz_reshaped, 2), row in 1:size(dz_reshaped, 1)
+        dz_reshaped[row, col], dzstar_reshaped[row, col] = dz_partials(T, ydual[row], col)
+    end
+    return dz, dzstar
+end
 
 """
     ForwardDiff.extract_derivative(T,d::ComplexDual)
@@ -215,7 +229,7 @@ function gradient(f, z::AbstractArray{Complex{V}},
 end
 
 function vector_mode_gradient(f::F, z, cfg::ComplexGradientConfig{T},
-                evalfcn=ForwardDiff.vector_mode_dual_eval) where {T, F}
+                evalfcn=ForwardDiff.vector_mode_dual_eval) where {F,T}
     ydual = evalfcn(f, z, cfg)
     dz = similar(z, Complex{valtype(ydual)})
     dzstar = similar(z, Complex{valtype(ydual)})
@@ -227,6 +241,25 @@ function ForwardDiff.vector_mode_dual_eval(f::F, z, cfg::ComplexGradientConfig) 
     seed!(zduals,z,cfg.rseeds,cfg.iseeds)
     return f(zduals)
 end
+
+# ===== jacobian ===== #
+
+function jacobian(f, z::AbstractArray{Complex{V}},
+            cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, z)) where {T, V}
+    #CHK && checktag(T, f, z)
+    checktag(T, f, z)
+    vector_mode_jacobian(f, z, cfg)
+end
+
+function vector_mode_jacobian(f::F, z, cfg::ComplexGradientConfig{T,V,N},
+            evalfcn=ForwardDiff.vector_mode_dual_eval) where {F,T,V,N}
+    ydual = evalfcn(f, z, cfg)
+    dz = similar(ydual, Complex{valtype(eltype(ydual))}, length(ydual), N)
+    dzstar = similar(ydual, Complex{valtype(eltype(ydual))}, length(ydual), N)
+    extract_jacobian!(T, dz, dzstar, ydual, N)
+    return dz, dzstar
+end
+
 
 # ===== derivative ===== #
 
