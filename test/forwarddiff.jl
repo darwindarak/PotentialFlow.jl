@@ -5,7 +5,7 @@ import PotentialFlow.Utils: derivative, extract_derivative, value, partials,
           dz_partials
 
 import PotentialFlow.Elements: gradient_position, gradient_strength,
-          jacobian_position, jacobian_strength
+          jacobian_position, jacobian_strength, jacobian_param
 
 const DELTA=1e-9
 const BIGEPS = 1000*eps(1.0)
@@ -161,25 +161,38 @@ end
 
 @testset "Induced velocity at a point" begin
 
+    compute_velocity(v) = induce_velocity(z,v,0.0)
+
     # Finite difference approximations
+    w_fd = compute_velocity(blobs)
+    wx⁺_fd = compute_velocity(blobsx⁺)
+    wy⁺_fd = compute_velocity(blobsy⁺)
+    wΓ⁺_fd = compute_velocity(blobsΓ⁺)
+    dwdx_fd = (wx⁺_fd - w_fd)/dz[i]
+    dwdy_fd = (wy⁺_fd - w_fd)/dz[i]
+    dwdz_fd = 0.5*(dwdx_fd - im*dwdy_fd)
+    dwdzstar_fd = 0.5*(dwdx_fd + im*dwdy_fd)
+    dwdΓ_fd = (wΓ⁺_fd - w_fd)/dΓ[i]
+
+    #=
     dwdx_fd = (induce_velocity(z,blobsx⁺,0.0) - induce_velocity(z,blobs,0.0))/dz[i]
     dwdy_fd =(induce_velocity(z,blobsy⁺,0.0) - induce_velocity(z,blobs,0.0))/dz[i]
     dwdz_fd = 0.5*(dwdx_fd - im*dwdy_fd)
     dwdzstar_fd = 0.5*(dwdx_fd + im*dwdy_fd)
     dwdΓ_fd = (induce_velocity(z,blobsΓ⁺,0.0) - induce_velocity(z,blobs,0.0))/dΓ[i]
+    =#
 
     # Auto differentation
     cfg = ComplexGradientConfig(z -> (),blobs)
-
     newblobs = Vortex.seed_position(blobs,cfg)
     dwdz2, dwdzstar2 = dz_partials(induce_velocity(z,newblobs,0.0))
 
-    dwdz, dwdzstar = gradient_position(v -> induce_velocity(z,v,0.0),blobs)
+    # Auto diff with the API
+    dwdz, dwdzstar = gradient_position(compute_velocity,blobs)
     @test dwdz == dwdz2 && dwdzstar == dwdzstar2
 
     @test isapprox(abs(dwdz[i]-dwdz_fd),0.0,atol=TOL)
     @test isapprox(abs(dwdzstar[i]-dwdzstar_fd),0.0,atol=TOL)
-
 
     newblobs = Vortex.seed_strength(blobs,cfg)
 
@@ -189,11 +202,11 @@ end
     dwdz_tmp, dwdzstar_tmp = dz_partials(induce_velocity(z,newblobs,0.0))
     dwdΓ2 = dwdz_tmp+dwdzstar_tmp
 
-    dwdΓ = gradient_strength(v -> induce_velocity(z,v,0.0),blobs)
+    # Auto diff with the API
+    dwdΓ = gradient_strength(compute_velocity,blobs)
     @test dwdΓ == dwdΓ2
 
     @test isapprox(abs(dwdΓ[i]-dwdΓ_fd),0.0,atol=TOL)
-
 
 
 end
@@ -217,36 +230,33 @@ Plates.enforce_no_flow_through!(pΓ⁺, motion, blobsΓ⁺, 0.0)
 
 @testset "Induced velocity at plate points" begin
 
-    C  = zeros(ComplexF64, N)
-    dchebt! = Plates.Chebyshev.plan_transform!(Plates._dct_data(Float64,N))
+    function plate_velocity(v)
+      w = zeros(Complex{Elements.property_type(eltype(v))},N)
+      induce_velocity!(w,p,v,0.0)
+      return w
+    end
 
-    C  = zeros(ComplexF64, N)
-    induce_velocity!(C,p,blobs,0.0)
+    C = plate_velocity(blobs)
+    Cx⁺ = plate_velocity(blobsx⁺)
+    Cy⁺ = plate_velocity(blobsy⁺)
+    CΓ⁺ = plate_velocity(blobsΓ⁺)
 
-    Cx⁺  = zeros(ComplexF64, N)
-    induce_velocity!(Cx⁺,p,blobsx⁺,0.0)
+
     dwdx_fd = (Cx⁺ - C)/dz[i]
-
-    Cy⁺  = zeros(ComplexF64, N)
-    induce_velocity!(Cy⁺,p,blobsy⁺,0.0)
     dwdy_fd = (Cy⁺ - C)/dz[i]
-
-    CΓ⁺  = zeros(ComplexF64, N)
-    induce_velocity!(CΓ⁺,p,blobsΓ⁺,0.0)
-
     dwdz_fd = 0.5*(dwdx_fd - im*dwdy_fd)
     dwdzstar_fd = 0.5*(dwdx_fd + im*dwdy_fd)
 
-    cfg = ComplexGradientConfig(z -> (),blobs)
-    newblobs = Vortex.seed_position(blobs,cfg)
-    C2 = zeros(eltype(cfg.duals),N)
-    induce_velocity!(C2,p,newblobs,0.0)
-    dwdz, dwdzstar = dz_partials(C2,i)
+    # Auto diff
+    dwdz, dwdzstar = jacobian_position(plate_velocity,blobs)
 
     # test that the induced velocities and their derivatives match
-    @test isapprox(norm(value.(C2) - C),0.0,atol=BIGEPS)
-    @test isapprox(norm(dwdz - dwdz_fd),0.0,atol=TOL)
-    @test isapprox(norm(dwdzstar - dwdzstar_fd),0.0,atol=TOL)
+    #@test isapprox(norm(value.(C2) - C),0.0,atol=BIGEPS)
+    @test isapprox(norm(dwdz[:,i] - dwdz_fd),0.0,atol=TOL)
+    @test isapprox(norm(dwdzstar[:,i] - dwdzstar_fd),0.0,atol=TOL)
+
+    dchebt! = Plates.Chebyshev.plan_transform!(Plates._dct_data(Float64,N))
+
 
     # finite diff
     dchebt! * C
@@ -260,6 +270,10 @@ Plates.enforce_no_flow_through!(pΓ⁺, motion, blobsΓ⁺, 0.0)
     dCdzstar_fd = 0.5*(dCdx_fd + im*dCdy_fd)
 
     # auto diff
+    cfg = ComplexGradientConfig(z -> (),blobs)
+    newblobs = Vortex.seed_position(blobs,cfg)
+    C2 = zeros(eltype(cfg.duals),N)
+    induce_velocity!(C2,p,newblobs,0.0)
     dchebt! = Plates.Chebyshev.plan_transform!(Plates._dct_data(Dual{Nothing,Float64,2*nblob},N))
     dchebt! * C2
     dCdz, dCdzstar = dz_partials(C2,i)
@@ -322,7 +336,6 @@ end
     # Now apply the full differentiation to evaluate sensitivity of induced velocity
     # First, by finite difference
 
-
     w_fd =  induce_velocity(z,(p,blobs),0.0)
     wx⁺_fd = induce_velocity(z,(px⁺,blobsx⁺),0.0)
     wy⁺_fd = induce_velocity(z,(py⁺,blobsy⁺),0.0)
@@ -352,43 +365,10 @@ end
     @test isapprox(abs(dwdΓ[i]-dwdΓ_fd),0.0,atol=TOL)
 end
 
+
 @testset "Self-induced velocity with bcs enforced" begin
 
-    # Now check the self-induced velocity
-    wself_fd = zeros(ComplexF64,length(blobs))
-    self_induce_velocity!(wself_fd,blobs, 0.0)
-    induce_velocity!(wself_fd, blobs, p, 0.0)
-
-    wselfx⁺_fd = zeros(ComplexF64,length(blobs))
-    self_induce_velocity!(wselfx⁺_fd,blobsx⁺, 0.0)
-    induce_velocity!(wselfx⁺_fd, blobsx⁺, px⁺, 0.0)
-
-    wselfy⁺_fd = zeros(ComplexF64,length(blobs))
-    self_induce_velocity!(wselfy⁺_fd,blobsy⁺, 0.0)
-    induce_velocity!(wselfy⁺_fd, blobsy⁺, py⁺, 0.0)
-
-    wselfΓ⁺_fd = zeros(ComplexF64,length(blobs))
-    self_induce_velocity!(wselfΓ⁺_fd,blobsΓ⁺, 0.0)
-    induce_velocity!(wselfΓ⁺_fd, blobsΓ⁺, pΓ⁺, 0.0)
-
-    dwdx_fd = (wselfx⁺_fd - wself_fd)/dz[i]
-    dwdy_fd = (wselfy⁺_fd - wself_fd)/dz[i]
-    dwdz_fd = 0.5*(dwdx_fd - im*dwdy_fd)
-    dwdzstar_fd = 0.5*(dwdx_fd + im*dwdy_fd)
-    dwdΓ_fd = (wselfΓ⁺_fd - wself_fd)/dΓ[i]
-
-    #=
-    cfg = ComplexGradientConfig(z -> (),blobs)
-    newblobs = Vortex.seed_position(blobs,cfg)
-    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,L,c,α)
-    Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
-    wself = zeros(eltype(cfg.duals),length(newblobs))
-    self_induce_velocity!(wself,newblobs, 0.0)
-    induce_velocity!(wself, newblobs, pdual, 0.0)
-    dwdz, dwdzstar = dz_partials(wself,i)
-    =#
-
-    function f(v)
+    function self_velocity(v)
       ptmp = PotentialFlow.Plate{Elements.property_type(eltype(v))}(N,L,c,α)
       Plates.enforce_no_flow_through!(ptmp, motion, v, 0.0)
       wself = zeros(Complex{Elements.property_type(eltype(v))},length(v))
@@ -396,53 +376,47 @@ end
       induce_velocity!(wself, v, ptmp, 0.0)
       return wself
     end
-    dwdz, dwdzstar = jacobian_position(f,blobs)
+
+    wself_fd = self_velocity(blobs)
+    wselfx⁺_fd = self_velocity(blobsx⁺)
+    wselfy⁺_fd = self_velocity(blobsy⁺)
+    wselfΓ⁺_fd = self_velocity(blobsΓ⁺)
+    dwdx_fd = (wselfx⁺_fd - wself_fd)/dz[i]
+    dwdy_fd = (wselfy⁺_fd - wself_fd)/dz[i]
+    dwdz_fd = 0.5*(dwdx_fd - im*dwdy_fd)
+    dwdzstar_fd = 0.5*(dwdx_fd + im*dwdy_fd)
+    dwdΓ_fd = (wselfΓ⁺_fd - wself_fd)/dΓ[i]
+
+    dwdz, dwdzstar = jacobian_position(self_velocity,blobs)
 
     @test isapprox(norm(dwdz[:,i]-dwdz_fd),0.0,atol=TOL)
     @test isapprox(norm(dwdzstar[:,i]-dwdzstar_fd),0.0,atol=TOL)
 
-    #=
-    newblobs = Vortex.seed_strength(blobs,cfg)
-    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,L,c,α)
-    Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
-    wself = zeros(eltype(cfg.duals),length(newblobs))
-    self_induce_velocity!(wself,newblobs, 0.0)
-    induce_velocity!(wself, newblobs, pdual, 0.0)
-    dwdz, dwdzstar = dz_partials(wself,i)
-    dwdΓ = dwdz + dwdzstar
-    =#
-    dwdΓ = jacobian_strength(f,blobs)
+    dwdΓ = jacobian_strength(self_velocity,blobs)
 
     @test isapprox(norm(dwdΓ[:,i]-dwdΓ_fd),0.0,atol=TOL)
 end
+
 
 @testset "Acceleration induced on plate" begin
 
     targvel = fill(ċ, length(p))
 
-    wself_fd = zeros(ComplexF64,length(blobs))
-    self_induce_velocity!(wself_fd,blobs, 0.0)
-    induce_velocity!(wself_fd, blobs, p, 0.0)
-    Ċ_fd = zero(targvel)
-    Plates.induce_acc!(Ċ_fd, p.zs, targvel, blobs, wself_fd)
+    function compute_Ċ(v)
+      ptmp = PotentialFlow.Plate{Elements.property_type(eltype(v))}(N,L,c,α)
+      Plates.enforce_no_flow_through!(ptmp, motion, v, 0.0)
+      wself = zeros(Complex{Elements.property_type(eltype(v))},length(v))
+      self_induce_velocity!(wself,v, 0.0)
+      induce_velocity!(wself, v, ptmp, 0.0)
+      Ċ = zeros(Complex{Elements.property_type(eltype(v))},length(ptmp))
+      Plates.induce_acc!(Ċ, ptmp.zs, targvel, v, wself)
+    end
 
-    wselfx⁺_fd = zeros(ComplexF64,length(blobs))
-    self_induce_velocity!(wselfx⁺_fd,blobsx⁺, 0.0)
-    induce_velocity!(wselfx⁺_fd, blobsx⁺, px⁺, 0.0)
-    Ċx⁺_fd = zero(targvel)
-    Plates.induce_acc!(Ċx⁺_fd, px⁺.zs, targvel, blobsx⁺, wselfx⁺_fd)
+    Ċ_fd = compute_Ċ(blobs)
+    Ċx⁺_fd = compute_Ċ(blobsx⁺)
+    Ċy⁺_fd = compute_Ċ(blobsy⁺)
+    ĊΓ⁺_fd = compute_Ċ(blobsΓ⁺)
 
-    wselfy⁺_fd = zeros(ComplexF64,length(blobs))
-    self_induce_velocity!(wselfy⁺_fd,blobsy⁺, 0.0)
-    induce_velocity!(wselfy⁺_fd, blobsy⁺, py⁺, 0.0)
-    Ċy⁺_fd = zero(targvel)
-    Plates.induce_acc!(Ċy⁺_fd, py⁺.zs, targvel, blobsy⁺, wselfy⁺_fd)
-
-    wselfΓ⁺_fd = zeros(ComplexF64,length(blobs))
-    self_induce_velocity!(wselfΓ⁺_fd,blobsΓ⁺, 0.0)
-    induce_velocity!(wselfΓ⁺_fd, blobsΓ⁺, pΓ⁺, 0.0)
-    ĊΓ⁺_fd = zero(targvel)
-    Plates.induce_acc!(ĊΓ⁺_fd, pΓ⁺.zs, targvel, blobsΓ⁺, wselfΓ⁺_fd)
 
     dĊdx_fd = (Ċx⁺_fd - Ċ_fd)/dz[i]
     dĊdy_fd = (Ċy⁺_fd - Ċ_fd)/dz[i]
@@ -450,35 +424,16 @@ end
     dĊdzstar_fd = 0.5*(dĊdx_fd + im*dĊdy_fd)
     dĊdΓ_fd = (ĊΓ⁺_fd - Ċ_fd)/dΓ[i]
 
-    cfg = ComplexGradientConfig(z -> (),blobs)
-    newblobs = Vortex.seed_position(blobs,cfg)
-    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,L,c,α)
-    Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0);
-    wself = zeros(eltype(cfg.duals),length(newblobs))
-    self_induce_velocity!(wself,newblobs, 0.0)
-    induce_velocity!(wself, newblobs, pdual, 0.0)
 
-    Ċ = zeros(eltype(cfg.duals),length(pdual))
-    Plates.induce_acc!(Ċ, pdual.zs, targvel, newblobs, wself)
-    dĊdz, dĊdzstar = dz_partials(Ċ,i)
+    dĊdz, dĊdzstar = jacobian_position(compute_Ċ,blobs)
 
-    @test isapprox(norm(dĊdz-dĊdz_fd),0.0,atol=BIGTOL)
-    @test isapprox(norm(dĊdzstar-dĊdzstar_fd),0.0,atol=BIGTOL)
+    @test isapprox(norm(dĊdz[:,i]-dĊdz_fd),0.0,atol=BIGTOL)
+    @test isapprox(norm(dĊdzstar[:,i]-dĊdzstar_fd),0.0,atol=BIGTOL)
 
-    newblobs = Vortex.seed_strength(blobs,cfg)
-    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,L,c,α)
-    Plates.enforce_no_flow_through!(pdual, motion, newblobs, 0.0)
-    wself = zeros(eltype(cfg.duals),length(newblobs))
-    self_induce_velocity!(wself,newblobs, 0.0)
-    induce_velocity!(wself, newblobs, pdual, 0.0)
 
-    Ċ = zeros(eltype(cfg.duals),length(pdual))
-    Plates.induce_acc!(Ċ, pdual.zs, targvel, newblobs, wself)
-    dĊdz, dĊdzstar = dz_partials(Ċ,i)
+    dĊdΓ = jacobian_strength(compute_Ċ,blobs)
 
-    dĊdΓ = dĊdz + dĊdzstar
-
-    @test isapprox(norm(dĊdΓ-dĊdΓ_fd),0.0,atol=BIGTOL)
+    @test isapprox(norm(dĊdΓ[:,i]-dĊdΓ_fd),0.0,atol=BIGTOL)
 
 
   end
@@ -506,34 +461,31 @@ end
     dpdzstar_fd = 0.5*(dpdx_fd + im*dpdy_fd)
     dpdΓ_fd = (pressΓ⁺_fd - press_fd)/dΓ[i]
 
-    cfg = ComplexGradientConfig(z -> (),blobs)
-    newblobs = Vortex.seed_position(blobs,cfg)
-    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,L,c,α)
-    press = Plates.surface_pressure_inst(pdual,motion,newblobs,(z₊,z₋),0.0,Δt,lesp,tesp)
-    dpdz, dpdzstar = dz_partials(complex(press),i)
+    function compute_pressure(v)
+      ptmp = PotentialFlow.Plate{Elements.property_type(eltype(v))}(N,L,c,α)
+      return complex(Plates.surface_pressure_inst(ptmp,motion,v,(z₊,z₋),0.0,Δt,lesp,tesp))
+    end
 
-    @test isapprox(safenorm(dpdz-dpdz_fd)/safenorm(dpdz),0.0,atol=BIGTOL)
-    @test isapprox(safenorm(dpdzstar-dpdzstar_fd)/safenorm(dpdzstar),0.0,atol=BIGTOL)
+    dpdz, dpdzstar = jacobian_position(compute_pressure,blobs)
 
-    newblobs = Vortex.seed_strength(blobs,cfg)
-    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,L,c,α)
-    press = Plates.surface_pressure_inst(pdual,motion,newblobs,(z₊,z₋),0.0,Δt,lesp,tesp)
-    dpdz, dpdzstar = dz_partials(complex(press),i)
+    @test isapprox(safenorm(dpdz[:,i]-dpdz_fd)/safenorm(dpdz_fd),0.0,atol=BIGTOL)
+    @test isapprox(safenorm(dpdzstar[:,i]-dpdzstar_fd)/safenorm(dpdzstar_fd),0.0,atol=BIGTOL)
 
-    dpdΓ = real(dpdz + dpdzstar)
 
-    @test isapprox(safenorm(dpdΓ-dpdΓ_fd)/safenorm(dpdΓ),0.0,atol=BIGTOL)
+    dpdΓ = real(jacobian_strength(compute_pressure,blobs))
+
+    @test isapprox(safenorm(dpdΓ[:,i]-dpdΓ_fd)/safenorm(dpdΓ_fd),0.0,atol=BIGTOL)
 
     presslesp⁺_fd = Plates.surface_pressure_inst(plesp⁺,motion,blobs,(z₊,z₋),0.0,Δt,lesp+dlesp,tesp)
     dpdlesp_fd = (presslesp⁺_fd - press_fd)/dlesp
 
-    cfg = ComplexGradientConfig(z -> (),ComplexF64[lesp]);
-    newblobs = Vortex.seed(blobs,cfg)
-    pdual = PotentialFlow.Plate{Elements.property_type(eltype(newblobs))}(N,L,c,α)
-    newlesp = real(one(eltype(cfg.duals),complex(lesp)))
-    press = Plates.surface_pressure_inst(pdual,motion,newblobs,(z₊,z₋),0.0,Δt,newlesp,tesp)
-    dpdz, dpdzstar = dz_partials(complex(press),1)
-    dpdlesp = real(dpdz + dpdzstar)
+    function lesp_to_pressure(v,lesp)
+      ptmp = PotentialFlow.Plate{Elements.property_type(eltype(v))}(N,L,c,α)
+      press = Plates.surface_pressure_inst(ptmp,motion,v,(z₊,z₋),0.0,Δt,lesp,tesp)
+      return complex(press)
+    end
+
+    dpdlesp = jacobian_param(lesp_to_pressure,(blobs,lesp))
 
     @test isapprox(safenorm(dpdlesp-dpdlesp_fd)/safenorm(dpdlesp),0.0,atol=BIGTOL)
 

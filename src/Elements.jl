@@ -6,7 +6,7 @@ export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction
 
 using ..Properties
 
-import ..Utils: ComplexDual, Dual, ComplexGradientConfig, seed!,
+import ..Utils: ComplexDual, Dual, ComplexGradientConfig, seed!, seed,
                 vector_mode_gradient, vector_mode_jacobian, checktag
 
 abstract type Element end
@@ -352,7 +352,7 @@ ComplexGradientConfig(f::F,v::Vector{<:Element},w...) where {F} =
 
 
 """
-    seed(v::Vector{Element},cfg::ComplexGradientConfig)
+    seed_zeros(v::Vector{Element},cfg::ComplexGradientConfig)
 
 Given a collection `v` of points or blobs, create a copy of the collection with
 the element's positions and strengths replaced by complex duals with zeros.
@@ -360,11 +360,12 @@ the element's positions and strengths replaced by complex duals with zeros.
 strength) ensures correct treatment for gradient calculation, since some
 calculations will be complex-valued.
 """
-function seed(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
+function seed_zeros(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
   posduals = convert.(eltype(cfg.duals),position(v))
   strduals = convert.(eltype(cfg.duals),complex(strength.(v)))
   return posduals, real(strduals)
 end
+
 
 """
     seed_position(v::Vector{Element},cfg::ComplexGradientConfig)
@@ -419,6 +420,8 @@ end
 @inline vector_mode_dual_eval_strength(f::F, v::Vector{<:Element},
           cfg::ComplexGradientConfig) where {F} = f(seed_strength(v,cfg))
 
+@inline vector_mode_dual_eval_param(f::F, v::Tuple{Vector{<:Element},T},
+          cfg::ComplexGradientConfig) where {F,T} = f(seed_zeros(v[1],cfg),seed(v[2],cfg))
 
 function jacobian_position(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
     checktag(T, f, property_type(eltype(v)))
@@ -429,6 +432,13 @@ function jacobian_strength(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} 
     checktag(T, f, property_type(eltype(v)))
     dz, dzstar = vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_strength)
     return dz .+ dzstar
+end
+
+function jacobian_param(f,v::Tuple{Vector{<:Element},S},
+        cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, ComplexF64[v[2]])) where {S,T}
+    checktag(T, f, v[2])
+    dz, dzstar = vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_param)
+    return real(dz .+ dzstar)
 end
 
 

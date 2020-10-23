@@ -191,6 +191,8 @@ function seed!(duals::AbstractArray{<:ComplexDual{T,V,M}}, x,
     return duals
 end
 
+
+
 function dualize(::Type{T},x::AbstractArray{<:Complex{V}}) where {T,V}
     xdual = similar(x,ComplexDual{T,V,2*length(v)})
     seed!(xdual,x)
@@ -217,6 +219,29 @@ function ComplexGradientConfig(f::F,
     duals = similar(x, ComplexDual{T,V,2N})
     return ComplexGradientConfig{T,V,N,typeof(duals),2N}(rseeds, iseeds, duals)
 end
+
+# =====  other seed functions ==== ##
+
+"""
+    seed(v::Number,cfg::ComplexGradientConfig)
+
+Given a number `v`, create a dual-valued copy of `v` with
+a unit seed. The use of complex duals (even if `v` is real-valued)
+ensures correct treatment for gradient calculation, since some
+calculations will be complex-valued.
+"""
+function seed(v::Complex,cfg::ComplexGradientConfig)
+    vduals = copy(cfg.duals)
+    seed!(vduals,[v],cfg.rseeds,cfg.iseeds)
+    return vduals[1]
+end
+
+function seed(v::Real,cfg::ComplexGradientConfig)
+    vduals = copy(cfg.duals)
+    seed!(vduals,complex([v]),cfg.rseeds,cfg.iseeds)
+    return real(vduals[1])
+end
+
 
 # ===== gradient ===== #
 

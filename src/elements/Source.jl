@@ -2,7 +2,7 @@ module Source
 
 import ..Points
 import ..Blobs
-import ..Elements: circulation, flux, kind, seed, seed_position, seed_strength
+import ..Elements: circulation, flux, kind, seed_zeros, seed_position, seed_strength
 
 import ..Utils: dualize, ComplexGradientConfig, seed!
 
