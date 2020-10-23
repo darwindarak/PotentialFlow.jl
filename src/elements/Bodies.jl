@@ -182,10 +182,10 @@ end
 
 Elements.conftransform(ζ::ComplexF64,b::ConformalBody) = b.c + b.m(ζ)*exp(im*b.α)
 
-Elements.conftransform(s::Point{T},b::ConformalBody) where T =
+Elements.conftransform(s::Point{T},b::ConformalBody) where {T} =
                 Point{T}(Elements.conftransform(s.z,b),s.S)
 
-Elements.conftransform(s::Blob{T},b::ConformalBody) where T =
+Elements.conftransform(s::Blob{T},b::ConformalBody) where {T} =
                 Blob{T}(Elements.conftransform(s.z,b),s.S,s.δ)
 
 Elements.conftransform(f::Freestream,b::ConformalBody) =
@@ -198,10 +198,10 @@ end
 
 Elements.inverse_conftransform(z::ComplexF64,b::ConformalBody) = b.minv((z-b.c)*exp(-im*b.α))
 
-Elements.inverse_conftransform(s::Point{T},b::ConformalBody) where T=
+Elements.inverse_conftransform(s::Point{T},b::ConformalBody) where {T} =
                 Point{T}(Elements.inverse_conftransform(s.z,b),s.S)
 
-Elements.inverse_conftransform(s::Blob{T},b::ConformalBody) where T =
+Elements.inverse_conftransform(s::Blob{T},b::ConformalBody) where {T} =
                 Blob{T}(Elements.inverse_conftransform(s.z,b),s.S,s.δ)
 
 Elements.inverse_conftransform(f::Freestream,b::ConformalBody) =
@@ -439,7 +439,7 @@ function induce_velocity!(ws::Vector, b::ConformalBody, src, t)
 end
 
 # Note that we are assuming here that the blobs/points are in the circle plane
-function _singular_velocity!(ws, b, src::Blob{T}, t, ::Type{Singleton}) where T
+function _singular_velocity!(ws, b, src::Blob{T}, t, ::Type{Singleton}) where {T}
     induce_velocity!(ws, b.zetas, Point{T}(src.z, src.S), t)
 end
 

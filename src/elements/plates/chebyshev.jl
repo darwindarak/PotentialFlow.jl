@@ -1,25 +1,48 @@
 module Chebyshev
 
 using FFTW
-using Future: copy!
+using Base: copy!
+
+import ..Utils: dz_partials, value, Dual, ComplexDual, Partials, valtype
+
 
 import Base: *, \
-struct Transform{T,I}
-    dct!::FFTW.r2rFFTWPlan{T,(3,),true,1}
+struct Transform{T,I,D}
+    dct!::FFTW.r2rFFTWPlan{T,(3,),true,D}
 end
 
 function plan_transform!(x::Vector{T}) where T
-    Transform{T,true}(FFTW.plan_r2r!(x, FFTW.REDFT00))
+    Transform{T,true,1}(FFTW.plan_r2r!(x, FFTW.REDFT00))
 end
 
 function plan_transform(x::Vector{T}) where T
-    Transform{T,false}(FFTW.plan_r2r!(x, FFTW.REDFT00))
+    Transform{T,false,1}(FFTW.plan_r2r!(x, FFTW.REDFT00))
+end
+
+function plan_transform!(x::Array{T,2}) where T
+    Transform{T,true,2}(FFTW.plan_r2r!(x, FFTW.REDFT00,1))
+end
+
+function plan_transform(x::Array{T,2}) where T
+    Transform{T,false,2}(FFTW.plan_r2r!(x, FFTW.REDFT00,1))
 end
 
 (C::Transform{T,true}  * x::Vector{T}) where T = transform!(x, C.dct!)
 (C::Transform{T,false} * x::Vector{T}) where T = transform(x, C.dct!)
 (C::Transform{T,true}  \ A::Vector{T}) where T = inv_transform!(A, C.dct!)
 (C::Transform{T,false} \ A::Vector{T}) where T = inv_transform(A, C.dct!)
+
+(C::Transform{Complex{T},true} * x::Vector{Complex{S}}) where {T,S <:Dual{R,V,N}} where {R,V,N}  = transform!(x, Array{Complex{V}}(undef,length(x),N+1), C.dct!)
+(C::Transform{Complex{T},false} * x::Vector{Complex{S}}) where {T,S <:Dual{R,V,N}} where {R,V,N}  = transform(x, Array{Complex{V}}(undef,length(x),N+1),C.dct!)
+(C::Transform{Complex{T},true} \ A::Vector{Complex{S}}) where {T,S <:Dual{R,V,N}} where {R,V,N}= inv_transform!(A, Array{Complex{V}}(undef,length(x),N+1),C.dct!)
+(C::Transform{Complex{T},false} \ A::Vector{Complex{S}}) where {T,S <:Dual{R,V,N}} where {R,V,N} = inv_transform(A, Array{Complex{V}}(undef,length(x),N+1),C.dct!)
+
+#=
+(C::Transform{T,true} * x::Vector{S}) where {T<:Real,S <:Dual{R} where R} = transform!(x, C.dct!)
+(C::Transform{T,false} * x::Vector{S}) where {T<:Real,S <:Dual{R} where R} = transform(x, C.dct!)
+(C::Transform{T,true} \ A::Vector{S}) where {T<:Real,S <:Dual{R} where R} = inv_transform!(A, C.dct!)
+(C::Transform{T,false} \ A::Vector{S}) where {T<:Real,S <:Dual{R} where R} = inv_transform(A, C.dct!)
+=#
 
 """
     Chebyshev.nodes(N, T = Float64)
@@ -148,6 +171,37 @@ function transform!(A::T, x::T, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00)) where T
     transform!(A, plan!)
 end
 
+function transform!(x::AbstractArray{V,2}, plan! = FFTW.plan_r2r!(x, FFTW.REDFT00,1)) where V
+    N = size(x,1)
+    if size(x) != size(plan!)
+        throw(BoundsError("`x` must have the same size as the preplanned DCT"))
+    end
+
+    plan!*x
+
+    s = 1/(N-1)
+
+    @inbounds begin
+        for n in 2:2:N
+            x[n-1,:] *= s
+            x[n,:]   *= -s
+        end
+        if isodd(N)
+            x[N,:] *= s
+        end
+
+        x[1,:] /= 2
+        x[N,:] /= 2
+    end
+
+    x
+end
+
+transform!(x::Vector{Complex{S}}, xhat = Array{Complex{V}}(undef,length(x),N+1),
+                    plan! = FFTW.plan_r2r!(xhat, FFTW.REDFT00,1)) where S <:Dual{T,V,N} where {T,V,N} =
+   _transform!(x,transform!,xhat,plan!)
+
+
 """
     Chebyshev.inv_transform(A[, plan!])
 
@@ -180,7 +234,7 @@ This is the inverse of [`Chebyshev.transform!`](@ref)
 - `A`: an optional input vector with coefficients of a Chebyshev series
 - `plan!`: an optional pre-planned in-place DCT-I used to compute the transform
 """
-function inv_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00))
+function inv_transform!(A, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00,1))
     N = length(A)
     if N != length(plan!)
         throw(BoundsError("`A` must have the same size as the preplanned DCT"))
@@ -206,6 +260,53 @@ function inv_transform!(x::T, A::T, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00)) whe
     Chebyshev.inv_transform!(x, plan!)
 end
 
+
+function inv_transform!(A::AbstractArray{V,2}, plan! = FFTW.plan_r2r!(A, FFTW.REDFT00,1)) where {V}
+    N = size(A,1)
+    if size(A) != size(plan!)
+      throw(BoundsError("`x` must have the same size as the preplanned DCT"))
+    end
+
+    @inbounds begin
+        for n in 2:2:N-2
+            A[n,:]   *= -0.5
+            A[n+1,:] *=  0.5
+        end
+        if iseven(N)
+            A[N,:] *= -1
+        else
+            A[N-1,:] *= -0.5
+        end
+    end
+
+    plan!*A
+end
+
+inv_transform!(x::Vector{Complex{S}}, xhat = Array{Complex{V}}(undef,length(x),N+1),
+                    plan! = FFTW.plan_r2r!(xhat, FFTW.REDFT00,1)) where S <:Dual{T,V,N} where {T,V,N} =
+   _transform!(x,inv_transform!,xhat,plan!)
+
+
+
+function _transform!(x::Vector{Complex{S}}, f! = transform!, xhat = Array{Complex{V}}(undef,length(x),N+1),
+                    plan! = FFTW.plan_r2r!(xhat, FFTW.REDFT00,1)) where S <:Dual{T,V,N} where {T,V,N}
+
+    xz = first.(dz_partials.(x))
+    xzstar = last.(dz_partials.(x))
+
+    xhat[:,1] = value.(x)
+    for j in eachindex(x)
+        xhat[j,2:N÷2+1] = xz[j]
+        xhat[j,N÷2+2:N+1] = xzstar[j]
+    end
+    f!(xhat,xhat,plan!)
+    for j in eachindex(x)
+        x[j] = ComplexDual{T}(xhat[j,1],Partials(tuple(xhat[j,2:N÷2+1]...)),
+                                        Partials(tuple(xhat[j,N÷2+2:N+1]...)))
+    end
+
+    return x
+end
 
 """
     clenshaw_curtis_weights(N)

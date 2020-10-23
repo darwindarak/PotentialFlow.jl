@@ -2,7 +2,10 @@ module Source
 
 import ..Points
 import ..Blobs
-import ..Elements: circulation, flux
+import ..Elements: circulation, flux, kind, seed_zeros, seed_position, seed_strength
+
+import ..Utils: dualize, ComplexGradientConfig, seed!
+
 
 #== Wrapper for a point source ==#
 
@@ -26,7 +29,10 @@ julia> p(S = 2.0)
 Source.Point(1.0 + 0.0im, 2.0)
 ```
 """
-const Point = Points.Point{ComplexF64}
+const Point = Points.Point{T,R} where {T<:Complex, R <: Real}
+Point(z::Complex{R},S::T) where {T<:Real,R<:Real} = Points.Point{Complex{T}}(z,S)
+Point(z::Real,S::T) where {T} = Points.Point{Complex{T}}(complex(z),S)
+
 (p::Point)(; z = p.z, S = imag(p.S)) = Point(z, S)
 
 function Base.show(io::IO, s::Point)
@@ -38,6 +44,7 @@ function Base.show(io::IO, s::Point)
 end
 flux(p::Point) = imag(p.S)
 circulation(::Point) = 0.0
+
 
 #== Wrapper for a blob source ==#
 
@@ -61,7 +68,11 @@ julia> b(S = 2.0, δ = 0.01)
 Source.Blob(1.0 + 0.0im, 2.0, 0.01)
 ```
 """
-const Blob = Blobs.Blob{ComplexF64}
+const Blob = Blobs.Blob{T,R} where {T<:Complex, R <: Real}
+Blob(z::Complex{R},S::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{Complex{T}}(z,S,δ)
+Blob(z::Real,S::T,δ) where {T<:Real} = Blobs.Blob{Complex{T}}(complex(z),S,δ)
+
+
 (b::Blob)(; z = b.z, S = imag(b.S), δ = b.δ) = Blob(z, S, δ)
 
 function Base.show(io::IO, s::Blob)
@@ -73,5 +84,8 @@ function Base.show(io::IO, s::Blob)
 end
 circulation(::Blob) = 0.0
 flux(b::Blob) = imag(b.S)
+
+
+include("source/diff.jl")
 
 end

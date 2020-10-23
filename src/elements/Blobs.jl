@@ -3,7 +3,8 @@ module Blobs
 export Blob
 
 using ..Elements
-import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect
+import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect,
+                  allocate_velocity
 
 #== Type definition ==#
 
@@ -20,30 +21,51 @@ An immutable structure representing a regularized point source/vortex
 ## Constructors
 
 """
-struct Blob{T <: Number} <: Element
-    z::ComplexF64
-    S::T
+struct Blob{S <: Number,R <: Real} <: Element
+    z::Complex{R}
+    S::Union{R,Complex{R}}
     δ::Float64
-    Blob{T}(z, s::Real, δ) where T <: Complex = new(z, im*s, δ)
-    Blob{T}(z, s, δ)       where T <: Complex = new(z, s, δ)
-    Blob{T}(z, s::Real, δ) where T <: Real    = new(z, s, δ)
+    Blob{S}(z::Complex{R}, s::T, δ)           where {S <: Complex, T <: Real, R <: Real} = (U = promote_type(R,T); new{Complex{U},U}(z, im*convert(U,s),δ))
+    Blob{S}(z::Complex{R}, s::Complex{T}, δ)  where {S <: Complex, T <: Real, R <: Real} = (U = promote_type(R,T); new{Complex{U},U}(z, convert(Complex{U},s),δ))
+    Blob{S}(z::Complex{R}, s::T, δ)           where {S <: Real, T <: Real, R <: Real}    = (U = promote_type(R,T); new{U,U}(z, convert(U,s),δ))
 end
-Elements.kind(::Blob) = Singleton
-Elements.kind(::Type{Blob{T}}) where T = Singleton
+# struct Blob{T <: Number, R <: Number} <: Element
+#     z::Complex{R}
+#     S::T
+#     δ::Float64
+#     Blob{T,R}(z, s::Real, δ) where {T <: Complex, R <: Number} = new(z, im*s, δ)
+#     Blob{T,R}(z, s, δ)       where {T <: Complex, R <: Number} = new(z, s, δ)
+#     Blob{T,R}(z, s::Real, δ) where {T <: Real, R <: Number}    = new(z, s, δ)
+# end
 
-(b::Blob{T})(; z = b.z, S = b.S, δ = b.δ) where T = Blob{T}(z, S, δ)
+
+Elements.kind(::Blob) = Singleton
+Elements.kind(::Type{Blob{T,R}}) where {T,R} = Singleton
+
+Elements.property_type(::Blob{T,R}) where {T,R} = R
+Elements.property_type(::Type{Blob{T,R}}) where {T,R} = R
+
+#Elements.promote_property_type(::Blob{T,R}) where {T,R} = promote_type(T,R)
+#Elements.promote_property_type(::Type{Blob{T,R}}) where {T,R} = promote_type(T,R)
+
+
+#(b::Blob{T,R})(; z = b.z, S = b.S, δ = b.δ) where {T,R} = Blob{T,R}(z, S, δ)
 
 #== Methods to be extended ==#
 
 Elements.position(b::Blob) = b.z
-Elements.streamfunction(z::ComplexF64, b::Blob) = real(-0.5b.S*log(z - b.z)/π)
+Elements.blobradius(b::Blob) = b.δ
+Elements.streamfunction(z::Complex{T}, b::Blob) where {T} = real(-0.5b.S*log(z - b.z)/π)
 
-Elements.complexpotential(z::ComplexF64, b::Blob) = -0.5im*b.S*log(z - b.z)/π
+Elements.complexpotential(z::Complex{T}, b::Blob) where {T} = -0.5im*b.S*log(z - b.z)/π
 
 
 blob_kernel(z, δ) = 0.5im*z/(π*(abs2(z) + δ^2))
 
-function induce_velocity(z::ComplexF64, b::Blob, t)
+# ensures that the velocity is of same type as position
+allocate_velocity(v::Vector{Blob{T,R}}) where {T,R} = zeros(Complex{R},length(v))
+
+function induce_velocity(z::Complex{T}, b::Blob, t) where {T}
     b.S*blob_kernel(z - b.z, b.δ)
 end
 
@@ -67,7 +89,7 @@ function mutually_induce_velocity!(ws₁, ws₂,
     nothing
 end
 
-function self_induce_velocity!(ws, blobs::Vector{Blob{T}}, t) where T
+function self_induce_velocity!(ws, blobs::Vector{Blob{T,R}}, t) where {T,R}
     N = length(blobs)
 
     for s in 1:N, t in s+1:N
@@ -79,7 +101,7 @@ function self_induce_velocity!(ws, blobs::Vector{Blob{T}}, t) where T
     ws
 end
 
-function advect(b::Blob{T}, w::ComplexF64, Δt::Float64) where T
+function advect(b::Blob{T}, w::ComplexF64, Δt::Float64) where {T}
     Blob{T}(b.z + w*Δt, b.S, b.δ)
 end
 #

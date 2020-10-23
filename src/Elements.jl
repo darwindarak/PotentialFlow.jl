@@ -1,9 +1,13 @@
 module Elements
 
 export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction,
-       complexpotential, conftransform, inverse_conftransform, jacobian, image
+       complexpotential, conftransform, inverse_conftransform, jacobian, image,
+       blobradius
 
 using ..Properties
+
+import ..Utils: ComplexDual, Dual, ComplexGradientConfig, seed!, seed,
+                vector_mode_gradient, vector_mode_jacobian, checktag
 
 abstract type Element end
 
@@ -22,8 +26,12 @@ macro kind(element, k)
 end
 
 @kind ComplexF64 Singleton
-kind(::AbstractArray{T}) where {T <: Union{Element, ComplexF64}} = Group
+
+kind(::ComplexDual) = Singleton
+kind(::Dual) = Singleton
+kind(::AbstractArray{T}) where {T <: Union{Element, ComplexF64, Dual, ComplexDual}} = Group
 kind(::Tuple) = Group
+
 
 # Convenience functions to define wrapper types
 # e.g. vortex sheets as a wrapper around vortex blobs
@@ -58,6 +66,17 @@ julia> Elements.position.(points)
 @property begin
     signature = position(src::Source)
     stype = ComplexF64
+end
+
+"""
+    Elements.blobradius(src)
+
+Returns the blob radius of a regularized potential flow element.
+If the element is singular, returns zero.
+"""
+@property begin
+    signature = blobradius(src::Source)
+    stype = Float64
 end
 
 """
@@ -306,5 +325,121 @@ julia> Elements.image(sys,b)
     preallocator = allocate_image
     stype = ComplexF64
 end
+
+
+
+
+"""
+    seed_strength(T,v::Vector{Element},i::Int)
+
+Given a collection `v` of points or blobs, create a copy of the collection with
+the `i`th element's strength replaced by a unit dual. The entire output
+collection has positions of `Dual` type, but only the replaced element has unit
+partials; the others have partials equal to zero. `T` is a `Tag`, and can be set
+to `Nothing`.
+"""
+function seed_strength end
+
+"""
+    property_type(::Element)
+
+Return the type of the properties of the element.
+"""
+function property_type end
+
+ComplexGradientConfig(f::F,v::Vector{<:Element},w...) where {F} =
+      ComplexGradientConfig(f,position(v),w...)
+
+
+"""
+    seed_zeros(v::Vector{Element},cfg::ComplexGradientConfig)
+
+Given a collection `v` of points or blobs, create a copy of the collection with
+the element's positions and strengths replaced by complex duals with zeros.
+`cfg` specifies the type and size of duals. The use of complex duals (in spite of the real-valued
+strength) ensures correct treatment for gradient calculation, since some
+calculations will be complex-valued.
+"""
+function seed_zeros(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
+  posduals = convert.(eltype(cfg.duals),position(v))
+  strduals = convert.(eltype(cfg.duals),complex(strength.(v)))
+  return posduals, real(strduals)
+end
+
+
+"""
+    seed_position(v::Vector{Element},cfg::ComplexGradientConfig)
+
+Given a collection `v` of points or blobs, create a copy of the collection with
+the element's positions replaced by complex duals with unit seeds and with
+the element's strengths replaced by complex duals with zeros. `cfg` specifies
+the type and size of duals. The length of the partials in these duals is twice
+the number of elements, to enable computation of gradients with respect to
+all positions.
+"""
+function seed_position(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
+  posduals = copy(cfg.duals)
+  strduals = copy(cfg.duals)
+  seed!(posduals,position(v),cfg.rseeds,cfg.iseeds)
+  seed!(strduals,complex(strength.(v)))
+  return posduals, real(strduals)
+end
+
+"""
+    seed_strength(v::Vector{Element},cfg::ComplexGradientConfig)
+
+Given a collection `v` of points or blobs, create a copy of the collection with
+the element's strengths replaced by complex duals with unit seeds and with
+the element's positions replaced by complex duals with zeros. `cfg` specifies
+the type and size of duals. The use of complex duals (in spite of the real-valued
+strength) ensures correct treatment for gradient calculation, since some
+calculations will be complex-valued.
+"""
+function seed_strength(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
+  posduals = copy(cfg.duals)
+  strduals = copy(cfg.duals)
+  seed!(posduals,position(v))
+  seed!(strduals,complex(strength.(v)),cfg.rseeds,cfg.iseeds)
+  return posduals, real(strduals)
+end
+
+function gradient_position(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
+    checktag(T, f, property_type(eltype(v)))
+    vector_mode_gradient(f,v,cfg,vector_mode_dual_eval_position)
+end
+
+function gradient_strength(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
+    checktag(T, f, property_type(eltype(v)))
+    dz, dzstar = vector_mode_gradient(f,v,cfg,vector_mode_dual_eval_strength)
+    return dz .+ dzstar
+end
+
+@inline vector_mode_dual_eval_position(f::F, v::Vector{<:Element},
+          cfg::ComplexGradientConfig) where {F} = f(seed_position(v,cfg))
+
+@inline vector_mode_dual_eval_strength(f::F, v::Vector{<:Element},
+          cfg::ComplexGradientConfig) where {F} = f(seed_strength(v,cfg))
+
+@inline vector_mode_dual_eval_param(f::F, v::Tuple{Vector{<:Element},T},
+          cfg::ComplexGradientConfig) where {F,T} = f(seed_zeros(v[1],cfg),seed(v[2],cfg))
+
+function jacobian_position(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
+    checktag(T, f, property_type(eltype(v)))
+    vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_position)
+end
+
+function jacobian_strength(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
+    checktag(T, f, property_type(eltype(v)))
+    dz, dzstar = vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_strength)
+    return dz .+ dzstar
+end
+
+function jacobian_param(f,v::Tuple{Vector{<:Element},S},
+        cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, ComplexF64[v[2]])) where {S,T}
+    checktag(T, f, v[2])
+    dz, dzstar = vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_param)
+    return real(dz .+ dzstar)
+end
+
 
 end

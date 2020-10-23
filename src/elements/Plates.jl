@@ -17,9 +17,28 @@ import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
                   self_induce_velocity!, allocate_velocity, advect!
 
-import ..Utils:@get, MappedVector
+import ..Utils
+import ..Utils:@get, MappedVector, Dual, ComplexDual,
+              value, dz_partials #extract_derivative
 
 include("plates/chebyshev.jl")
+
+@inline function _chebyshev_coefficient(C::ComplexDual{T}) where {T}
+    A = imag(value(C))
+    #dCdz, dCdzstar = extract_derivative(T,C)
+    dCdz, dCdzstar = dz_partials(C)
+    dAdz = -0.5im*(dCdz - conj(dCdzstar))
+    return real(ComplexDual{T}(A,dAdz,conj(dAdz)))
+end
+
+#@inline _chebyshev_coefficient(C::ComplexRealDual{T}) where {T} = imag(C)
+
+@inline _chebyshev_coefficient(C::ComplexF64) = imag(C)
+
+@inline _dct_data(::Type{Dual{T,V,N}},M) where {T,V,N} =
+                  Array{Complex{V}}(undef,M,N+1)
+
+@inline _dct_data(::Type{Float64},M) = Vector{ComplexF64}(undef,M)
 
 """
     Plate <: Elements.Element
@@ -29,7 +48,7 @@ An infinitely thin, flat plate, represented as a bound vortex sheet
 # Constructors
 - `Plate(N, L, c, α)`
 """
-mutable struct Plate <: Element
+mutable struct Plate{T} <: Element
     "chord length"
     L::Float64
     "centroid"
@@ -38,7 +57,7 @@ mutable struct Plate <: Element
     α::Float64
 
     "total circulation"
-    Γ::Float64
+    Γ::T
 
     "number of control points"
     N::Int
@@ -47,9 +66,9 @@ mutable struct Plate <: Element
     "control point coordinates"
     zs::Vector{ComplexF64}
     "Chebyshev coefficients of the normal component of velocity induced along the plate by ambient vorticity"
-    A::MappedVector{Float64, Vector{ComplexF64}, typeof(imag)}
+    A::MappedVector{T, Vector{Complex{T}}, typeof(_chebyshev_coefficient)}
     "Chebyshev coefficients of the velocity induced along the plate by ambient vorticity"
-    C::Vector{ComplexF64}
+    C::Vector{Complex{T}}
     "zeroth Chebyshev coefficient associated with body motion"
     B₀::Float64
     "first Chebyshev coefficient associated with body motion"
@@ -67,19 +86,25 @@ end
 #    Plate(fields..., dchebt!)
 #end
 
-function Plate(N, L, c, α)
+function Plate{T}(N, L, c, α) where {T}
     ss = Chebyshev.nodes(N)
     zs = c .+ 0.5L*ss*exp(im*α)
 
-    C  = zeros(ComplexF64, N)
-    A = MappedVector(imag, C, 1)
+    C  = zeros(Complex{T}, N)
+    A = MappedVector(_chebyshev_coefficient, C, 1)
 
-    dchebt! = Chebyshev.plan_transform!(C)
+    # set up the transform for ComplexF64, regardless of T
+    dchebt! = Chebyshev.plan_transform!(_dct_data(T,N))
 
-    Plate(L, c, α, 0.0, N, ss, zs, A, C, 0.0, 0.0, dchebt!)
+    Plate{T}(L, c, α, zero(T), N, ss, zs, A, C, 0.0, 0.0, dchebt!)
 end
 
+Plate(args...) = Plate{Float64}(args...)
+
+
 Base.length(p::Plate) = p.N
+
+
 
 circulation(p::Plate) = p.Γ
 function impulse(p::Plate)
@@ -104,7 +129,7 @@ end
 normal(z, α) = imag(exp(-im*α)*z)
 tangent(z, α) = real(exp(-im*α)*z)
 
-function induce_velocity(z::ComplexF64, p::Plate, t)
+function induce_velocity(z::Complex{T}, p::Plate, t) where {T}
     @get p (α, L, c, B₀, B₁, Γ, A)
 
     z̃ = conj(2*(z - c)*exp(-im*α)/L)
@@ -144,7 +169,7 @@ function induce_velocity!(ws::Vector, p::Plate, src, t)
                         kind(Elements.unwrap_src(src)))
 end
 
-function _singular_velocity!(ws, p, src::Blob{T}, t, ::Type{Singleton}) where T
+function _singular_velocity!(ws, p, src::Blob{T,R}, t, ::Type{Singleton}) where {T,R}
     induce_velocity!(ws, p.zs, Point{T}(src.z, src.S), t)
 end
 
@@ -162,7 +187,7 @@ end
 induce_velocity!(m::RigidBodyMotion, target::Plate, source, t) = m
 
 
-function Elements.streamfunction(z::ComplexF64, p::Plate)
+function Elements.streamfunction(z::Complex{T}, p::Plate) where {T}
     @get p (N, L, c, α, Γ, A, B₀, B₁)
     z̃ = 2*(z - c)*exp(-im*α)/L
     J = z̃ - √(z̃ - 1)*√(z̃ + 1)
@@ -178,7 +203,7 @@ function Elements.streamfunction(z::ComplexF64, p::Plate)
     return -ψ*L/4
 end
 
-function Elements.complexpotential(z::ComplexF64, p::Plate)
+function Elements.complexpotential(z::Complex{T}, p::Plate) where {T}
     @get p (N, L, c, α, Γ, A, B₀, B₁)
     z̃ = 2*(z - c)*exp(-im*α)/L
     J = z̃ - √(z̃ - 1)*√(z̃ + 1)
@@ -227,7 +252,7 @@ end
 Compute the impulse per unit circulation of `src` and its associated bound vortex sheet on `plate` (its image vortex)
 `src` can be either a `ComplexF64` or a subtype of `Vortex.PointSource`.
 """
-function unit_impulse(z::ComplexF64, plate::Plate)
+function unit_impulse(z::Complex{T}, plate::Plate) where {T}
     z̃ = 2(z - plate.c)*exp(-im*plate.α)/plate.L
     unit_impulse(z̃)
 end
@@ -319,7 +344,7 @@ include("plates/pressure.jl")
 function Base.show(io::IO, p::Plate)
     lesp, tesp = suction_parameters(p)
     println(io, "Plate: N = $(p.N), L = $(p.L), c = $(p.c), α = $(round(rad2deg(p.α); digits=2))ᵒ")
-    print(io, "       LESP = $(round(lesp; digits=2)), TESP = $(round(tesp; digits=2))")
+    print(io, "       LESP = $(round(value(lesp); digits=2)), TESP = $(round(value(tesp); digits=2))")
 end
 
 end

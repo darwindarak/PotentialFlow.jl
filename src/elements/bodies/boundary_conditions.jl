@@ -72,11 +72,11 @@ function get_image!(tmp,src,b::ConformalBody,::Type{Group})
   end
 end
 
-function get_image(src::Union{Blob{T},Point{T}}, b::ConformalBody) where T <: Complex
+function get_image(src::Union{Blob{T},Point{T}}, b::ConformalBody) where {T<: Complex}
     Point{T}(Elements.image(src.z,b),src.S)
 end
 
-function get_image(src::Union{Blob{T},Point{T}}, b::ConformalBody) where T <: Real
+function get_image(src::Union{Blob{T},Point{T}}, b::ConformalBody) where {T <: Real}
     Point{T}(Elements.image(src.z,b),-src.S)
 end
 

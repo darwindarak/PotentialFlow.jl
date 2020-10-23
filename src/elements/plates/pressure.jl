@@ -7,19 +7,19 @@ import ..Vortex
     stype = ComplexF64
 end
 
-function induce_acc(z::ComplexF64, ż::ComplexF64,
-                    p::Vortex.Point, point_vel::ComplexF64)
+function induce_acc(z::Complex{T}, ż::Complex{T},
+                    p::Vortex.Point, point_vel::Complex{S}) where {T,S}
     -circulation(p)*Points.cauchy_kernel((z - p.z)^2)*conj(ż - point_vel)
 end
 
-function induce_acc(z::ComplexF64, ż::ComplexF64,
-                           b::Vortex.Blob, blob_vel::ComplexF64)
+function induce_acc(z::Complex{T}, ż::Complex{T},
+                           b::Vortex.Blob, blob_vel::Complex{S}) where {T,S}
     induce_acc(z, ż,
                Vortex.Point(Elements.position(b), circulation(b)),
                blob_vel)
 end
 
-function surface_pressure_inst(p::Plate, ṗ, ambient_sys, z_new, t, Δt, lesp, tesp)
+function surface_pressure_inst(p::Plate{T}, ṗ, ambient_sys, z_new, t, Δt, lesp, tesp) where {T}
     @get p (L, C, ss, α, dchebt!)
     @get ṗ (ċ, c̈, α̇ , α̈ )
 
@@ -30,7 +30,7 @@ function surface_pressure_inst(p::Plate, ṗ, ambient_sys, z_new, t, Δt, lesp, 
     induce_velocity!(srcvel, ambient_sys, p, t)
 
     targvel = fill(ċ, length(p))
-    Ċ = zero(targvel)
+    Ċ = zeros(Complex{T},length(targvel))
 
     induce_acc!(Ċ, p.zs, targvel, ambient_sys, srcvel)
 
@@ -46,7 +46,7 @@ function surface_pressure_inst(p::Plate, ṗ, ambient_sys, z_new, t, Δt, lesp, 
 
     @. Ċ += (∂C₊ + ∂C₋)/Δt - im*α̇*C
 
-    Ȧ = MappedVector(imag, Ċ, 1)
+    Ȧ = MappedVector(_chebyshev_coefficient, Ċ, 1)
 
     # Plate is subject to translation and rotation
     #B₀ = n⋅ẋc and B₁ = L/2α with n = i*exp(iα)

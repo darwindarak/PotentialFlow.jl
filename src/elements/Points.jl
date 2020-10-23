@@ -3,12 +3,13 @@ module Points
 export Point
 
 using ..Elements
-import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect
+import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect,
+                  allocate_velocity
 
 #== Type definition ==#
 
 """
-    Point{T} <: Elements.Element
+    Point{T,R} <: Elements.Element
 
 An immutable structure representing a point source/vortex
 
@@ -17,28 +18,48 @@ An immutable structure representing a point source/vortex
 - `z::ComplexF64`: position
 - `S::T`: strength/circulation
 """
-struct Point{T <: Number} <: Element
-    z::ComplexF64
-    S::T
-    Point{T}(z, s::Real) where T <: Complex = new(z, im*s)
-    Point{T}(z, s)       where T <: Complex = new(z, s)
-    Point{T}(z, s::Real) where T <: Real = new(z, s)
+struct Point{S <: Number,R <: Real} <: Element
+    z::Complex{R}
+    S::Union{R,Complex{R}}
+    Point{S}(z::Complex{R}, s::T)           where {S <: Complex, T <: Real, R <: Real} = (U = promote_type(R,T); new{Complex{U},U}(z, im*convert(U,s)))
+    Point{S}(z::Complex{R}, s::Complex{T})  where {S <: Complex, T <: Real, R <: Real} = (U = promote_type(R,T); new{Complex{U},U}(z, convert(Complex{U},s)))
+    Point{S}(z::Complex{R}, s::T)           where {S <: Real, T <: Real, R <: Real}    = (U = promote_type(R,T); new{U,U}(z, convert(U,s)))
 end
+# struct Point{T <: Number, R <: Number} <: Element
+#     z::Complex{R}
+#     S::T
+#     Point{T,R}(z, s::Real) where {T <: Complex,R <: Number} = new(z, im*s)
+#     Point{T,R}(z, s)       where {T <: Complex,R <: Number} = new(z, s)
+#     Point{T,R}(z, s::Real) where {T <: Real, R <: Number} = new(z, s)
+# end
+
+#Point(z::Complex{R},S::T) where {T,R} = Point{T,R}(z,S)
+
 Elements.kind(::Point) = Singleton
-Elements.kind(::Type{Point{T}}) where T = Singleton
+Elements.kind(::Type{Point{T,R}}) where {T,R} = Singleton
+
+Elements.property_type(::Point{T,R}) where {T,R} = R
+Elements.property_type(::Type{Point{T,R}}) where {T,R} = R
+
+#Elements.promote_property_type(::Point{T,R}) where {T,R} = promote_type(T,R)
+#Elements.promote_property_type(::Type{Point{T,R}}) where {T,R} = promote_type(T,R)
 
 #== Methods to be extended ==#
 
 Elements.position(p::Point) = p.z
+Elements.blobradius(p::Point) = 0.0
 
-Elements.streamfunction(z::ComplexF64, p::Point) = real(-0.5p.S*log(z - p.z)/π)
+Elements.streamfunction(z::Complex{T}, p::Point) where {T} = real(-0.5p.S*log(z - p.z)/π)
 
-Elements.complexpotential(z::ComplexF64, p::Point) = -0.5im*p.S*log(z - p.z)/π
+Elements.complexpotential(z::Complex{T}, p::Point) where {T} = -0.5im*p.S*log(z - p.z)/π
 
 
 cauchy_kernel(z) = z != zero(z) ? 0.5im/(π*conj(z)) : zero(z)
 
-function induce_velocity(z::ComplexF64, p::Point, t)
+# ensures that the velocity is of same type as position
+allocate_velocity(v::Vector{Point{T,R}}) where {T,R} = zeros(Complex{R},length(v))
+
+function induce_velocity(z::Complex{T}, p::Point, t) where {T}
     p.S'*cauchy_kernel(z - p.z)
 end
 
@@ -56,7 +77,7 @@ function mutually_induce_velocity!(ws₁, ws₂,
     nothing
 end
 
-function self_induce_velocity!(ws, points::Vector{Point{T}}, t) where T
+function self_induce_velocity!(ws, points::Vector{Point{T,R}}, t) where {T,R}
     N = length(points)
 
     for s in 1:N, t in s+1:N
@@ -67,7 +88,7 @@ function self_induce_velocity!(ws, points::Vector{Point{T}}, t) where T
     ws
 end
 
-function advect(p::Point{T}, w::ComplexF64, Δt::Float64) where T
+function advect(p::Point{T}, w::ComplexF64, Δt::Float64) where {T}
     Point{T}(p.z + w*Δt, p.S)
 end
 

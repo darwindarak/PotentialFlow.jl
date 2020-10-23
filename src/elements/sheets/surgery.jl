@@ -20,7 +20,7 @@ julia> sys[1]
 Vortex Sheet: L ≈ 2.0, Γ = 5.0, δ = 0.2
 ```
 """
-function redistribute_points!(sheet::Sheet{T}, zs, Ss) where T
+function redistribute_points!(sheet::Sheet{T}, zs, Ss) where {T}
     if !(sheet.Ss === Ss)
         resize!(sheet.Ss, length(Ss))
         copy!(sheet.Ss, Ss)
@@ -49,7 +49,7 @@ julia> sheet
 Vortex Sheet: L ≈ 0.6, Γ = 6.0, δ = 0.2
 ```
 """
-function split!(sheet::Sheet{T}, n::Int) where T
+function split!(sheet::Sheet{T}, n::Int) where {T}
     @assert 2 < n < length(sheet) - 2
 
     blobs = splice!(sheet.blobs, 1:n-1)
@@ -77,7 +77,7 @@ julia> Sheets.truncate!(sheet, 5)
 4.0
 ```
 """
-function truncate!(sheet::Sheet{T}, n::Int) where T
+function truncate!(sheet::Sheet{T}, n::Int) where {T}
     @assert 2 ≤ n ≤ length(sheet)-1
     ΔS = sheet.Ss[n] - sheet.Ss[1]
     splice!(sheet.Ss, 1:n-1)
@@ -111,7 +111,7 @@ julia> Sheets.remesh(sheet, 0.2, (age, ))
 (Complex{Float64}[0.0+0.0im, 0.25+0.0im, 0.5+0.0im, 0.75+0.0im, 1.0+0.0im], [0.0, 2.5, 5.0, 7.5, 10.0], 1.0, ([10.0, 7.5, 5.0, 2.5, 0.0],))
 ```
 """
-function remesh(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
+function remesh(sheet::Sheet{S,R}, Δs::Float64, params::Tuple = ()) where {S,R}
     L = arclengths(sheet)
 
     if L[end] < Δs
@@ -179,7 +179,7 @@ julia> age
   0.0
 ```
 """
-function remesh!(sheet::Sheet{S}, Δs::Float64, params::Tuple = ()) where S
+function remesh!(sheet::Sheet{S,R}, Δs::Float64, params::Tuple = ()) where {S,R}
     z₌, S₌, L, p₌ = remesh(sheet, Δs, params)
     if L < Δs
         return sheet, L, params
@@ -279,7 +279,7 @@ julia> sheet.blobs[end]
 Vortex.Blob(1.1 + 0.0im, 1.0, 0.2)
 ```
 """
-function append_segment!(sheet::Sheet{T}, z, S::T) where T
+function append_segment!(sheet::Sheet{T}, z, S::T) where {T}
     b₋ = sheet.blobs[end]
     sheet.blobs[end] = Blob{T}(b₋.z, b₋.S + 0.5S, b₋.δ)
     push!(sheet.blobs, Blob{T}(z, 0.5S, sheet.δ))

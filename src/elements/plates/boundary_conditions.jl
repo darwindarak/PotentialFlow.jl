@@ -46,7 +46,7 @@ end
 
 Compute in-place the change in plate's Chebyshev coefficients `∂A` by a vortex element `v`
 """
-function influence_on_plate!(∂A::Vector{ComplexF64}, plate::Plate, v, t)
+function influence_on_plate!(∂A::Vector{Complex{T}}, plate::Plate{T}, v, t) where {T}
     fill!(∂A, zero(ComplexF64))
     induce_velocity!(∂A, plate, v, t)
     rmul!(∂A, exp(-im*plate.α))
@@ -54,8 +54,8 @@ function influence_on_plate!(∂A::Vector{ComplexF64}, plate::Plate, v, t)
     nothing
 end
 
-function influence_on_plate(plate::Plate, v, t)
-    ∂A = Vector{ComplexF64}(undef, plate.N)
+function influence_on_plate(plate::Plate{T}, v, t) where {T}
+    ∂A = Vector{Complex{T}}(undef, plate.N)
     influence_on_plate!(∂A, plate, v, t)
     return ∂A
 end
@@ -102,9 +102,9 @@ julia> Γ # should equal -πULsin(α) = -π
 -3.1415926535897927
 ```
 """
-function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
-                        ∂C₁ = Vector{ComplexF64}(undef,plate.N),
-                        ∂C₂ = Vector{ComplexF64}(undef,plate.N))
+function vorticity_flux(plate::Plate{T}, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
+                        ∂C₁ = Vector{Complex{T}}(undef,plate.N),
+                        ∂C₂ = Vector{Complex{T}}(undef,plate.N)) where {T}
 
     @get plate (N, α, B₀, B₁, L, A, Γ)
 
@@ -141,6 +141,7 @@ function vorticity_flux(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
     end
 
     return K₁*Γ₁, K₂*Γ₂, rmul!(∂C₁, K₁), rmul!(∂C₂, K₂)
+
 end
 
 """
@@ -155,9 +156,9 @@ modify `plate.C` with those changes so that no-flow-through is
 enforced in the presence of `v₁` and `v₂` with strengths that satisfy
 the suction parameters.
 """
-function vorticity_flux!(plate::Plate, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
-                        ∂C₁ = Vector{ComplexF64}(undef, plate.N),
-                        ∂C₂ = Vector{ComplexF64}(undef, plate.N))
+function vorticity_flux!(plate::Plate{T}, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
+                        ∂C₁ = Vector{Complex{T}}(undef, plate.N),
+                        ∂C₂ = Vector{Complex{T}}(undef, plate.N)) where {T}
     Γ₁, Γ₂, _, _ = vorticity_flux(plate, v₁, v₂, t, lesp, tesp, ∂C₁, ∂C₂)
     @. plate.C += ∂C₁ + ∂C₂
     plate.Γ -= Γ₁ + Γ₂
