@@ -21,7 +21,7 @@ end
 
 function surface_pressure_inst(p::Plate{T}, ṗ, ambient_sys, z_new, t, Δt, lesp, tesp) where {T}
     @get p (L, C, ss, α, dchebt!)
-    @get ṗ (ċ, α̇)
+    @get ṗ (ċ, c̈, α̇ , α̈ )
 
     # Get Ċ from movement of existing vortex blobs (without vortex shedding)
     enforce_no_flow_through!(p, ṗ, ambient_sys, t)
@@ -48,8 +48,10 @@ function surface_pressure_inst(p::Plate{T}, ṗ, ambient_sys, z_new, t, Δt, les
 
     Ȧ = MappedVector(_chebyshev_coefficient, Ċ, 1)
 
-    # Plate is moving at a fixed velocity and angle of attack
-    Ḃ₀ = Ḃ₁ = 0.0
+    # Plate is subject to translation and rotation
+    #B₀ = n⋅ẋc and B₁ = L/2α with n = i*exp(iα)
+    Ḃ₀ = real(-α̇ *exp(-im*α)*ċ  + -im*exp(-im*α)*c̈)
+    Ḃ₁ = L/2*α̈
 
     Γ̇ = [Γ₋/Δt + _bound_circulation(Ȧ, Ḃ₀, Ḃ₁, L, -(Γ₊ + Γ₋)/Δt, s) for s in p.ss]
 
