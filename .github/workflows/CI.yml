@@ -2,6 +2,8 @@ name: CI
 on:
   - push
   - pull_request
+env:
+  PYTHON: ""
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ github.event_name }}
@@ -48,7 +50,6 @@ jobs:
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()'
-      - run: julia --project=docs -e 'ENV["PYTHON"]=""; using Pkg; Pkg.add("Conda"); using Conda; Conda.add("matplotlib"); Conda.add("pyqt"); Pkg.add("PyCall"); Pkg.build("PyCall"); Pkg.add("PyPlot")'
       - run: julia --project=docs docs/make.jl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
