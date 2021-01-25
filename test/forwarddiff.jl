@@ -10,7 +10,7 @@ import PotentialFlow.Elements: gradient_position, gradient_strength,
 const DELTA=1e-8
 const BIGEPS = 10000*eps(1.0)
 const TOL=5e-6
-const BIGTOL=1e-5
+const BIGTOL=2e-5
 const BIGGESTTOL=1e-3
 
 safenorm(a) = norm(filter(x -> ~isnan(x),a))
