@@ -7,7 +7,7 @@ import PotentialFlow.Utils: derivative, extract_derivative, value, partials,
 import PotentialFlow.Elements: gradient_position, gradient_strength,
           jacobian_position, jacobian_strength, jacobian_param
 
-const DELTA=1e-9
+const DELTA=1e-8
 const BIGEPS = 1000*eps(1.0)
 const TOL=5e-6
 const BIGTOL=1e-5
@@ -491,5 +491,83 @@ end
 
 
   end
+
+  ## Larger number of blobs
+
+  nblob = 20
+  pos = rand(ComplexF64,nblob)
+  str = rand(length(pos))
+
+  σ = 1e-2
+  blobs = Vortex.Blob.(pos,str,σ)
+  z = rand(ComplexF64)
+
+  i = rand(1:nblob)
+
+  # For finite difference approximations
+  dz = zeros(ComplexF64,length(blobs))
+  dz[i] = DELTA
+  dΓ = zeros(Float64,length(blobs))
+  dΓ[i] = DELTA
+  blobsx⁺ = Vortex.Blob.(Elements.position(blobs).+dz,Elements.circulation.(blobs),σ)
+  blobsy⁺ = Vortex.Blob.(Elements.position(blobs).+im*dz,Elements.circulation.(blobs),σ)
+  blobsΓ⁺ = Vortex.Blob.(Elements.position(blobs),Elements.circulation.(blobs).+dΓ,σ)
+
+  N = 7
+  L = 2.0
+  c = complex(0)
+  α = 0.0
+  ċ = complex(0.0)
+  α̇ = 0.0
+  p = PotentialFlow.Plate(N,L,c,α)
+  motion = PotentialFlow.RigidBodyMotion(ċ,α̇)
+
+  Plates.enforce_no_flow_through!(p, motion, blobs, 0.0)
+  px⁺ = deepcopy(p)
+  Plates.enforce_no_flow_through!(px⁺, motion, blobsx⁺, 0.0)
+  py⁺ = deepcopy(p)
+  Plates.enforce_no_flow_through!(py⁺, motion, blobsy⁺, 0.0)
+  pΓ⁺ = deepcopy(p)
+  Plates.enforce_no_flow_through!(pΓ⁺, motion, blobsΓ⁺, 0.0)
+
+  @testset "Acceleration induced on plate" begin
+
+      targvel = fill(ċ, length(p))
+
+      function compute_Ċ(v)
+        ptmp = PotentialFlow.Plate{Elements.property_type(eltype(v))}(N,L,c,α)
+        Plates.enforce_no_flow_through!(ptmp, motion, v, 0.0)
+        wself = zeros(Complex{Elements.property_type(eltype(v))},length(v))
+        self_induce_velocity!(wself,v, 0.0)
+        induce_velocity!(wself, v, ptmp, 0.0)
+        Ċ = zeros(Complex{Elements.property_type(eltype(v))},length(ptmp))
+        Plates.induce_acc!(Ċ, ptmp.zs, targvel, v, wself)
+      end
+
+      Ċ_fd = compute_Ċ(blobs)
+      Ċx⁺_fd = compute_Ċ(blobsx⁺)
+      Ċy⁺_fd = compute_Ċ(blobsy⁺)
+      ĊΓ⁺_fd = compute_Ċ(blobsΓ⁺)
+
+
+      dĊdx_fd = (Ċx⁺_fd - Ċ_fd)/dz[i]
+      dĊdy_fd = (Ċy⁺_fd - Ċ_fd)/dz[i]
+      dĊdz_fd = 0.5*(dĊdx_fd - im*dĊdy_fd)
+      dĊdzstar_fd = 0.5*(dĊdx_fd + im*dĊdy_fd)
+      dĊdΓ_fd = (ĊΓ⁺_fd - Ċ_fd)/dΓ[i]
+
+
+      dĊdz, dĊdzstar = jacobian_position(compute_Ċ,blobs)
+
+      @test isapprox(norm(dĊdz[:,i]-dĊdz_fd),0.0,atol=BIGTOL)
+      @test isapprox(norm(dĊdzstar[:,i]-dĊdzstar_fd),0.0,atol=BIGTOL)
+
+
+      dĊdΓ = jacobian_strength(compute_Ċ,blobs)
+
+      @test isapprox(norm(dĊdΓ[:,i]-dĊdΓ_fd),0.0,atol=BIGTOL)
+
+
+    end
 
 end
