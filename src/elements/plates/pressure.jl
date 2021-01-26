@@ -19,9 +19,11 @@ function induce_acc(z::Complex{T}, ż::Complex{T},
                blob_vel)
 end
 
-function surface_pressure_inst(p::Plate{T}, ṗ, ambient_sys, z_new, t, Δt, lesp, tesp) where {T}
-    @get p (L, C, ss, α, dchebt!)
+function surface_pressure_inst(p::Plate{T}, ṗ, ambient_sys, z_new, t, Δt, lesp, tesp, ss::AbstractArray{S}) where {T, S <: Real}
+    @get p (L, C, α, dchebt!)
     @get ṗ (ċ, c̈, α̇ , α̈ )
+
+    press = zeros(T, length(ss))
 
     # Get Ċ from movement of existing vortex blobs (without vortex shedding)
     enforce_no_flow_through!(p, ṗ, ambient_sys, t)
@@ -53,7 +55,12 @@ function surface_pressure_inst(p::Plate{T}, ṗ, ambient_sys, z_new, t, Δt, les
     Ḃ₀ = real(-α̇ *exp(-im*α)*ċ  + -im*exp(-im*α)*c̈)
     Ḃ₁ = L/2*α̈
 
-    Γ̇ = [Γ₋/Δt + _bound_circulation(Ȧ, Ḃ₀, Ḃ₁, L, -(Γ₊ + Γ₋)/Δt, s) for s in p.ss]
+    # Γ̇ = [Γ₋/Δt + _bound_circulation(Ȧ, Ḃ₀, Ḃ₁, L, -(Γ₊ + Γ₋)/Δt, s) for s in p.ss]
+    map!(s-> Γ₋/Δt + _bound_circulation(Ȧ, Ḃ₀, Ḃ₁, L, -(Γ₊ + Γ₋)/Δt, s), press, ss)
 
-    strength(p) .* (Chebyshev.firstkind(real.(C), ss) .- tangent(ċ, α)) .+ Γ̇
+    # strength(p) .* (Chebyshev.firstkind(real.(C), ss) .- tangent(ċ, α)) .+ Γ̇
+    press .+=  strength(p, ss) .* (Chebyshev.firstkind(real.(C), ss) .- tangent(ċ, α))
+    return press
 end
+
+surface_pressure_inst(p::Plate{T}, ṗ, ambient_sys, z_new, t, Δt, lesp, tesp) where {T} = surface_pressure_inst(p, ṗ, ambient_sys, z_new, t, Δt, lesp, tesp, p.ss)
