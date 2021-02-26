@@ -117,28 +117,38 @@ function vorticity_flux(plate::Plate{T}, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
     Γ₁ = circulation(v₁)
     Γ₂ = circulation(v₂)
 
+    # If both conditions are satisfied, return with zero circulation for
+    # both vortices
+    if (abs2(lesp) > abs2(b₊)) && (abs2(tesp) > abs2(b₋))
+      K₁, K₂ = 0.0, 0.0
+      return K₁*Γ₁, K₂*Γ₂, rmul!(∂C₁, K₁), rmul!(∂C₂, K₂)
+    end
+
     A₁₊ =  2imag(∂C₁[1]) + imag(∂C₁[2]) - 2Γ₁/(π*L)
     A₂₊ =  2imag(∂C₂[1]) + imag(∂C₂[2]) - 2Γ₂/(π*L)
     A₁₋ = -2imag(∂C₁[1]) + imag(∂C₁[2]) - 2Γ₁/(π*L)
     A₂₋ = -2imag(∂C₂[1]) + imag(∂C₂[2]) - 2Γ₂/(π*L)
 
     if (abs2(lesp) > abs2(b₊)) && (abs2(tesp) ≤ abs2(b₋))
-        K₁, K₂ = 0.0, (sign(b₋)*tesp - b₋)/A₂₋
+        #K₁, K₂ = 0.0, (sign(b₋)*tesp - b₋)/A₂₋
+        b₊ = 0.0
+        b₋ = sign(b₋)*tesp - b₋
     elseif (abs2(lesp) ≤ abs2(b₊)) && (abs2(tesp) > abs2(b₋))
-        K₁, K₂ = (sign(b₊)*lesp - b₊)/A₁₊, 0.0
-    elseif (abs2(lesp) > abs2(b₊)) && (abs2(tesp) > abs2(b₋))
-        K₁ = K₂ = 0.0
+        #K₁, K₂ = (sign(b₊)*lesp - b₊)/A₁₊, 0.0
+        b₊ = sign(b₊)*lesp - b₊
+        b₋ = 0.0
     else
         b₊ = sign(b₊)*lesp - b₊
         b₋ = sign(b₋)*tesp - b₋
-
-        detA = A₁₊*A₂₋ - A₂₊*A₁₋
-
-        @assert (detA != 0) "Cannot enforce suction parameters"
-
-        K₁ = (A₂₋*b₊ - A₂₊*b₋)/detA
-        K₂ = (A₁₊*b₋ - A₁₋*b₊)/detA
     end
+
+    detA = A₁₊*A₂₋ - A₂₊*A₁₋
+
+    @assert (detA != 0) "Cannot enforce suction parameters"
+
+    K₁ = (A₂₋*b₊ - A₂₊*b₋)/detA
+    K₂ = (A₁₊*b₋ - A₁₋*b₊)/detA
+
 
     return K₁*Γ₁, K₂*Γ₂, rmul!(∂C₁, K₁), rmul!(∂C₂, K₂)
 
