@@ -122,22 +122,35 @@ function vorticity_flux(plate::Plate{T}, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
     A₁₋ = -2imag(∂C₁[1]) + imag(∂C₁[2]) - 2Γ₁/(π*L)
     A₂₋ = -2imag(∂C₂[1]) + imag(∂C₂[2]) - 2Γ₂/(π*L)
 
-    if (abs2(lesp) > abs2(b₊)) && (abs2(tesp) ≤ abs2(b₋))
+    if (abs2(lesp) > abs2(b₊)) && (abs2(tesp) > abs2(b₋))
+        K₁, K₂ = 0.0, 0.0
+    elseif isinf(abs2(lesp)) && (abs2(tesp) ≤ abs2(b₋))
+        # If critical lesp set to Inf, don't create vorticity there
         K₁, K₂ = 0.0, (sign(b₋)*tesp - b₋)/A₂₋
-    elseif (abs2(lesp) ≤ abs2(b₊)) && (abs2(tesp) > abs2(b₋))
+    elseif (abs2(lesp) ≤ abs2(b₊)) && isinf(abs2(tesp))
+        # If critical tesp set to Inf, don't create vorticity there
         K₁, K₂ = (sign(b₊)*lesp - b₊)/A₁₊, 0.0
-    elseif (abs2(lesp) > abs2(b₊)) && (abs2(tesp) > abs2(b₋))
-        K₁ = K₂ = 0.0
     else
+      # Finite critical lesp or tesp, with one or both violated
+      if (abs2(lesp) > abs2(b₊)) && (abs2(tesp) ≤ abs2(b₋))
+        #K₁, K₂ = 0.0, (sign(b₋)*tesp - b₋)/A₂₋
+        b₊ = 0.0   # lesp condition satisfied. Don't change it.
+        b₋ = sign(b₋)*tesp - b₋
+      elseif (abs2(lesp) ≤ abs2(b₊)) && (abs2(tesp) > abs2(b₋))
+        #K₁, K₂ = (sign(b₊)*lesp - b₊)/A₁₊, 0.0
+        b₊ = sign(b₊)*lesp - b₊
+        b₋ = 0.0 # tesp condition satisfied. Don't change it.
+      else
         b₊ = sign(b₊)*lesp - b₊
         b₋ = sign(b₋)*tesp - b₋
+      end
 
-        detA = A₁₊*A₂₋ - A₂₊*A₁₋
+      detA = A₁₊*A₂₋ - A₂₊*A₁₋
 
-        @assert (detA != 0) "Cannot enforce suction parameters"
+      @assert (detA != 0) "Cannot enforce suction parameters"
 
-        K₁ = (A₂₋*b₊ - A₂₊*b₋)/detA
-        K₂ = (A₁₊*b₋ - A₁₋*b₊)/detA
+      K₁ = (A₂₋*b₊ - A₂₊*b₋)/detA
+      K₂ = (A₁₊*b₋ - A₁₋*b₊)/detA
     end
 
     return K₁*Γ₁, K₂*Γ₂, rmul!(∂C₁, K₁), rmul!(∂C₂, K₂)
