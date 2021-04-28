@@ -20,7 +20,7 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 SchwarzChristoffel = "6e93f119-a087-51f0-a155-b73ce4943121"
 
 [compat]
-ColorTypes = "0.10"
+ColorTypes = "0.10, 0.11"
 DiffRules = "1"
 DocStringExtensions = "0.8.1"
 FFTW = "1"
