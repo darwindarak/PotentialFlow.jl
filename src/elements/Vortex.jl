@@ -2,7 +2,9 @@ module Vortex
 
 import ..Elements
 import ..Elements: circulation, flux, impulse, angularimpulse, seed_zeros, seed_position,
-                    seed_strength, kind
+                    seed_strength, kind, pressure
+
+import ..Motions: allocate_velocity, self_induce_velocity!, induce_velocity!
 
 import ..Utils: dualize, ComplexGradientConfig, seed!
 
@@ -85,6 +87,35 @@ angularimpulse(b::Blob) = -0.5*b.z*conj(b.z)*b.S
 Base.show(io::IO, s::Blob) = print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ))")
 
 
+function pressure(z::AbstractVector{Complex{T}},sys::Vector{S},t) where {T, S<:Union{Blob,Point}}
+    w = zero(z)
+    Ḟ = zero(z)
+
+    induce_velocity!(w,z,sys,t)
+
+    ẋs = allocate_velocity(sys)
+    self_induce_velocity!(ẋs, sys, t)
+
+    # not yet suitable if sys contains sources
+    modvort, modsrc = _velocity_modulated_src(ẋs,sys)
+    induce_velocity!(Ḟ,z,(modvort,modsrc),t)
+
+    -real(Ḟ) - 0.5*abs2.(w)
+end
+
+# Given the set of vortex blobs or points, return a new set in which
+# the strengths are modulated by their velocity components
+function _velocity_modulated_src(ẋs,sys::Vector{S}) where {S<:Vortex.Point}
+    modvort = Vortex.Point.(Elements.position.(sys),-real(ẋs).*circulation.(sys))
+    modsrc = Points.Point{Complex{Float64}}.(Elements.position.(sys),-imag(ẋs).*circulation.(sys))
+    modvort, modsrc
+end
+
+function _velocity_modulated_src(ẋs,sys::Vector{S}) where {S<:Vortex.Blob}
+    modvort = Vortex.Blob.(Elements.position.(sys),-real(ẋs).*circulation.(sys),Elements.blobradius.(sys))
+    modsrc = Blobs.Blob{Complex{Float64}}.(Elements.position.(sys),-imag(ẋs).*circulation.(sys),Elements.blobradius.(sys))
+    modvort, modsrc
+end
 
 #== Wrapper for a vortex sheet ==#
 

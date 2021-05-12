@@ -2,7 +2,7 @@ module Elements
 
 export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction,
        complexpotential, conftransform, inverse_conftransform, jacobian, image,
-       blobradius
+       blobradius, pressure
 
 using ..Properties
 
@@ -346,6 +346,15 @@ function seed_strength end
 Return the type of the properties of the element.
 """
 function property_type end
+
+@doc """
+    pressure(z::AbstractVector{ComplexF64},src::Vector{Blob/Point},t)
+
+Calculate pressure at positions `z` using `src` at time `t`
+
+"""
+function pressure end
+
 
 ComplexGradientConfig(f::F,v::Vector{<:Element},w...) where {F} =
       ComplexGradientConfig(f,position(v),w...)
