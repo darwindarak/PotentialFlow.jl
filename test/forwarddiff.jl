@@ -2,7 +2,7 @@ using LinearAlgebra
 
 import PotentialFlow.Utils: derivative, extract_derivative, value, partials,
           Dual,ComplexDual, ComplexGradientConfig,
-          dz_partials
+          dz_partials, gradient, chunk_mode_gradient
 
 import PotentialFlow.Elements: gradient_position, gradient_strength,
           jacobian_position, jacobian_strength, jacobian_param
@@ -115,6 +115,27 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
     @test isapprox(abs(dystarzstar-dystarzstarex),0,atol=BIGEPS)
 
   end
+
+  @testset "Chunk mode derivatives" begin
+
+    n = 20
+    z = rand(ComplexF64,n)
+    fcn(z) = sum(log.(sqrt.(z)))
+
+    cfg = ComplexGradientConfig(fcn,z)
+    dz, dzstar = gradient(fcn,z,cfg)
+
+    ichk = rand(1:n)
+    @test dz[ichk] ≈ 1.0/(2*z[ichk])
+
+    N = rand(1:n)
+    cfg = ComplexGradientConfig(fcn,z,PotentialFlow.Utils.Chunk{N}())
+    dz_chunk, dzstar_chunk = chunk_mode_gradient(fcn,z,cfg)
+    @test dz == dz_chunk
+    @test dzstar == dzstar_chunk
+
+  end
+
 
   nblob = 5
   pos = rand(ComplexF64,nblob)

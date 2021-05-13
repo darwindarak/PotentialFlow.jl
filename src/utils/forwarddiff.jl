@@ -4,27 +4,15 @@ using DiffRules
 
 import ForwardDiff: Dual, Partials, single_seed, partials, Chunk, Tag, seed!, value,
               gradient, valtype, extract_gradient!, derivative,extract_derivative,
-              checktag, vector_mode_gradient, vector_mode_jacobian
+              checktag, vector_mode_gradient, vector_mode_jacobian,
+              chunk_mode_gradient
 
 const AMBIGUOUS_TYPES = (AbstractFloat, Irrational, Integer, Rational,
                          Real, RoundingMode, ComplexF64)
 
-# The philosophy followed here is a bit different from that used by
-# ForwardDiff. Here, the number of partials is limited to 1 or 2, even for
-# arrays of vortex elements. For ComplexComplex cases, there are two partials,
-# corresponding to differentiation with respect to the real and imaginary parts
-# of the differentiation variable. For ComplexReal cases, there is one partial, since the
-# differentiation variable is real.
-# ComplexComplexDual is designated for derivatives of complex functions
-# with respect to complex numbers
-# ComplexRealDual is for derivatives of complex functions with respect to
-# real numbers
+
 # ComplexDual encompasses all complex dual types
 const ComplexDual{T,V,N} = Complex{Dual{T,V,N}}
-#const ComplexComplexDual{T,V} = ComplexDual{T,V,2}
-#const ComplexRealDual{T,V} = ComplexDual{T,V,1}
-#const RealComplexDual{T,V} = Dual{T,V,2}
-
 
 # Constructor for ComplexDual based on real Partials for dreal and dimag
 @inline function ComplexDual{T,V,N}(z::Number,dr::Partials{N,V},di::Partials{N,V}) where {T,N,V<:Real}
@@ -116,6 +104,16 @@ end
 @inline extract_gradient!(::Type{T},dz,dzstar,d::ComplexDual{T,V,N}) where {T,V,N} =
           extract_gradient!(dz,dzstar,d)
 
+function extract_gradient_chunk!(::Type{T}, dz, dzstar, d::ComplexDual{T,V,N}, index, chunksize) where {T,V,N}
+    offset = index - 1
+    for i in 1:chunksize
+        tmp, tmpstar = dz_partials(T, d, i)
+        dz[i + offset] = tmp
+        dzstar[i + offset] = tmpstar
+    end
+    return dz, dzstar
+end
+
 
 function extract_jacobian!(::Type{T}, dz::AbstractArray, dzstar::AbstractArray,
                 ydual::AbstractArray{<:ComplexDual{T,V,N}}, n) where {T,V,N}
@@ -175,19 +173,35 @@ end
 end
 
 function seed!(duals::AbstractArray{<:ComplexDual{T,V,M}}, x,
-               rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}}) where {T,V,N,M}
-    for i in 1:N
-        #duals[i] = Dual{T,V,M}(real(x[i]), rseeds[i]) + im*Dual{T,V,M}(imag(x[i]), iseeds[i])
-        duals[i] = ComplexDual{T,V,M}(x[i],rseeds[i],iseeds[i])
+               rseed::Partials{M,V} = zero(Partials{M,V}),iseed::Partials{M,V} = zero(Partials{M,V})) where {T,V,N,M}
+    for i in eachindex(duals)
+        duals[i] = ComplexDual{T,V,M}(x[i],rseed,iseed)
     end
     return duals
 end
 
 function seed!(duals::AbstractArray{<:ComplexDual{T,V,M}}, x,
-               rseed::Partials{M,V} = zero(Partials{M,V}),iseed::Partials{M,V} = zero(Partials{M,V})) where {T,V,N,M}
-    for i in eachindex(duals)
-        duals[i] = ComplexDual{T,V,M}(x[i],rseed,iseed)
+               rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}}) where {T,V,N,M}
+    for i in 1:N
+        duals[i] = ComplexDual{T,V,M}(x[i],rseeds[i],iseeds[i])
     end
+    return duals
+end
+
+function seed!(duals::AbstractArray{<:ComplexDual{T,V,M}}, x, index,
+               rseed::Partials{M,V} = zero(Partials{M,V}),iseed::Partials{M,V} = zero(Partials{M,V})) where {T,V,N,M}
+    offset = index - 1
+    dual_inds = (1:M÷2) .+ offset
+    duals[dual_inds] .= ComplexDual{T,V,M}.(view(x, dual_inds), Ref(rseed),Ref(iseed))
+    return duals
+end
+
+function seed!(duals::AbstractArray{<:ComplexDual{T,V,M}}, x, index,
+               rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}}, chunksize = N) where {T,V,N,M}
+    offset = index - 1
+    seed_inds = 1:chunksize
+    dual_inds = seed_inds .+ offset
+    duals[dual_inds] .= ComplexDual{T,V,M}.(view(x, dual_inds), getindex.(Ref(rseeds), seed_inds), getindex.(Ref(iseeds), seed_inds))
     return duals
 end
 
@@ -214,7 +228,7 @@ end
 function ComplexGradientConfig(f::F,
                         x::AbstractArray{Complex{V}},
                         ::Chunk{N} = Chunk(x,length(x)),
-                        ::T = Tag(f, V)) where {F,V,N,T}
+                        ::T = Tag(f, Complex{V})) where {F,V,N,T}
     rseeds, iseeds = construct_complex_seeds(Partials{2N,V})
     duals = similar(x, ComplexDual{T,V,2N})
     return ComplexGradientConfig{T,V,N,typeof(duals),2N}(rseeds, iseeds, duals)
@@ -267,6 +281,54 @@ function ForwardDiff.vector_mode_dual_eval(f::F, z, cfg::ComplexGradientConfig) 
     return f(zduals)
 end
 
+function chunk_mode_complex_gradient_expr(dz_definition::Expr, dzstar_definition::Expr)
+  return quote
+
+    @assert length(z) >= N "chunk size cannot be greater than length(z) ($(N) > $(length(z)))"
+
+    # precalculate loop bounds
+    zlen = length(z)
+    remainder = zlen % N
+    lastchunksize = ifelse(remainder == 0, N, remainder)
+    lastchunkindex = zlen - lastchunksize + 1
+    middlechunks = 2:div(zlen - lastchunksize, N)
+
+    # seed work vectors
+    zdual = cfg.duals
+    rseeds = cfg.rseeds
+    iseeds = cfg.iseeds
+    seed!(zdual, z)
+    seed!(zdual, z, 1, rseeds,iseeds)
+    ydual = f(zdual)
+    $(dz_definition)
+    $(dzstar_definition)
+
+    extract_gradient_chunk!(T,dz,dzstar,ydual,1,N)
+    seed!(zdual, z, 1)
+
+    for c in middlechunks
+      i = ((c - 1) * N + 1)
+      seed!(zdual, z, i, rseeds,iseeds)
+      ydual = f(zdual)
+      extract_gradient_chunk!(T, dz, dzstar, ydual, i, N)
+      seed!(zdual, z, i)
+    end
+
+    seed!(zdual, z, lastchunkindex, rseeds, iseeds, lastchunksize)
+    ydual = f(zdual)
+    extract_gradient_chunk!(T, dz, dzstar, ydual, lastchunkindex, lastchunksize)
+
+    return dz, dzstar
+  end
+end
+
+@eval function chunk_mode_gradient(f::F, z, cfg::ComplexGradientConfig{T,V,N}) where {F,T,V,N}
+    $(chunk_mode_complex_gradient_expr(:(dz = similar(z, Complex{valtype(ydual)})),
+                                       :(dzstar = similar(z, Complex{valtype(ydual)}))))
+end
+
+
+
 # ===== jacobian ===== #
 
 function jacobian(f, z::AbstractArray{Complex{V}},
@@ -284,6 +346,14 @@ function vector_mode_jacobian(f::F, z, cfg::ComplexGradientConfig{T,V,N},
     extract_jacobian!(T, dz, dzstar, ydual, N)
     return dz, dzstar
 end
+
+
+
+
+
+
+
+
 
 
 # ===== derivative ===== #
