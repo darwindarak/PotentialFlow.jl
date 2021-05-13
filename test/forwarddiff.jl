@@ -2,7 +2,7 @@ using LinearAlgebra
 
 import PotentialFlow.Utils: derivative, extract_derivative, value, partials,
           Dual,ComplexDual, ComplexGradientConfig,
-          dz_partials, gradient, chunk_mode_gradient
+          dz_partials, gradient, chunk_mode_gradient, chunk_mode_jacobian
 
 import PotentialFlow.Elements: gradient_position, gradient_strength,
           jacobian_position, jacobian_strength, jacobian_param
@@ -133,6 +133,24 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
     dz_chunk, dzstar_chunk = chunk_mode_gradient(fcn,z,cfg)
     @test dz == dz_chunk
     @test dzstar == dzstar_chunk
+
+    n = 20
+    z = rand(ComplexF64,n)
+    fcn2(z) = log.(sqrt.(z))
+
+    cfg = ComplexGradientConfig(fcn2,z)
+    dz, dzstar = PotentialFlow.Utils.jacobian(fcn2,z,cfg)
+
+    ichk = rand(1:n)
+    @test dz[ichk,ichk] ≈ 1.0/(2*z[ichk])
+
+    N = rand(1:n)
+    cfg = ComplexGradientConfig(fcn2,z,PotentialFlow.Utils.Chunk{N}())
+
+    dz_chunk, dzstar_chunk = chunk_mode_jacobian(fcn2,z,cfg)
+
+    @test dz_chunk == dz
+    @test dzstar_chunk == dzstar
 
   end
 
