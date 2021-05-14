@@ -4,7 +4,11 @@ function gradient(f, z::AbstractArray{Complex{V}},
             cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, z)) where {T, V}
     #CHK && checktag(T, f, z)
     checktag(T, f, z)
-    vector_mode_gradient(f, z, cfg)
+    if chunksize(cfg) == length(z)
+      vector_mode_gradient(f, z, cfg)
+    else
+      chunk_mode_gradient(f, z, cfg)
+    end
 end
 
 # Given a complex dual, return dz and dzstar as Partial types. Ugly way of doing

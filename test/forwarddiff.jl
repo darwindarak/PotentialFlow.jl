@@ -129,8 +129,8 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
     @test dz[ichk] ≈ 1.0/(2*z[ichk])
 
     N = rand(1:n)
-    cfg = ComplexGradientConfig(fcn,z,PotentialFlow.Utils.Chunk{N}())
-    dz_chunk, dzstar_chunk = chunk_mode_gradient(fcn,z,cfg)
+    cfg2 = ComplexGradientConfig(fcn,z,PotentialFlow.Utils.Chunk{N}())
+    dz_chunk, dzstar_chunk = gradient(fcn,z,cfg)
     @test dz == dz_chunk
     @test dzstar == dzstar_chunk
 
@@ -145,9 +145,9 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
     @test dz[ichk,ichk] ≈ 1.0/(2*z[ichk])
 
     N = rand(1:n)
-    cfg = ComplexGradientConfig(fcn2,z,PotentialFlow.Utils.Chunk{N}())
+    cfg2 = ComplexGradientConfig(fcn2,z,PotentialFlow.Utils.Chunk{N}())
 
-    dz_chunk, dzstar_chunk = chunk_mode_jacobian(fcn2,z,cfg)
+    dz_chunk, dzstar_chunk = jacobian(fcn2,z,cfg2)
 
     @test dz_chunk == dz
     @test dzstar_chunk == dzstar

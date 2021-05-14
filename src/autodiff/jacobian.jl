@@ -1,12 +1,16 @@
 # ===== jacobian ===== #
-import ForwardDiff: JACOBIAN_ERROR, reshape_jacobian
+import ForwardDiff: JACOBIAN_ERROR, reshape_jacobian, chunksize
 
 
 function jacobian(f, z::AbstractArray{Complex{V}},
             cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, z)) where {T, V}
     #CHK && checktag(T, f, z)
     checktag(T, f, z)
-    vector_mode_jacobian(f, z, cfg)
+    if chunksize(cfg) == length(z)
+      vector_mode_jacobian(f, z, cfg)
+    else
+      chunk_mode_jacobian(f, z, cfg)
+    end
 end
 
 function extract_jacobian!(::Type{T}, dz::AbstractArray, dzstar::AbstractArray,
@@ -38,12 +42,18 @@ function extract_jacobian_chunk!(::Type{T}, dz, dzstar, ydual, index, chunksize)
     offset = index - 1
     irange = 1:chunksize
     col = irange .+ offset
+
     # Use closure to avoid GPU broadcasting with Type
-    #dz_partials_wrap(ydual, nrange) = dz_partials(T, ydual, nrange)
-    #dztmp, dzstartmp .= dz_partials_wrap.(ydual_reshaped, transpose(irange))
-    for icol in irange, row in 1:size(dz, 1)
-        dz[row, icol+offset], dzstar[row, icol+offset] = dz_partials(T, ydual[row], icol)
-    end
+    dz_partials_wrap(ydual, nrange) = dz_partials(T, ydual, nrange)
+    dztmp = collect(Iterators.flatten(dz_partials_wrap.(ydual_reshaped, transpose(irange))))
+    len, ylen = length(dztmp), length(ydual_reshaped)
+
+    dz[:,col] .= reshape(view(dztmp,1:2:len-1),ylen,chunksize)
+    dzstar[:,col] .= reshape(view(dztmp,2:2:len),ylen,chunksize)
+
+    #for icol in irange, row in 1:size(dz, 1)
+    #    dz[row, icol+offset], dzstar[row, icol+offset] = dz_partials(T, ydual[row], icol)
+    #end
     return dz, dzstar
 end
 

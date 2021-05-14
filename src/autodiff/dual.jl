@@ -60,7 +60,9 @@ end
 # For the dz and dz* partials with respect to the ith element
 @inline Base.@propagate_inbounds function dz_partials(d::ComplexDual, i)
     dr, di = partials(d)
-    return _derivs(dr[2i-1], dr[2i], di[2i-1],di[2i])
+    ix = 2*i.-1
+    iy = 2*i
+    return _derivs(dr[ix], dr[iy], di[ix],di[iy])
 end
 
 @inline Base.@propagate_inbounds dz_partials(::Type{T}, d::ComplexDual{T}, i...) where T = dz_partials(d, i...)
