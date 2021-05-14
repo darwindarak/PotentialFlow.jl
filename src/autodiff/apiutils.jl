@@ -43,6 +43,12 @@ function dualize(::Type{T},x::AbstractArray{<:Complex{V}}) where {T,V}
     seed!(xdual,x)
 end
 
+function ForwardDiff.vector_mode_dual_eval(f::F, z, cfg::ComplexGradientConfig) where {F}
+    zduals = cfg.duals
+    seed!(zduals,z,cfg.rseeds,cfg.iseeds)
+    return f(zduals)
+end
+
 # =====  other seed functions ==== ##
 
 """

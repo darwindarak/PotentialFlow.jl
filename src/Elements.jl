@@ -377,13 +377,15 @@ the type and size of duals. The length of the partials in these duals is twice
 the number of elements, to enable computation of gradients with respect to
 all positions.
 """
-function seed_position(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
-  posduals = copy(cfg.duals)
-  strduals = copy(cfg.duals)
+function seed_position!(posduals,strduals,strfunc::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
   seed!(posduals,position(v),cfg.rseeds,cfg.iseeds)
-  seed!(strduals,complex(strength.(v)))
+  seed!(strduals,complex(strfunc.(v)))
   return posduals, real(strduals)
 end
+
+seed_position(strfunc::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F =
+    seed_position!(copy(cfg.duals),copy(cfg.duals),strfunc,v,cfg)
+
 
 """
     seed_strength(v::Vector{Element},cfg::ComplexGradientConfig)
@@ -395,13 +397,17 @@ the type and size of duals. The use of complex duals (in spite of the real-value
 strength) ensures correct treatment for gradient calculation, since some
 calculations will be complex-valued.
 """
-function seed_strength(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
-  posduals = copy(cfg.duals)
-  strduals = copy(cfg.duals)
+function seed_strength!(posduals,strduals,strfunc::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
   seed!(posduals,position(v))
-  seed!(strduals,complex(strength.(v)),cfg.rseeds,cfg.iseeds)
+  seed!(strduals,complex(strfunc.(v)),cfg.rseeds,cfg.iseeds)
   return posduals, real(strduals)
 end
+
+seed_strength(strfunc::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F =
+    seed_strength!(copy(cfg.duals),copy(cfg.duals),strfunc,v,cfg)
+
+
+## Gradient
 
 function gradient_position(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
     checktag(T, f, property_type(eltype(v)))
