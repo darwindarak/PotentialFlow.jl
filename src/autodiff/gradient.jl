@@ -44,10 +44,11 @@ function vector_mode_gradient(f::F, z, cfg::ComplexGradientConfig{T},
 end
 
 
-function chunk_mode_complex_gradient_expr(dz_definition::Expr, dzstar_definition::Expr,
-                                          compute_ydual::Expr,seed_definition::Expr,
+function chunk_mode_gradient_expr(work_array_definition::Expr,result_definition::Expr,
+                                          result::Expr,compute_ydual::Expr,
+                                          error_definition::Expr,
                                           seed_chunk_definition::Expr, unseed_definition::Expr,
-                                          extract_definition::Expr)
+                                          extract_definition::Expr,y_definition::Expr)
   return quote
 
     @assert length(z) >= N "chunk size cannot be greater than length(z) ($(N) > $(length(z)))"
@@ -60,16 +61,15 @@ function chunk_mode_complex_gradient_expr(dz_definition::Expr, dzstar_definition
     middlechunks = 2:div(zlen - lastchunksize, N)
 
     # seed work vectors
-    zdual = cfg.duals
+    $(work_array_definition)
     rseeds = cfg.rseeds
     iseeds = cfg.iseeds
-    $(seed_definition)
 
     index, chunksize = 1, N
     $(seed_chunk_definition)
     $(compute_ydual)
-    $(dz_definition)
-    $(dzstar_definition)
+    $(error_definition)
+    $(result_definition)
 
     $(extract_definition)
     $(unseed_definition)
@@ -87,16 +87,26 @@ function chunk_mode_complex_gradient_expr(dz_definition::Expr, dzstar_definition
     $(compute_ydual)
     $(extract_definition)
 
-    return dz, dzstar
+    $(y_definition)
+
+    return $(result)
   end
 end
 
 @eval function chunk_mode_gradient(f::F, z, cfg::ComplexGradientConfig{T,V,N}) where {F,T,V,N}
-    $(chunk_mode_complex_gradient_expr(:(dz = similar(z, Complex{valtype(ydual)})),
-                                       :(dzstar = similar(z, Complex{valtype(ydual)})),
+    $(chunk_mode_gradient_expr(quote
+                                          zdual = cfg.duals
+                                          seed!(zdual, z)
+                                        end,
+                                        quote
+                                          dz = similar(z, Complex{valtype(ydual)})
+                                          dzstar = similar(z, Complex{valtype(ydual)})
+                                        end,
+                                        :(dz, dzstar),
                                        :(ydual = f(zdual)),
-                                       :(seed!(zdual, z)),
+                                       :(),
                                        :(seed!(zdual, z, index, rseeds, iseeds, chunksize)),
                                        :(seed!(zdual, z, index)),
-                                       :(extract_gradient_chunk!(T, dz, dzstar, ydual, index, chunksize))))
+                                       :(extract_gradient_chunk!(T, dz, dzstar, ydual, index, chunksize)),
+                                       :()))
 end

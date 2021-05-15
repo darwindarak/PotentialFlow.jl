@@ -58,64 +58,22 @@ function extract_jacobian_chunk!(::Type{T}, dz, dzstar, ydual, index, chunksize)
 end
 
 
-function jacobian_chunk_mode_expr(work_array_definition::Expr, compute_ydual::Expr,
-                                  dz_definition::Expr, dzstar_definition::Expr, y_definition::Expr)
-    return quote
-        @assert length(z) >= N "chunk size cannot be greater than length(z) ($(N) > $(length(z)))"
-
-        # precalculate loop bounds
-        zlen = length(z)
-        remainder = zlen % N
-        lastchunksize = ifelse(remainder == 0, N, remainder)
-        lastchunkindex = zlen - lastchunksize + 1
-        middlechunks = 2:div(zlen - lastchunksize, N)
-
-        # seed work arrays
-        $(work_array_definition)
-        rseeds = cfg.rseeds
-        iseeds = cfg.iseeds
-
-        # do first chunk manually to calculate output type
-        seed!(zdual, z, 1, rseeds, iseeds)
-        $(compute_ydual)
-        ydual isa AbstractArray || throw(JACOBIAN_ERROR)
-
-        $(dz_definition)
-        $(dzstar_definition)
-
-        dz_reshaped = reshape_jacobian(dz, ydual, zdual)
-        dzstar_reshaped = reshape_jacobian(dzstar, ydual, zdual)
-
-        extract_jacobian_chunk!(T, dz_reshaped, dzstar_reshaped, ydual, 1, N)
-        seed!(zdual, z, 1)
-
-        # do middle chunks
-        for c in middlechunks
-            i = ((c - 1) * N + 1)
-            seed!(zdual, z, i, rseeds,iseeds)
-            $(compute_ydual)
-            extract_jacobian_chunk!(T, dz_reshaped, dzstar_reshaped, ydual, i, N)
-            seed!(zdual, z, i)
-        end
-
-        # do final chunk
-        seed!(zdual, z, lastchunkindex, rseeds, iseeds, lastchunksize)
-        $(compute_ydual)
-        extract_jacobian_chunk!(T, dz_reshaped, dzstar_reshaped, ydual, lastchunkindex, lastchunksize)
-
-        $(y_definition)
-
-        return dz, dzstar
-    end
-end
-
 @eval function chunk_mode_jacobian(f::F, z, cfg::ComplexGradientConfig{T,V,N}) where {F,T,V,N}
-    $(jacobian_chunk_mode_expr(quote
+    $(chunk_mode_gradient_expr(quote
                                    zdual = cfg.duals
                                    seed!(zdual, z)
                                end,
+                               quote
+                                 dz = similar(z, Complex{valtype(ydual)},length(ydual), zlen)
+                                 dzstar = similar(z, Complex{valtype(ydual)},length(ydual), zlen)
+                                 dz_reshaped = reshape_jacobian(dz, ydual, zdual)
+                                 dzstar_reshaped = reshape_jacobian(dzstar, ydual, zdual)
+                               end,
+                               :(dz, dzstar),
                                :(ydual = f(zdual)),
-                               :(dz = similar(z, Complex{valtype(ydual)},length(ydual), zlen)),
-                               :(dzstar = similar(z, Complex{valtype(ydual)},length(ydual), zlen)),
+                               :(ydual isa AbstractArray || throw(JACOBIAN_ERROR)),
+                               :(seed!(zdual, z, index, rseeds, iseeds, chunksize)),
+                               :(seed!(zdual, z, index)),
+                               :(extract_jacobian_chunk!(T, dz_reshaped, dzstar_reshaped, ydual, index, chunksize)),
                                :()))
 end
