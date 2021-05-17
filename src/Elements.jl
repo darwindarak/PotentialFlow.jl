@@ -367,13 +367,13 @@ function seed_zeros(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig)
   return posduals, real(strduals)
 end
 
-function seed!(posduals,strduals,strfunc::F,v::Vector{<:Element}) where F
+function seed!(posduals::AbstractArray{<:ComplexDual{T,V,M}},strduals::AbstractArray{<:ComplexDual{T,V,M}},strfunc::F,v::Vector{<:Element}) where {F,T,V,M}
   seed!(posduals,position(v))
   seed!(strduals,complex(strfunc.(v)))
   return posduals, real(strduals)
 end
 
-function seed!(posduals,strduals,strfunc::F,v::Vector{<:Element},index) where F
+function seed!(posduals::AbstractArray{<:ComplexDual{T,V,M}},strduals::AbstractArray{<:ComplexDual{T,V,M}},strfunc::F,v::Vector{<:Element},index) where {F,T,V,M}
   seed!(posduals,position(v),index)
   seed!(strduals,complex(strfunc.(v)),index)
   return posduals, real(strduals)
@@ -389,13 +389,16 @@ the type and size of duals. The length of the partials in these duals is twice
 the number of elements, to enable computation of gradients with respect to
 all positions.
 """
-function seed_position!(posduals,strduals,strfunc::F,v::Vector{<:Element},rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}}) where {F,N,M,V}
+function seed_position!(posduals::AbstractArray{<:ComplexDual{T,V,M}},strduals::AbstractArray{<:ComplexDual{T,V,M}},
+                        strfunc::F,v::Vector{<:Element},rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}}) where {T,F,N,M,V}
   seed!(posduals,position(v),rseeds,iseeds)
   seed!(strduals,complex(strfunc.(v)))
   return posduals, real(strduals)
 end
 
-function seed_position!(posduals,strduals,strfunc::F,v::Vector{<:Element},index,rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}},chunksize=N) where {F,N,M,V}
+function seed_position!(posduals::AbstractArray{<:ComplexDual{T,V,M}},strduals::AbstractArray{<:ComplexDual{T,V,M}},
+                        strfunc::F,v::Vector{<:Element},index,rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}},
+                        chunksize=N) where {T,F,N,M,V}
   seed!(posduals,position(v),index,rseeds,iseeds,chunksize)
   seed!(strduals,complex(strfunc.(v)),index)
   return posduals, real(strduals)
@@ -415,13 +418,16 @@ the type and size of duals. The use of complex duals (in spite of the real-value
 strength) ensures correct treatment for gradient calculation, since some
 calculations will be complex-valued.
 """
-function seed_strength!(posduals,strduals,strfunc::F,v::Vector{<:Element},rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}}) where {F,N,M,V}
+function seed_strength!(posduals::AbstractArray{<:ComplexDual{T,V,M}},strduals::AbstractArray{<:ComplexDual{T,V,M}},
+                        strfunc::F,v::Vector{<:Element},rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}}) where {T,F,N,M,V}
   seed!(posduals,position(v))
   seed!(strduals,complex(strfunc.(v)),rseeds,iseeds)
   return posduals, real(strduals)
 end
 
-function seed_strength!(posduals,strduals,strfunc::F,v::Vector{<:Element},index,rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}},chunksize=N) where {F,N,M,V}
+function seed_strength!(posduals::AbstractArray{<:ComplexDual{T,V,M}},strduals::AbstractArray{<:ComplexDual{T,V,M}},
+                        strfunc::F,v::Vector{<:Element},index,
+                        rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}},chunksize=N) where {T,F,N,M,V}
   seed!(posduals,position(v),index)
   seed!(strduals,complex(strfunc.(v)),index,rseeds,iseeds,chunksize)
   return posduals, real(strduals)
