@@ -129,7 +129,7 @@ centraldiff(F::AbstractVector) = centraldiff(F, [1:length(F);])
 centraldiff(F::AbstractVector, h::Real) = centraldiff(F, [h*(1:length(F));])
 
 
-include("utils/forwarddiff.jl")
+include("autodiff/forwarddiff.jl")
 
 
 

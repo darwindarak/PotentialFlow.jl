@@ -2,9 +2,9 @@ module Vortex
 
 import ..Elements
 import ..Elements: circulation, flux, impulse, angularimpulse, seed_zeros, seed_position,
-                    seed_strength, kind
+                    seed_strength, kind, seed_position!, seed_strength!
 
-import ..Utils: dualize, ComplexGradientConfig, seed!
+import ..Utils: dualize, ComplexGradientConfig, seed!, Partials
 
 import ..Points
 import ..Blobs
