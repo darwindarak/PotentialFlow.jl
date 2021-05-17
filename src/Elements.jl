@@ -8,7 +8,8 @@ using ..Properties
 
 import ..Utils: ComplexDual, Dual, ComplexGradientConfig, seed!, seed,
                 vector_mode_gradient, vector_mode_jacobian, checktag,chunksize,
-                chunk_mode_gradient_expr, Partials, valtype, extract_gradient_chunk!
+                chunk_mode_gradient_expr, Partials, valtype, extract_gradient_chunk!,
+                extract_jacobian_chunk!, reshape_jacobian, JACOBIAN_ERROR
 
 
 abstract type Element end
