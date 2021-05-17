@@ -7,7 +7,8 @@ export Element, Singleton, Group, kind, @kind, circulation, flux, streamfunction
 using ..Properties
 
 import ..Utils: ComplexDual, Dual, ComplexGradientConfig, seed!, seed,
-                vector_mode_gradient, vector_mode_jacobian, checktag
+                vector_mode_gradient, vector_mode_jacobian, checktag,chunksize,
+                chunk_mode_gradient_expr, Partials, valtype, extract_gradient_chunk!
 
 abstract type Element end
 
@@ -366,6 +367,17 @@ function seed_zeros(strength::F,v::Vector{<:Element},cfg::ComplexGradientConfig)
   return posduals, real(strduals)
 end
 
+function seed!(posduals,strduals,strfunc::F,v::Vector{<:Element}) where F
+  seed!(posduals,position(v))
+  seed!(strduals,complex(strfunc.(v)))
+  return posduals, real(strduals)
+end
+
+function seed!(posduals,strduals,strfunc::F,v::Vector{<:Element},index) where F
+  seed!(posduals,position(v),index)
+  seed!(strduals,complex(strfunc.(v)),index)
+  return posduals, real(strduals)
+end
 
 """
     seed_position(v::Vector{Element},cfg::ComplexGradientConfig)
@@ -377,14 +389,20 @@ the type and size of duals. The length of the partials in these duals is twice
 the number of elements, to enable computation of gradients with respect to
 all positions.
 """
-function seed_position!(posduals,strduals,strfunc::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
-  seed!(posduals,position(v),cfg.rseeds,cfg.iseeds)
+function seed_position!(posduals,strduals,strfunc::F,v::Vector{<:Element},rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}}) where {F,N,M,V}
+  seed!(posduals,position(v),rseeds,iseeds)
   seed!(strduals,complex(strfunc.(v)))
   return posduals, real(strduals)
 end
 
+function seed_position!(posduals,strduals,strfunc::F,v::Vector{<:Element},index,rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}},chunksize=N) where {F,N,M,V}
+  seed!(posduals,position(v),index,rseeds,iseeds,chunksize)
+  seed!(strduals,complex(strfunc.(v)),index)
+  return posduals, real(strduals)
+end
+
 seed_position(strfunc::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F =
-    seed_position!(copy(cfg.duals),copy(cfg.duals),strfunc,v,cfg)
+    seed_position!(copy(cfg.duals),copy(cfg.duals),strfunc,v,cfg.rseeds,cfg.iseeds)
 
 
 """
@@ -397,26 +415,42 @@ the type and size of duals. The use of complex duals (in spite of the real-value
 strength) ensures correct treatment for gradient calculation, since some
 calculations will be complex-valued.
 """
-function seed_strength!(posduals,strduals,strfunc::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F
+function seed_strength!(posduals,strduals,strfunc::F,v::Vector{<:Element},rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}}) where {F,N,M,V}
   seed!(posduals,position(v))
-  seed!(strduals,complex(strfunc.(v)),cfg.rseeds,cfg.iseeds)
+  seed!(strduals,complex(strfunc.(v)),rseeds,iseeds)
   return posduals, real(strduals)
 end
 
+function seed_strength!(posduals,strduals,strfunc::F,v::Vector{<:Element},index,rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}},chunksize=N) where {F,N,M,V}
+  seed!(posduals,position(v),index)
+  seed!(strduals,complex(strfunc.(v)),index,rseeds,iseeds,chunksize)
+  return posduals, real(strduals)
+end
+
+
+
 seed_strength(strfunc::F,v::Vector{<:Element},cfg::ComplexGradientConfig) where F =
-    seed_strength!(copy(cfg.duals),copy(cfg.duals),strfunc,v,cfg)
+    seed_strength!(copy(cfg.duals),copy(cfg.duals),strfunc,v,cfg.rseeds,cfg.iseeds)
 
 
 ## Gradient
 
 function gradient_position(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
     checktag(T, f, property_type(eltype(v)))
-    vector_mode_gradient(f,v,cfg,vector_mode_dual_eval_position)
+    if chunksize(cfg) == length(v)
+      vector_mode_gradient(f,v,cfg,vector_mode_dual_eval_position)
+    else
+      chunk_mode_gradient_position(f,v,cfg)
+    end
 end
 
 function gradient_strength(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
     checktag(T, f, property_type(eltype(v)))
-    dz, dzstar = vector_mode_gradient(f,v,cfg,vector_mode_dual_eval_strength)
+    if chunksize(cfg) == length(v)
+      dz, dzstar = vector_mode_gradient(f,v,cfg,vector_mode_dual_eval_strength)
+    else
+      dz, dzstar = chunk_mode_gradient_strength(f,v,cfg)
+    end
     return dz .+ dzstar
 end
 
@@ -431,12 +465,20 @@ end
 
 function jacobian_position(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
     checktag(T, f, property_type(eltype(v)))
-    vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_position)
+    if chunksize(cfg) == length(v)
+      vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_position)
+    else
+      chunk_mode_jacobian_position(f,v,cfg)
+    end
 end
 
 function jacobian_strength(f,v::Vector{<:Element},cfg::ComplexGradientConfig{T} = ComplexGradientConfig(f, v)) where {T}
     checktag(T, f, property_type(eltype(v)))
-    dz, dzstar = vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_strength)
+    if chunksize(cfg) == length(v)
+      dz, dzstar = vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_strength)
+    else
+      dz, dzstar = chunk_mode_jacobian_strength(f,v,cfg)
+    end
     return dz .+ dzstar
 end
 
@@ -446,6 +488,58 @@ function jacobian_param(f,v::Tuple{Vector{<:Element},S},
     dz, dzstar = vector_mode_jacobian(f,v,cfg,vector_mode_dual_eval_param)
     return real(dz .+ dzstar)
 end
+
+for ftype = (:position, :strength)
+  fname = Symbol("chunk_mode_gradient_",ftype)
+  sname = Symbol("seed_",ftype,"!")
+  @eval function $fname(f::F, z::Vector{<:Element}, cfg::ComplexGradientConfig{T,V,N}) where {F,T,V,N}
+     $(chunk_mode_gradient_expr(quote
+                                  posduals = copy(cfg.duals)
+                                  strduals = copy(cfg.duals)
+                                  zdual = seed_zeros(z,cfg)
+                                  seed!(zdual,z,posduals,strduals)
+                                end,
+                                quote
+                                  dz = similar(z, Complex{valtype(ydual)})
+                                  dzstar = similar(z, Complex{valtype(ydual)})
+                                end,
+                                :(dz, dzstar),
+                                :(ydual = f(zdual)),
+                                :(),
+                                :($sname(zdual, z, posduals, strduals, index, rseeds, iseeds, chunksize)),
+                                :(seed!(zdual, z, posduals, strduals, index)),
+                                :(extract_gradient_chunk!(T, dz, dzstar, ydual, index, chunksize)),
+                                :()))
+  end
+end
+
+for ftype = (:position, :strength)
+  fname = Symbol("chunk_mode_jacobian_",ftype)
+  sname = Symbol("seed_",ftype,"!")
+  @eval function $fname(f::F, z::Vector{<:Element}, cfg::ComplexGradientConfig{T,V,N}) where {F,T,V,N}
+     $(chunk_mode_gradient_expr(quote
+                                  posduals = copy(cfg.duals)
+                                  strduals = copy(cfg.duals)
+                                  zdual = seed_zeros(z,cfg)
+                                  seed!(zdual,z,posduals,strduals)
+                                end,
+                                quote
+                                  dz = similar(z, Complex{valtype(ydual)},length(ydual), zlen)
+                                  dzstar = similar(z, Complex{valtype(ydual)},length(ydual), zlen)
+                                  dz_reshaped = reshape_jacobian(dz, ydual, zdual)
+                                  dzstar_reshaped = reshape_jacobian(dzstar, ydual, zdual)
+                                end,
+                                :(dz, dzstar),
+                                :(ydual = f(zdual)),
+                                :(ydual isa AbstractArray || throw(JACOBIAN_ERROR)),
+                                :($sname(zdual, z, posduals, strduals, index, rseeds, iseeds, chunksize)),
+                                :(seed!(zdual, z, posduals, strduals, index)),
+                                :(extract_jacobian_chunk!(T, dz_reshaped, dzstar_reshaped, ydual, index, chunksize)),
+                                :()))
+  end
+end
+
+
 
 
 end

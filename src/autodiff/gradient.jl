@@ -24,6 +24,15 @@ end
 @inline extract_gradient!(::Type{T},dz,dzstar,d::ComplexDual{T,V,N}) where {T,V,N} =
           extract_gradient!(dz,dzstar,d)
 
+
+function vector_mode_gradient(f::F, z, cfg::ComplexGradientConfig{T},
+                evalfcn=ForwardDiff.vector_mode_dual_eval) where {F,T}
+    ydual = evalfcn(f, z, cfg)
+    dz = similar(z, Complex{valtype(ydual)})
+    dzstar = similar(z, Complex{valtype(ydual)})
+    return extract_gradient!(T, dz, dzstar,ydual)
+end
+
 function extract_gradient_chunk!(::Type{T}, dz, dzstar, d::ComplexDual{T,V,N}, index, chunksize) where {T,V,N}
     offset = index - 1
     for i in 1:chunksize
@@ -35,13 +44,6 @@ function extract_gradient_chunk!(::Type{T}, dz, dzstar, d::ComplexDual{T,V,N}, i
 end
 
 
-function vector_mode_gradient(f::F, z, cfg::ComplexGradientConfig{T},
-                evalfcn=ForwardDiff.vector_mode_dual_eval) where {F,T}
-    ydual = evalfcn(f, z, cfg)
-    dz = similar(z, Complex{valtype(ydual)})
-    dzstar = similar(z, Complex{valtype(ydual)})
-    return extract_gradient!(T, dz, dzstar,ydual)
-end
 
 
 function chunk_mode_gradient_expr(work_array_definition::Expr,result_definition::Expr,
@@ -95,18 +97,18 @@ end
 
 @eval function chunk_mode_gradient(f::F, z, cfg::ComplexGradientConfig{T,V,N}) where {F,T,V,N}
     $(chunk_mode_gradient_expr(quote
-                                          zdual = cfg.duals
-                                          seed!(zdual, z)
-                                        end,
-                                        quote
-                                          dz = similar(z, Complex{valtype(ydual)})
-                                          dzstar = similar(z, Complex{valtype(ydual)})
-                                        end,
-                                        :(dz, dzstar),
-                                       :(ydual = f(zdual)),
-                                       :(),
-                                       :(seed!(zdual, z, index, rseeds, iseeds, chunksize)),
-                                       :(seed!(zdual, z, index)),
-                                       :(extract_gradient_chunk!(T, dz, dzstar, ydual, index, chunksize)),
-                                       :()))
+                                  zdual = cfg.duals
+                                  seed!(zdual, z)
+                                end,
+                                quote
+                                  dz = similar(z, Complex{valtype(ydual)})
+                                  dzstar = similar(z, Complex{valtype(ydual)})
+                                end,
+                                :(dz, dzstar),
+                                :(ydual = f(zdual)),
+                                :(),
+                                :(seed!(zdual, z, index, rseeds, iseeds, chunksize)),
+                                :(seed!(zdual, z, index)),
+                                :(extract_gradient_chunk!(T, dz, dzstar, ydual, index, chunksize)),
+                                :()))
 end
