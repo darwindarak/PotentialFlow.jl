@@ -20,9 +20,10 @@ function seed!(duals::AbstractArray{<:ComplexDual{T,V,M}}, x,
 end
 
 function seed!(duals::AbstractArray{<:ComplexDual{T,V,M}}, x, index,
-               rseed::Partials{M,V} = zero(Partials{M,V}),iseed::Partials{M,V} = zero(Partials{M,V})) where {T,V,N,M}
+               rseed::Partials{M,V} = zero(Partials{M,V}),iseed::Partials{M,V} = zero(Partials{M,V}),chunksize=M÷2) where {T,V,M}
     offset = index - 1
-    dual_inds = (1:M÷2) .+ offset
+    seed_inds = 1:chunksize
+    dual_inds = seed_inds .+ offset
     duals[dual_inds] .= ComplexDual{T,V,M}.(view(x, dual_inds), Ref(rseed),Ref(iseed))
     return duals
 end

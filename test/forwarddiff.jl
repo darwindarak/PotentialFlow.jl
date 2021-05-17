@@ -226,12 +226,19 @@ end
     newblobs = Vortex.seed_position(blobs,cfg)
     dwdz2, dwdzstar2 = dz_partials(induce_velocity(z,newblobs,0.0))
 
+    # chunk mode
+    nchunk = 3
+    cfg2 = PotentialFlow.Utils.ComplexGradientConfig(z -> (),blobs,PotentialFlow.Utils.Chunk{nchunk}())
+
     # Auto diff with the API
     dwdz, dwdzstar = gradient_position(compute_velocity,blobs)
     @test dwdz == dwdz2 && dwdzstar == dwdzstar2
 
     @test isapprox(abs(dwdz[i]-dwdz_fd),0.0,atol=TOL)
     @test isapprox(abs(dwdzstar[i]-dwdzstar_fd),0.0,atol=TOL)
+
+    dwdz_chunk, dwdzstar_chunk = gradient_position(compute_velocity,blobs,cfg2)
+    @test dwdz == dwdz_chunk && dwdzstar == dwdzstar_chunk
 
     newblobs = Vortex.seed_strength(blobs,cfg)
 
@@ -247,6 +254,9 @@ end
 
     @test isapprox(abs(dwdΓ[i]-dwdΓ_fd),0.0,atol=TOL)
 
+    dwdΓ_chunk = gradient_strength(compute_velocity,blobs,cfg2)
+
+    @test dwdΓ  == dwdΓ_chunk
 
 end
 
@@ -416,6 +426,11 @@ end
       return wself
     end
 
+    # chunk mode
+    nchunk = 3
+    cfg2 = PotentialFlow.Utils.ComplexGradientConfig(z -> (),blobs,PotentialFlow.Utils.Chunk{nchunk}())
+
+
     wself_fd = self_velocity(blobs)
     wselfx⁺_fd = self_velocity(blobsx⁺)
     wselfy⁺_fd = self_velocity(blobsy⁺)
@@ -428,12 +443,22 @@ end
 
     dwdz, dwdzstar = jacobian_position(self_velocity,blobs)
 
+
     @test isapprox(norm(dwdz[:,i]-dwdz_fd),0.0,atol=TOL)
     @test isapprox(norm(dwdzstar[:,i]-dwdzstar_fd),0.0,atol=TOL)
+
+    dwdz_chunk, dwdzstar_chunk = jacobian_position(self_velocity,blobs,cfg2)
+    @test dwdz == dwdz_chunk
+    @test dwdzstar == dwdzstar_chunk
+
 
     dwdΓ = jacobian_strength(self_velocity,blobs)
 
     @test isapprox(norm(dwdΓ[:,i]-dwdΓ_fd),0.0,atol=TOL)
+
+    dwdΓ_chunk = jacobian_strength(self_velocity,blobs,cfg2)
+    @test dwdΓ == dwdΓ_chunk
+
 end
 
 

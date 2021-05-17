@@ -50,7 +50,7 @@ function seed_position!(posduals::AbstractArray{<:ComplexDual{T,V,M}},strduals::
                         strfunc::F,v::Vector{<:Element},index,rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}},
                         chunksize=N) where {T,F,N,M,V}
   seed!(posduals,position(v),index,rseeds,iseeds,chunksize)
-  seed!(strduals,complex(strfunc.(v)),index)
+  seed!(strduals,complex(strfunc.(v)),index,zero(Partials{M,V}),zero(Partials{M,V}),chunksize)
   return posduals, real(strduals)
 end
 
@@ -78,7 +78,7 @@ end
 function seed_strength!(posduals::AbstractArray{<:ComplexDual{T,V,M}},strduals::AbstractArray{<:ComplexDual{T,V,M}},
                         strfunc::F,v::Vector{<:Element},index,
                         rseeds::NTuple{N,Partials{M,V}},iseeds::NTuple{N,Partials{M,V}},chunksize=N) where {T,F,N,M,V}
-  seed!(posduals,position(v),index)
+  seed!(posduals,position(v),index,zero(Partials{M,V}),zero(Partials{M,V}),chunksize)
   seed!(strduals,complex(strfunc.(v)),index,rseeds,iseeds,chunksize)
   return posduals, real(strduals)
 end
