@@ -64,10 +64,14 @@ end
     vorticity_flux(p::Plate, v₁, v₂,
                    lesp = 0.0, tesp = 0.0,
                    ∂C₁ = Vector{ComplexF64}(undef, plate.N),
-                   ∂C₂ = Vector{ComplexF64}(undef, plate.N))
+                   ∂C₂ = Vector{ComplexF64}(undef, plate.N)[,clamp_constraints=false])
 
 Return strengths of new vortex elements that satisfies edge suction parameters.
 For a given edge, if the current suction parameter is less than the criticial suction parameter, then no vorticity is released.  If it is higher, however, vorticity will be released so that the suction parameter equals the critical value.
+If `clamp_constraints=true`, and if one of the constraints is currently satisfied,
+then it fixes the constraint at that critical value while it solves for new strengths.
+The default is `false`, in which it does not assign any new strength to a vortex
+element if the associated constraint is satisfied.
 
 # Arguments
 
@@ -104,7 +108,7 @@ julia> Γ # should equal -πULsin(α) = -π
 """
 function vorticity_flux(plate::Plate{T}, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
                         ∂C₁ = Vector{Complex{T}}(undef,plate.N),
-                        ∂C₂ = Vector{Complex{T}}(undef,plate.N)) where {T}
+                        ∂C₂ = Vector{Complex{T}}(undef,plate.N);clamp_constraints::Bool=false) where {T}
 
     @get plate (N, α, B₀, B₁, L, A, Γ)
 
@@ -123,12 +127,18 @@ function vorticity_flux(plate::Plate{T}, v₁, v₂, t, lesp = 0.0, tesp = 0.0,
     A₂₋ = -2imag(∂C₂[1]) + imag(∂C₂[2]) - 2Γ₂/(π*L)
 
     if (abs2(lesp) > abs2(b₊)) && (abs2(tesp) > abs2(b₋))
+        # both constraints satisfied
         K₁, K₂ = 0.0, 0.0
-    elseif isinf(abs2(lesp)) && (abs2(tesp) ≤ abs2(b₋))
+    elseif (isinf(abs2(lesp)) || (!clamp_constraints && (abs2(lesp) > abs2(b₊)))) &&
+           (abs2(tesp) ≤ abs2(b₋))
         # If critical lesp set to Inf, don't create vorticity there
+        # Also, don't create vorticity there if the constraint is already satisfied
+        # and we aren't clamping the constraints.
         K₁, K₂ = 0.0, (sign(b₋)*tesp - b₋)/A₂₋
-    elseif (abs2(lesp) ≤ abs2(b₊)) && isinf(abs2(tesp))
+    elseif (abs2(lesp) ≤ abs2(b₊)) && (isinf(abs2(tesp)) || (!clamp_constraints && (abs2(tesp) > abs2(b₋))))
         # If critical tesp set to Inf, don't create vorticity there
+        # Also, don't create vorticity there if the constraint is already satisfied
+        # and we aren't clamping the constraints.
         K₁, K₂ = (sign(b₊)*lesp - b₊)/A₁₊, 0.0
     else
       # Finite critical lesp or tesp, with one or both violated
