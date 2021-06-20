@@ -4,7 +4,7 @@
 
 | Documentation | Build Status |
 |:---:|:---:|
-| [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://darwindarak.github.com/PotentialFlow.jl) [![Binder](https://beta.mybinder.org/badge.svg)](https://beta.mybinder.org/v2/gh/darwindarak/PotentialFlow.jl/binder?filepath=binder%2Fnotebooks) | [![Build Status](https://github.com/darwindarak/PotentialFlow.jl/workflows/CI/badge.svg)](https://github.com/darwindarak/PotentialFlow.jl/actions) [![codecov](https://codecov.io/gh/darwindarak/PotentialFlow.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/darwindarak/PotentialFlow.jl) |
+| [![docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://darwindarak.github.io/PotentialFlow.jl/latest/) [![Binder](https://beta.mybinder.org/badge.svg)](https://beta.mybinder.org/v2/gh/darwindarak/PotentialFlow.jl/binder?filepath=binder%2Fnotebooks) | [![Build Status](https://github.com/darwindarak/PotentialFlow.jl/workflows/CI/badge.svg)](https://github.com/darwindarak/PotentialFlow.jl/actions) [![codecov](https://codecov.io/gh/darwindarak/PotentialFlow.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/darwindarak/PotentialFlow.jl) |
 
 
 ## Installation
