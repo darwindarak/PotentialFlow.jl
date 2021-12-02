@@ -66,7 +66,7 @@ blob_kernel(z, δ) = 0.5im*z/(π*(abs2(z) + δ^2))
 allocate_velocity(v::Vector{Blob{T,R}}) where {T,R} = zeros(Complex{R},length(v))
 
 function induce_velocity(z::Complex{T}, b::Blob, t) where {T}
-    b.S*blob_kernel(z - b.z, b.δ)
+    b.S'*blob_kernel(z - b.z, b.δ)
 end
 
 
