@@ -8,7 +8,7 @@ import PotentialFlow.Elements: gradient_position, gradient_strength,
           jacobian_position, jacobian_strength, jacobian_param
 
 const DELTA=1e-6
-const BIGEPS = 10000*eps(1.0)
+const BIGEPS = 1e-8
 const TOL=5e-6
 const BIGTOL=1e-4
 const BIGGESTTOL=1e-3
