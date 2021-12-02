@@ -110,9 +110,8 @@ plot(T, ramp.(T), xlabel = "t", ylabel="Smoothed Ramp",
 
 savefig("ramp.svg"); nothing # hide
 ```
-```@raw html
-<object data="./manual/ramp.svg" type="image/svg+xml"></object>
-```
+![Ramp](ramp.svg)
+
 Now suppose we want to scale the ramp and shift it
 ```@example ramp
 shifted_ramp = -(ramp >> 2)
@@ -121,9 +120,8 @@ plot(T, shifted_ramp.(T), xlabel = "t", ylabel="Smoothed Ramp",
      legend = :none, linewidth = 2, size=(600,300))
 savefig("shifted_ramp.svg"); nothing # hide
 ```
-```@raw html
-<object data="../shifted_ramp.svg" type="image/svg+xml"></object>
-```
+![Shifted ramp](shifted_ramp.svg)
+
 then take its derivative
 ```@example ramp
 ddt_ramp = d_dt(shifted_ramp)
@@ -132,9 +130,8 @@ plot(T, ddt_ramp.(T), xlabel = "t", ylabel="Smoothed Ramp",
      legend = :none, linewidth = 2, size = (600, 200))
 savefig("ddt_ramp.svg"); nothing # hide
 ```
-```@raw html
-<object data="../ddt_ramp.svg" type="image/svg+xml"></object>
-```
+![ddt ramp](ddt_ramp.svg)
+
 We see that wrapping these functions in a type allows us to operate on
 them as if they values, making it easier to compose multiple motions together:
 ```@example ramp
@@ -145,9 +142,7 @@ plot(T, composed_ramp.(T), xlabel = "t", ylabel="Smoothed Ramp",
      legend = :none, linewidth = 2, size = (600, 300))
 savefig("composed_ramp.svg"); nothing # hide
 ```
-```@raw html
-<object data="../composed_ramp.svg" type="image/svg+xml"></object>
-```
+![Composed ramp](composed_ramp.svg)
 
 ### Defining a profile
 
@@ -179,9 +174,7 @@ plot(T, [s.(T) c.(T)], xlabel = "t", color = ["#00BFFF" "#D4CA3A"],
      legend = :none, linewidth = 2)
 savefig("custom_profile.svg"); nothing # hide
 ```
-```@raw html
-<object data="../custom_profile.svg" type="image/svg+xml"></object>
-```
+![Custom profile](custom_profile.svg)
 
 ## Function Documentation
 
