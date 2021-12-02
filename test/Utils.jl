@@ -20,7 +20,7 @@ import PotentialFlow.Utils: @get, MappedVector
         buff = IOBuffer()
         show(buff, y)
         #@test String(take!(buff)) == "Vector{Float64} → typeof(cos) (0:2)"
-         @test String(take!(buff)) == string(typeof(y))*" → typeof(cos) (0:2)"
+         @test String(take!(buff)) == string(typeof(x))*" → typeof(cos) (0:2)"
 
     end
 end
