@@ -210,7 +210,6 @@ julia> self_induce_velocity!(vels, sys, 0.0);
 using PotentialFlow
 using Plots
 using Random
-clibrary(:colorbrewer)
 Random.seed!(1)
 default(colorbar_title=("Γ"), grid = false, ratio = 1, legend = :none, colorbar = :right, markerstrokealpha = 0, markersize = 5, size = (600, 400))
 ```
