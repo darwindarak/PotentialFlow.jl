@@ -48,7 +48,7 @@ julia> induce_velocity(0.0im, (vortex, source), t)
 0.5 - 0.5im
 
 julia> induce_velocity([0.0im, 1.0im, 1.0], (vortex, source), t)
-3-element Array{Complex{Float64},1}:
+3-element Vector{ComplexF64}:
                  0.5 - 0.5im
  0.09999999999999999 - 0.7im
                  0.5 - 0.5im

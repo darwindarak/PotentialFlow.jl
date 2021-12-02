@@ -53,7 +53,7 @@ However we can also have
   julia> targets = ComplexF64.(1:3);
 
   julia> induce_velocity(targets, src, 0.0)
-  3-element Array{Complex{Float64},1}:
+  3-element Vector{ComplexF64}:
    0.07957747154594767 + 0.07957747154594767im
    0.03183098861837907 + 0.06366197723675814im
    0.01591549430918953 + 0.0477464829275686im
@@ -63,7 +63,7 @@ However we can also have
   julia> targets₂ = Vortex.Point.(im*(1.0:3), 1.0);
 
   julia> induce_velocity(targets₂, src, 0.0)
-  3-element Array{Complex{Float64},1}:
+  3-element Vector{ComplexF64}:
                     0.0 + 0.0im
    -0.15915494309189535 + 0.0im
    -0.07957747154594767 + 0.0im
@@ -75,17 +75,17 @@ However we can also have
   julia> sys = (targets, (targets₂, targets₃));
 
   julia> induce_velocity(sys, src, 0.0)
-  (Complex{Float64}[0.0795775+0.0795775im, 0.031831+0.063662im, 0.0159155+0.0477465im], (Complex{Float64}[0.0+0.0im, -0.159155+0.0im, -0.0795775+0.0im], Complex{Float64}[0.0159155-0.0477465im, 0.031831-0.063662im, 0.0795775-0.0795775im]))
+  (ComplexF64[0.07957747154594767 + 0.07957747154594767im, 0.03183098861837907 + 0.06366197723675814im, 0.01591549430918953 + 0.0477464829275686im], (ComplexF64[0.0 + 0.0im, -0.15915494309189535 + 0.0im, -0.07957747154594767 + 0.0im], ComplexF64[0.01591549430918953 - 0.0477464829275686im, 0.03183098861837907 - 0.06366197723675814im, 0.07957747154594767 - 0.07957747154594767im]))
   ```
 
 Since the structure of these targets can get complicated, e.g. nested tuples), the library also provides a set of functions for creating and resizing the `velocity` variable for in-place computations.
 For example:
 ```jldoctest sources-targets
 julia> vels = allocate_velocity(sys)
-(Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im], (Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im], Complex{Float64}[0.0+0.0im, 0.0+0.0im, 0.0+0.0im]))
+(ComplexF64[0.0 + 0.0im, 0.0 + 0.0im, 0.0 + 0.0im], (ComplexF64[0.0 + 0.0im, 0.0 + 0.0im, 0.0 + 0.0im], ComplexF64[0.0 + 0.0im, 0.0 + 0.0im, 0.0 + 0.0im]))
 
 julia> induce_velocity!(vels, sys, src, 0.0)
-(Complex{Float64}[0.0795775+0.0795775im, 0.031831+0.063662im, 0.0159155+0.0477465im], (Complex{Float64}[0.0+0.0im, -0.159155+0.0im, -0.0795775+0.0im], Complex{Float64}[0.0159155-0.0477465im, 0.031831-0.063662im, 0.0795775-0.0795775im]))
+(ComplexF64[0.07957747154594767 + 0.07957747154594767im, 0.03183098861837907 + 0.06366197723675814im, 0.01591549430918953 + 0.0477464829275686im], (ComplexF64[0.0 + 0.0im, -0.15915494309189535 + 0.0im, -0.07957747154594767 + 0.0im], ComplexF64[0.01591549430918953 - 0.0477464829275686im, 0.03183098861837907 - 0.06366197723675814im, 0.07957747154594767 - 0.07957747154594767im]))
 ```
 
 The remaining sections of this page list the documentation for all the relevant methods for computing velocities.

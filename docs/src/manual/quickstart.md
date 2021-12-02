@@ -34,7 +34,7 @@ julia> N = 5;
 julia> zs = Complex.(randn(N), randn(N));
 
 julia> vortices = Vortex.Point.(zs .+ 1.5, rand(N))
-5-element Array{PotentialFlow.Points.Point{Float64},1}:
+5-element Vector{PotentialFlow.Points.Point{Float64, Float64}}:
  Vortex.Point(1.7972879845354617 + 0.31111133849833383im, 0.42471785049513144)
  Vortex.Point(1.882395967790608 + 2.2950878238373105im, 0.773223048457377)
  Vortex.Point(0.9023655232717689 - 2.2670863488005306im, 0.2811902322857298)
@@ -42,7 +42,7 @@ julia> vortices = Vortex.Point.(zs .+ 1.5, rand(N))
  Vortex.Point(0.660973145611236 + 0.43142152642291204im, 0.25137920979222494)
 
 julia> sources = Source.Point.(zs .- 1.5, rand(N))
-5-element Array{PotentialFlow.Points.Point{Complex{Float64}},1}:
+5-element Vector{PotentialFlow.Points.Point{ComplexF64, Float64}}:
  Source.Point(-1.2027120154645383 + 0.31111133849833383im, 0.02037486871266725)
  Source.Point(-1.117604032209392 + 2.2950878238373105im, 0.2877015122756894)
  Source.Point(-2.0976344767282313 - 2.2670863488005306im, 0.859512136087661)
@@ -91,7 +91,7 @@ julia> Elements.circulation(sys)
 1.939982714228534
 
 julia> Elements.circulation.(vortices)
-5-element Array{Float64,1}:
+5-element Vector{Float64}:
  0.42471785049513144
  0.773223048457377
  0.2811902322857298
@@ -99,7 +99,7 @@ julia> Elements.circulation.(vortices)
  0.25137920979222494
 
 julia> Elements.position.(sources)
-5-element Array{Complex{Float64},1}:
+5-element Vector{ComplexF64}:
  -1.2027120154645383 + 0.31111133849833383im
   -1.117604032209392 + 2.2950878238373105im
  -2.0976344767282313 - 2.2670863488005306im
@@ -134,7 +134,7 @@ The target can be
 - an array/tuple of vortex elements
   ```jldoctest quickstart
   julia> induce_velocity(vortices, sources, 0.0)
-  5-element Array{Complex{Float64},1}:
+  5-element Vector{ComplexF64}:
     0.06454384396015585 + 0.007898382618214123im
    0.053907048316969616 + 0.02790291832733651im
      0.0706678480701265 - 0.02711822881988212im
@@ -142,7 +142,7 @@ The target can be
     0.07894704527850091 + 0.01178636990942516im
 
   julia> induce_velocity(sources, sys, 0.0)
-  5-element Array{Complex{Float64},1}:
+  5-element Vector{ComplexF64}:
       0.1406920003437716 - 0.09680661285216872im
    -0.003388443511578354 - 0.004829334922251807im
      0.03508222004503095 - 0.10591880362792691im
@@ -155,7 +155,7 @@ The in-place version, `induce_velocity!(velocities, targets, source, t)`, comput
 For example:
 ```jldoctest quickstart
 julia> vel_vortices = zeros(ComplexF64, length(vortices))
-5-element Array{Complex{Float64},1}:
+5-element Vector{ComplexF64}:
  0.0 + 0.0im
  0.0 + 0.0im
  0.0 + 0.0im
@@ -165,7 +165,7 @@ julia> vel_vortices = zeros(ComplexF64, length(vortices))
 julia> induce_velocity!(vel_vortices, vortices, sources, 0.0);
 
 julia> vel_vortices
-5-element Array{Complex{Float64},1}:
+5-element Vector{ComplexF64}:
   0.06454384396015585 + 0.007898382618214123im
  0.053907048316969616 + 0.02790291832733651im
    0.0706678480701265 - 0.02711822881988212im
@@ -178,7 +178,7 @@ To make it easier to allocate velocities for more complex collections of vortex 
 julia> vels = allocate_velocity(sys);
 
 julia> typeof(vels)
-Tuple{Array{Complex{Float64},1},Array{Complex{Float64},1}}
+Tuple{Vector{ComplexF64}, Vector{ComplexF64}}
 ```
 The code above created a tuple containing two arrays of velocities, corresponding to the structure of `sys`.
 Similarly, there is also the `reset_velocity!(velocities, sources)` function, which resizes the entries in `velocities` to match the structure of `sources` if necessary, then sets all velocities to zero.

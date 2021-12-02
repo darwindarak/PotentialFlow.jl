@@ -144,7 +144,7 @@ continuous_streamfunction(::Vortex.Blob) = true
 continuous_streamfunction(::Source.Point) = false
 continuous_streamfunction(::Source.Blob) = false
 
-vortices = (Vortex.Point.(rand(10), rand(10)), 
+vortices = (Vortex.Point.(rand(10), rand(10)),
 	        Vortex.Blob.(rand(10), rand(10), rand())
 		   )
 
@@ -177,7 +177,7 @@ end
 is_desingularized(::Points.Point) = false
 is_desingularized(::Blobs.Blob) = true
 
-vortices = (Vortex.Point.(rand(2), rand(2)), 
+vortices = (Vortex.Point.(rand(2), rand(2)),
 	        Vortex.Blob.(rand(2), rand(2), rand())
 		   )
 
@@ -189,5 +189,5 @@ is_desingularized.((vortices, sources))
 
 # output
 
-((Bool[false, false], Bool[true, true]), (Bool[false, false], Bool[true, true]))
+((Bool[0, 0], Bool[1, 1]), (Bool[0, 0], Bool[1, 1]))
 ```

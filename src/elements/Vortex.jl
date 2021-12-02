@@ -31,7 +31,7 @@ Vortex.Point(1.0 + 0.0im, 1.0)
 julia> p(Γ = 2.0)
 Vortex.Point(1.0 + 0.0im, 2.0)
 ```
-"""
+""" Vortex.Point(::ComplexF64,::Float64)
 #const Point = Points.Point{Float64,Float64}
 const Point = Points.Point{T,R} where {T<: Real, R<:Real}
 Point(z::Complex{R},Γ::T) where {T<:Real,R<:Real} = Points.Point{T}(z,Γ)
@@ -68,7 +68,7 @@ Vortex.Blob(1.0 + 0.0im, 1.0, 0.1)
 julia> b(Γ = 2.0, δ = 0.01)
 Vortex.Blob(1.0 + 0.0im, 2.0, 0.01)
 ```
-"""
+""" Vortex.Blob(::ComplexF64,::Float64,::Float64)
 #const Blob = Blobs.Blob{Float64,Float64}
 const Blob = Blobs.Blob{T,R} where {T<:Real,R<:Real}
 Blob(z::Complex{R},Γ::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{T}(z,Γ,δ)
