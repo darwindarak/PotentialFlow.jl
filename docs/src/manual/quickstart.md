@@ -227,9 +227,7 @@ vels = allocate_velocity(sys)
 plot(sys, color = :reds, clim = (0, 1))
 savefig("initial_clusters.svg"); nothing # hide
 ```
-```@raw html
-<object data="../initial_clusters.svg" type="image/svg+xml"></object>
-```
+![Initial clusters](initial_clusters.svg)
 
 Given an array or tuple of vortex elements and their velocities, we can compute their positions after some time interval with the `advect!(x₊, x, ẋ, Δt)` function, where
 - `x₊` is where the new states are stored
@@ -247,6 +245,4 @@ end
 plot(sys, color = :reds, clim = (0, 1))
 savefig("final_clusters.svg"); nothing # hide
 ```
-```@raw html
-<object data="../final_clusters.svg" type="image/svg+xml"></object>
-```
+![Final clusters](final_clusters.svg)
