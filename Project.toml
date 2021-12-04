@@ -30,7 +30,7 @@ MacroTools = "0.5.6"
 MappedArrays = "0.3.0"
 PlotUtils = "1.0"
 RecipesBase = "1.0"
-Reexport = "0.2.0"
+Reexport = "0.2.0, 1"
 SchwarzChristoffel = "0.1.7"
 julia = "1"
 
