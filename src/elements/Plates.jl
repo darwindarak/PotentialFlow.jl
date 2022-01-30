@@ -13,7 +13,7 @@ using ..Blobs
 using ..Elements
 using ..RigidBodyMotions
 
-import ..Elements: position, impulse, circulation
+import ..Elements: position, impulse, angularimpulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
                   self_induce_velocity!, allocate_velocity, advect!
 
@@ -112,7 +112,7 @@ function impulse(p::Plate)
     -im*c*Γ - exp(im*α)*π*(0.5L)^2*im*(A[0] - 0.5A[2] - B₀)
 end
 function angularimpulse(p::Plate)
-    @get p (c, B₀, α, Γ, L, A)
+    @get p (c, B₀, B₁, α, Γ, L, A)
     -0.5*(c*conj(c)+L^2/8)*Γ - real(exp(im*α)*conj(c)*π*(0.5L)^2*(A[0] - 0.5A[2] - B₀)) -
           π*(0.25L)^3*(A[1]-A[3]-B₁)
 end
