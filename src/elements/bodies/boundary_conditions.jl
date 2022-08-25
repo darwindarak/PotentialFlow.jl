@@ -29,12 +29,15 @@ julia> b.img
 ```
 """
 function enforce_no_flow_through!(b::ConformalBody, ṗ, elements, t)
-    @get ṗ (ċ, α̇)
+    #@get ṗ (ċ, α̇, c̈, α̈)
+    ċ, c̈, α̇, α̈ = ṗ(t)
 
     # should set up images here
 
     b.ċ = ċ
     b.α̇ = α̇
+    b.c̈ = c̈
+    b.α̈ = α̈
 
     get_image!(b,elements)
 

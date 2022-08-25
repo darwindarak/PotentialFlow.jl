@@ -29,7 +29,7 @@ A type to store the plate's current kinematics
 - `α̈`: current angular acceleration
 - `kin`: a [`Kinematics`](@ref) structure
 
-The first three fields are meant as a cache of the current kinematics
+The first four fields are meant as a cache of the current kinematics
 while the `kin` field can be used to find the plate kinematics at any time.
 """
 mutable struct RigidBodyMotion
@@ -65,10 +65,10 @@ struct Constant{C <: Complex, A <: Real} <: Kinematics
     α̇::A
 end
 Constant(ċ, α̇) = Constant(complex(ċ), α̇)
-(c::Constant{C})(t) where C = c.ċ, zero(C), c.α̇, zero(C)
+(c::Constant{C})(t) where C = c.ċ, zero(C), c.α̇, zero(c.α̇)
 show(io::IO, c::Constant) = print(io, "Constant (ċ = $(c.ċ), α̇ = $(c.α̇))")
 
-# Define Kinematic structure for unsteady translation and rotation 
+# Define Kinematic structure for unsteady translation and rotation
 struct UnsteadyTransRot{C <: Complex, A <: Real} <: Kinematics
     ċ::C
     c̈::C
@@ -76,7 +76,7 @@ struct UnsteadyTransRot{C <: Complex, A <: Real} <: Kinematics
     α̈::A
 end
 UnsteadyTransRot(ċ, c̈, α̇, α̈) = UnsteadyTransRot(complex(ċ), complex(c̈),  α̇, α̈)
-(c::UnsteadyTransRot{C})(t) where C = c.ċ, c.c̈, c.α̇ , c.α̈
+(c::UnsteadyTransRot{C})(t) where C = c.ċ + c.c̈*t, c.c̈, c.α̇ + c.α̈*t, c.α̈
 show(io::IO, c::UnsteadyTransRot) = print(io, "Unsteady translation and rotation  (ċ = $(c.ċ), c̈ = $(c.c̈), α̇ = $(c.α̇ ), α̈ = $(c.α̈)")
 
 """

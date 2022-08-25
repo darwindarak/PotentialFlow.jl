@@ -47,6 +47,10 @@ mutable struct ConformalBody <: Element
     ċ::ComplexF64
     "angular velocity"
     α̇::Float64
+    "translational acceleration"
+    c̈::ComplexF64
+    "angular acceleration"
+    α̈::Float64
     "image singularities"
     img::Vector{Element}
 end
@@ -55,11 +59,13 @@ end
 ConformalBody(m::PowerMap,c,α) =
         ConformalBody(m,InverseMap(m),DerivativeMap(m),
         ComplexF64(c),α,ComplexF64[],rigid_transform(m.z,ComplexF64(c),α),ComplexF64(0),0.0,
+        ComplexF64(0),0.0,
         Points.Point{Float64}[])
 
 ConformalBody(m::ExteriorMap,c,α) =
         ConformalBody(m,InverseMap(m),DerivativeMap(m),
         ComplexF64(c),α,(1+1e-15)*m.preprev,rigid_transform(m.z,ComplexF64(c),α),ComplexF64(0),0.0,
+        ComplexF64(0),0.0,
         Points.Point{Float64}[])
 
 ConformalBody(m::ConformalMap) = ConformalBody(m,ComplexF64(0),0.0)
