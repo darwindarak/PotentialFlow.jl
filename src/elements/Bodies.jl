@@ -363,7 +363,7 @@ function transform_velocity(win,ζ::ComplexF64,b::ConformalBody)
   wout /= conj(dz̃*exp(im*b.α))
 end
 
-transform_velocity(win,ζ::Vector{ComplexF64},b::ConformalBody) =
+transform_velocity(win,ζ::Array{ComplexF64,N},b::ConformalBody) where {N} =
       map((x,y) -> transform_velocity(x,y,b),win,ζ)
 
 function transform_velocity!(wout,win,targ::ConformalBody,b::ConformalBody)
