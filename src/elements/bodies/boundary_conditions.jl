@@ -41,6 +41,16 @@ function enforce_no_flow_through!(b::ConformalBody, ṗ, elements, t)
     nothing
 end
 
+"""
+    clear_images!(b::ConformalBody)
+
+Return the body `b` with its images removed.
+"""
+function clear_images!(b)
+    b.img = Element[]
+    return b
+end
+
 Elements.image(z::ComplexF64,b::ConformalBody) = isinf(z) ? complex(0.0) : 1.0/conj(z)
 
 Elements.image(s::T,b::ConformalBody) where T <: Union{Blob,Point} = Elements.image(s.z,b)

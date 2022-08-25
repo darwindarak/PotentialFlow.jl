@@ -22,7 +22,8 @@ import SchwarzChristoffel: Polygon, ExteriorMap, ConformalMap, PowerMap, addedma
 import ..Utils:@get, MappedVector
 
 export ConformalBody,Polygon,enforce_no_flow_through!,normal,tangent,
-          transform_velocity!,transform_velocity,unit_impulse,addedmass
+          transform_velocity!,transform_velocity,unit_impulse,addedmass,
+          clear_images!
 
 
 mutable struct ConformalBody <: Element
@@ -377,6 +378,9 @@ end
 transform_velocity!(wout,win,sheet::Sheet,b) = transform_velocity!(wout,win,sheet.blobs,b)
 
 include("bodies/boundary_conditions.jl")
+include("bodies/basisfields.jl")
+include("bodies/pressure.jl")
+
 
 function Elements.complexpotential(ζ::ComplexF64, b::ConformalBody)
   @get b (m, minv, c, α, ċ, α̇, img)
