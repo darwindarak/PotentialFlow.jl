@@ -1,11 +1,17 @@
 #=
  Routines that provide the unit basis fields for a given body
  Note that the unit velocity fields are provided in standard
- complex form, w = u - iv
+ complex form, w = u - iv.
+
+ The conventions of these routines:
+ wc to denote ŵ (velocity in the circle plane)
+ ζ to renote a point in the circle plane
 =#
 
 export Fbt1, Fbt2, Fbr, Fv, wbt1, wbt2, wbr, winf1, winf2, wrinf, wv,
-        ŵbt1, ŵbt2, ŵbr, ŵv
+        wcbt1, wcbt2, wcbr, wcv
+
+#### Basis complex potentials ####
 
 """
     Fbt1(ζ,b::ConformalBody)
@@ -13,7 +19,7 @@ export Fbt1, Fbt2, Fbr, Fv, wbt1, wbt2, wbr, winf1, winf2, wrinf, wv,
 Calculate the complex potential at `ζ` in the circle plane due to motion of body `b` with unit velocity
 in the x̃ direction (of its own coordinate system).
 """
-@inline Fbt1(ζ,b::Bodies.ConformalBody) = Elements.complexpotential(ζ,_set_motion_in_quiescent(b,1.0,0.0,0.0))
+@inline Fbt1(ζ,b::ConformalBody) = Elements.complexpotential(ζ,_set_motion_in_quiescent(b,1.0,0.0,0.0))
 
 """
     Fbt2(ζ,b::ConformalBody)
@@ -21,7 +27,7 @@ in the x̃ direction (of its own coordinate system).
 Calculate the complex potential at `ζ` in the circle plane due to motion of body `b` with unit velocity
 in the ỹ direction (of its own coordinate system).
 """
-@inline Fbt2(ζ,b::Bodies.ConformalBody) = Elements.complexpotential(ζ,_set_motion_in_quiescent(b,0.0,1.0,0.0))
+@inline Fbt2(ζ,b::ConformalBody) = Elements.complexpotential(ζ,_set_motion_in_quiescent(b,0.0,1.0,0.0))
 
 """
     Fbr(ζ,b::ConformalBody)
@@ -29,7 +35,7 @@ in the ỹ direction (of its own coordinate system).
 Calculate the complex potential at `ζ` in the circle plane due to motion of body `b` with unit angular velocity
 about its reference point
 """
-@inline Fbr(ζ,b::Bodies.ConformalBody) = Elements.complexpotential(ζ,_set_motion_in_quiescent(b,0.0,0.0,1.0))
+@inline Fbr(ζ,b::ConformalBody) = Elements.complexpotential(ζ,_set_motion_in_quiescent(b,0.0,0.0,1.0))
 
 """
     Fv(ζ,b::ConformalBody,v::Element)
@@ -37,44 +43,132 @@ about its reference point
 Calculate the complex potential at `ζ` in the circle plane due to a unit-strength vortex at the location of `v`,
 along with its images inside the body `b`. It is presumed that the location of `v` is given in the circle plane.
 """
-@inline Fv(ζ,b::Bodies.ConformalBody,v::Element) = Elements.complexpotential(ζ,(_set_image_for_stationary_body(b,v,Val(true)),_unit_strength_copy(v)))
+@inline Fv(ζ,b::ConformalBody,v::Element) = Elements.complexpotential(ζ,(_set_image_for_stationary_body(b,v,Val(true)),_unit_strength_copy(v)))
+
+#### Basis velocities in circle plane ####
 
 """
-    ŵbt1(ζ,b::ConformalBody)
-
-Calculate the complex velocity ``ŵ = û-iv̂`` at `ζ` in the circle plane due to motion of body `b` with unit velocity
-in the x̃ direction (of its own coordinate system).
-"""
-@inline ŵbt1(ζ,b::Bodies.ConformalBody) = conj(_ŵbt1_conj(ζ,b))
-
-"""
-    ŵbt2(ζ,b::ConformalBody)
+    wcbt1(ζ,b::ConformalBody)
 
 Calculate the complex velocity ``ŵ = û-iv̂`` at `ζ` in the circle plane due to motion of body `b` with unit velocity
 in the x̃ direction (of its own coordinate system).
 """
-@inline ŵbt2(ζ,b::Bodies.ConformalBody) = conj(_ŵbt2_conj(ζ,b))
+@inline wcbt1(ζ,b::ConformalBody) = conj(_wcbt1_conj(ζ,b))
 
 """
-    ŵbr(ζ,b::ConformalBody)
+    wcbt2(ζ,b::ConformalBody)
+
+Calculate the complex velocity ``ŵ = û-iv̂`` at `ζ` in the circle plane due to motion of body `b` with unit velocity
+in the x̃ direction (of its own coordinate system).
+"""
+@inline wcbt2(ζ,b::ConformalBody) = conj(_wcbt2_conj(ζ,b))
+
+"""
+    wcbr(ζ,b::ConformalBody)
 
 Calculate the complex velocity in the circle plane ``ŵ = û-iv̂`` at `ζ` in the circle plane due to motion of body `b` with unit angular velocity
 about its reference point.
 """
-@inline ŵbr(ζ,b::Bodies.ConformalBody) = conj(_ŵbr_conj(ζ,b))
+@inline wcbr(ζ,b::ConformalBody) = conj(_wcbr_conj(ζ,b))
 
 """
-    ŵv(ζ,b::ConformalBody,v::Element)
+    wcv(ζ,b::ConformalBody,v::Element)
 
 Calculate the complex velocity ``ŵ = û-iv̂`` at `ζ` in the circle plane due to a unit-strength vortex at the location of `v`,
 along with its images inside the body `b`. It is presumed that the location of `v` is given in the circle plane.
 """
-@inline ŵv(ζ,b::Bodies.ConformalBody,v::Element) = conj(_ŵv_conj(ζ,b,v))
+@inline wcv(ζ,b::ConformalBody,v::Element) = conj(_wcv_conj(ζ,b,v))
 
-@inline _ŵbt1_conj(ζ,b::Bodies.ConformalBody) = induce_velocity(ζ,_set_motion_in_quiescent(b,1.0,0.0,0.0),0.0)
-@inline _ŵbt2_conj(ζ,b::Bodies.ConformalBody) = induce_velocity(ζ,_set_motion_in_quiescent(b,0.0,1.0,0.0),0.0)
-@inline _ŵbr_conj(ζ,b::Bodies.ConformalBody) = induce_velocity(ζ,_set_motion_in_quiescent(b,0.0,0.0,1.0),0.0)
-@inline _ŵv_conj(ζ,b::Bodies.ConformalBody,v::Element) = induce_velocity(ζ,(_set_image_for_stationary_body(b,v,Val(true)),_unit_strength_copy(v)),0.0)
+@inline _wcbt1_conj(ζ,b::ConformalBody) = induce_velocity(ζ,_set_motion_in_quiescent(b,1.0,0.0,0.0),0.0)
+@inline _wcbt2_conj(ζ,b::ConformalBody) = induce_velocity(ζ,_set_motion_in_quiescent(b,0.0,1.0,0.0),0.0)
+@inline _wcbr_conj(ζ,b::ConformalBody) = induce_velocity(ζ,_set_motion_in_quiescent(b,0.0,0.0,1.0),0.0)
+@inline _wcv_conj(ζ,b::ConformalBody,v::Element) = induce_velocity(ζ,(_set_image_for_stationary_body(b,v,Val(true)),_unit_strength_copy(v)),0.0)
+
+#### Derivatives of circle-plane basis velocity fields ####
+"""
+    dwcbt1dζ(ζ,b::ConformalBody)
+
+Derivative with respect to ``\\zeta`` of the complex velocity ``ŵ = û-iv̂`` at `ζ` in the circle plane due to motion of body `b` with unit velocity
+in the x̃ direction (of its own coordinate system).
+"""
+@inline dwcbt1dζ(ζ,b::ConformalBody) = dinduce_velocity_dz(ζ,_set_motion_in_quiescent(b,1.0,0.0,0.0),0.0)
+
+"""
+    dwcbt1dζstar(ζ,b::ConformalBody)
+
+Derivative with respect to ``\\zeta^*`` of the complex velocity ``ŵ = û-iv̂`` at `ζ` in the circle plane due to motion of body `b` with unit velocity
+in the x̃ direction (of its own coordinate system).
+"""
+@inline dwcbt1dζstar(ζ,b::ConformalBody) = dinduce_velocity_dzstar(ζ,_set_motion_in_quiescent(b,1.0,0.0,0.0),0.0)
+
+"""
+    dwcbt2dζ(ζ,b::ConformalBody)
+
+Derivative with respect to ``\\zeta`` of the complex velocity ``ŵ = û-iv̂`` at `ζ` in the circle plane due to motion of body `b` with unit velocity
+in the x̃ direction (of its own coordinate system).
+"""
+@inline dwcbt2dζ(ζ,b::ConformalBody) = dinduce_velocity_dz(ζ,_set_motion_in_quiescent(b,0.0,1.0,0.0),0.0)
+
+"""
+    dwcbt2dζstar(ζ,b::ConformalBody)
+
+Derivative with respect to ``\\zeta^*`` of the complex velocity ``ŵ = û-iv̂`` at `ζ` in the circle plane due to motion of body `b` with unit velocity
+in the x̃ direction (of its own coordinate system).
+"""
+@inline dwcbt2dζstar(ζ,b::ConformalBody) = dinduce_velocity_dzstar(ζ,_set_motion_in_quiescent(b,0.0,1.0,0.0),0.0)
+
+"""
+    dwcbrdζ(ζ,b::ConformalBody)
+
+Derivative with respect to ``\\zeta`` of the complex velocity in the circle plane ``wc = û-iv̂`` at `ζ` in the circle plane due to motion of body `b` with unit angular velocity
+about its reference point.
+"""
+@inline dwcbrdζ(ζ,b::ConformalBody) = dinduce_velocity_dz(ζ,_set_motion_in_quiescent(b,0.0,0.0,1.0),0.0)
+
+"""
+    dwcbrdζstar(ζ,b::ConformalBody)
+
+Derivative with respect to ``\\zeta^*`` of the complex velocity in the circle plane ``wc = û-iv̂`` at `ζ` in the circle plane due to motion of body `b` with unit angular velocity
+about its reference point.
+"""
+@inline dwcbrdζstar(ζ,b::ConformalBody) = dinduce_velocity_dzstar(ζ,_set_motion_in_quiescent(b,0.0,0.0,1.0),0.0)
+
+
+"""
+    dwcvdζ(ζ,b::ConformalBody,v::Element)
+
+Derivative of vortex-induced basis velocity at `ζ` (in circle plane) with respect to ``\\zeta``
+"""
+dwcvdζ(ζ,b::Bodies.ConformalBody,v::Element) = dinduce_velocity_dz(ζ,(_set_image_for_stationary_body(b,v,Val(true)),_unit_strength_copy(v)),0.0)
+
+"""
+    dwcvdζstar(ζ,b::ConformalBody,v::Element)
+
+Derivative of vortex-induced basis velocity at `ζ` (in circle plane) with respect to ``\\zeta^*``
+"""
+dwcvdζstar(ζ,b::Bodies.ConformalBody,v::Element) = dinduce_velocity_dzstar(ζ,_unit_strength_copy(v),0.0)
+
+"""
+    dwcvdζv(ζ,b::ConformalBody,v::Element)
+
+Derivative of vortex-induced basis velocity at `ζ` (in circle plane) with respect to
+the change of position of element `v`.
+"""
+dwcvdζv(ζ,b::Bodies.ConformalBody,v::Element) = -dinduce_velocity_dz(ζ,_unit_strength_copy(v),0.0)
+
+"""
+    dwcvdζvstar(ζ,b::ConformalBody,v::Element)
+
+Derivative of vortex-induced basis velocity at `ζ` (in circle plane) with respect to
+the change of conjugate position of element `v`.
+"""
+function dwcvdζvstar(ζ,b::Bodies.ConformalBody,v::Element)
+  b_img = _set_image_for_stationary_body(b,v,Val(false))
+  img = first(b_img.img)
+  return -dinduce_velocity_dzstar(ζ,_unit_strength_copy(v),0.0) + dinduce_velocity_dz(ζ,b_img,0.0)*position(img)^2
+end
+
+#### Physical plane basis velocity fields ####
 
 
 """
@@ -84,7 +178,7 @@ Calculate the complex velocity ``w = u-iv`` in the physical plane at
 the location mapped from `ζ` in the circle plane due to motion of body `b` with unit velocity
 in the x̃ direction (of its own coordinate system).
 """
-@inline wbt1(ζ,b::Bodies.ConformalBody) = conj(Bodies.transform_velocity(_ŵbt1_conj(ζ,b),ζ,b))
+@inline wbt1(ζ,b::Bodies.ConformalBody) = conj(Bodies.transform_velocity(_wcbt1_conj(ζ,b),ζ,b))
 
 """
     wbt2(ζ,b::ConformalBody)
@@ -93,7 +187,7 @@ Calculate the complex velocity ``w = u-iv`` in the physical plane at
 the location mapped from `ζ` in the circle plane due to motion of body `b` with unit velocity
 in the ỹ direction (of its own coordinate system).
 """
-@inline wbt2(ζ,b::Bodies.ConformalBody) = conj(Bodies.transform_velocity(_ŵbt2_conj(ζ,b),ζ,b))
+@inline wbt2(ζ,b::Bodies.ConformalBody) = conj(Bodies.transform_velocity(_wcbt2_conj(ζ,b),ζ,b))
 
 """
     wbr(ζ,b::ConformalBody)
@@ -102,7 +196,7 @@ Calculate the complex velocity ``w = u-iv`` in the physical plane at
 the location mapped from `ζ` in the circle plane due to motion of body `b` with unit velocity
 angular velocity.
 """
-@inline wbr(ζ,b::Bodies.ConformalBody) = conj(Bodies.transform_velocity(_ŵbr_conj(ζ,b),ζ,b))
+@inline wbr(ζ,b::Bodies.ConformalBody) = conj(Bodies.transform_velocity(_wcbr_conj(ζ,b),ζ,b))
 
 
 """
@@ -130,7 +224,7 @@ Calculate the complex velocity ``w = u-iv`` in the physical plane at
 the location mapped from `ζ` in the circle plane due to unit angular velocity at infinity
 about the body's reference point.
 """
-@inline wrinf(ζ,b::Bodies.ConformalBody) = -im*conj(b.m.(ζ)) .- wbr(ζ,b)
+@inline wrinf(ζ,b::Bodies.ConformalBody) = conj(im*b.m.(ζ)*exp(im*b.α)) .- wbr(ζ,b)
 
 """
     wv(ζ,b::ConformalBody,v::Element)
@@ -139,8 +233,72 @@ Calculate the complex velocity ``w = u-iv`` in the physical plane at
 the location mapped from `ζ` in the circle plane due to a unit-strength vortex at the location of `v`,
 along with its images inside the body `b`. It is presumed that the location of `v` is given in the circle plane.
 """
-@inline wv(ζ,b::Bodies.ConformalBody,v::Element) = conj(Bodies.transform_velocity(_ŵv_conj(ζ,b,v),ζ,b))
+@inline wv(ζ,b::Bodies.ConformalBody,v::Element) = conj(Bodies.transform_velocity(_wcv_conj(ζ,b,v),ζ,b))
 
+#### Derivatives of physical plane basis velocity fields ####
+
+"""
+    dwvdz(ζ,b::ConformalBody,v::Element)
+
+Derivative with respect to ``z`` of basis vortex-induced velocity ``w_v`` from vortex `v`
+at physical plane mapped from location `ζ` (in circle plane).
+"""
+@inline dwvdz(ζ,b::Bodies.ConformalBody,v::Element) = conj(Bodies.transform_velocity(conj(_dwvdζ(ζ,b,v)),ζ,b))
+
+"""
+    dwvdzstar(ζ,b::ConformalBody,v::Element)
+
+Derivative with respect to conjugate of ``z`` of basis vortex-induced velocity ``w_v`` from vortex `v`
+at physical plane mapped from location `ζ` (in circle plane).
+"""
+@inline dwvdzstar(ζ,b::Bodies.ConformalBody,v::Element) = Bodies.transform_velocity(_dwvdζstar(ζ,b,v),ζ,b)
+
+# Derivative of wbt1, wbt2, wbr (in physical plane) with respect to zeta, zeta* (in circle plane)
+for w in [:bt1,:bt2,:br]
+    wc = Symbol("wc",w)
+    dwcdζ = Symbol("d",wc,"dζ")
+    dwdζ = Symbol("_dw",w,"dζ")
+    dwcdζstar = Symbol("d",wc,"dζstar")
+    dwdζstar = Symbol("_dw",w,"dζstar")
+
+    @eval function $dwdζ(ζ,b::Bodies.ConformalBody)
+        dz̃, ddz̃ = b.dm(ζ)
+        out = Bodies.$dwcdζ(ζ,b) - ddz̃/dz̃*Bodies.$wc(ζ,b)
+        return conj(Bodies.transform_velocity(conj(out),ζ,b))
+    end
+
+    @eval function $dwdζstar(ζ,b::Bodies.ConformalBody)
+        out = Bodies.$dwcdζstar(ζ,b)
+        return conj(Bodies.transform_velocity(conj(out),ζ,b))
+    end
+end
+
+# Derivative of wv (in physical plane) with respect to zeta (in circle plane)
+function _dwvdζ(ζ,b::Bodies.ConformalBody,v::Element)
+  dz̃, ddz̃ = b.dm(ζ)
+  out = dwcvdζ(ζ,b,v) - ddz̃/dz̃*wcv(ζ,b,v)
+  return conj(Bodies.transform_velocity(conj(out),ζ,b))
+end
+
+# Derivative of wv (in physical plane) with respect to zeta* (in circle plane)
+function _dwvdζstar(ζ,b::Bodies.ConformalBody,v::Element)
+  out = dwcvdζstar(ζ,b,v)
+  return conj(Bodies.transform_velocity(conj(out),ζ,b))
+end
+
+_dwinf1dζ(ζ,b::Bodies.ConformalBody) = -_dwbt1dζ(ζ,b)
+_dwinf2dζ(ζ,b::Bodies.ConformalBody) = -_dwbt2dζ(ζ,b)
+_dwrinfdζ(ζ,b::Bodies.ConformalBody) = -_dwbrdζ(ζ,b)
+
+_dwinf1dζstar(ζ,b::Bodies.ConformalBody) = -_dwbt1dζstar(ζ,b)
+_dwinf2dζstar(ζ,b::Bodies.ConformalBody) = -_dwbt2dζstar(ζ,b)
+function _dwrinfdζstar(ζ,b::Bodies.ConformalBody)
+  dz̃, ddz̃ = b.dm(ζ)
+  return conj(im*dz̃*exp(im*b.α)) - _dwbrdζstar(ζ,b)
+end
+
+
+#### Some utilities ####
 
 
 function _set_motion_in_quiescent(b_orig,Ũ,Ṽ,Ω)

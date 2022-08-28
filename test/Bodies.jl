@@ -36,5 +36,14 @@
     @test b₊.α ≈ 1.0
     end
 
+    @testset "Derivatives" begin
+
+    a1 = 0.5; b1 = 0.1; ccoeff = ComplexF64[0.5(a1+b1),0,0.5(a1-b1)]
+    b = Bodies.ConformalBody(ccoeff,complex(0.0),0.0)
+
+    
+
+
+    end
 
 end

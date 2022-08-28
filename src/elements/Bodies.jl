@@ -15,7 +15,8 @@ using ..RigidBodyMotions
 
 import ..Elements: position, impulse, circulation
 import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, self_induce_velocity,
-                  self_induce_velocity!, allocate_velocity, advect!, advect, streamfunction, complexpotential
+                  self_induce_velocity!, allocate_velocity, advect!, advect, streamfunction, complexpotential,
+                  dinduce_velocity_dz, dinduce_velocity_dzstar
 import SchwarzChristoffel: Polygon, ExteriorMap, ConformalMap, PowerMap, addedmass,
                             InverseMap, DerivativeMap, coefficients, LinkedLines
 
@@ -171,12 +172,12 @@ julia> Bodies.tangent(exp(im*0),exp(im*π/4),b)
 0.7071067811865478
 ```
 """
-function tangent(ζ::ComplexF64,v::ComplexF64,b::ConformalBody)
+function tangent(ζ::Complex{T},v::Complex{S},b::ConformalBody) where {T,S}
   dz̃, ddz̃ = b.dm(ζ)
   imag(v*conj(ζ*dz̃*exp(im*b.α))/abs(dz̃))
 end
 
-tangent(ζ::Vector{ComplexF64},v::Vector{ComplexF64},b::ConformalBody) =
+tangent(ζ::Vector{T},v::Vector{S},b::ConformalBody) where {T<:Complex,S<:Complex} =
         map((x,y) -> tangent(x,y,b),ζ,v)
 
 addedmass(b::ConformalBody) = addedmass(b.m)
@@ -187,7 +188,7 @@ function allocate_conftransform(::ConformalBody)
     nothing
 end
 
-Elements.conftransform(ζ::ComplexF64,b::ConformalBody) = b.c + b.m(ζ)*exp(im*b.α)
+Elements.conftransform(ζ::Complex{T},b::ConformalBody) where {T} = b.c + b.m(ζ)*exp(im*b.α)
 
 Elements.conftransform(s::Point{T},b::ConformalBody) where {T} =
                 Point{T}(Elements.conftransform(s.z,b),s.S)
@@ -203,7 +204,7 @@ function allocate_inv_conftransform(::ConformalBody)
     nothing
 end
 
-Elements.inverse_conftransform(z::ComplexF64,b::ConformalBody) = b.minv((z-b.c)*exp(-im*b.α))
+Elements.inverse_conftransform(z::Complex{T},b::ConformalBody) where {T} = b.minv((z-b.c)*exp(-im*b.α))
 
 Elements.inverse_conftransform(s::Point{T},b::ConformalBody) where {T} =
                 Point{T}(Elements.inverse_conftransform(s.z,b),s.S)
@@ -219,7 +220,7 @@ function allocate_jacobian(::ConformalBody)
     nothing
 end
 
-function Elements.jacobian(ζ::ComplexF64,b::ConformalBody)
+function Elements.jacobian(ζ::Complex{T},b::ConformalBody) where {T}
   dz, ddz = b.dm(ζ)
   return dz
 end
@@ -237,7 +238,7 @@ function self_induce_velocity!(motion, ::ConformalBody, t)
     motion
 end
 
-function induce_velocity(ζ::ComplexF64, b::ConformalBody, t)
+function induce_velocity(ζ::Complex{T}, b::ConformalBody, t) where {T}
   # Also, this is the velocity in the circle plane, not physical plane
     @get b (m, minv, dm, c, α, ċ, α̇, img)
     @get m (ps,)
@@ -269,6 +270,35 @@ induce_velocity(target::T,b::ConformalBody, t) where
             T <: Union{Blob,Point} = induce_velocity(target.z,b,t)
 
 induce_velocity(f::Freestream,b::ConformalBody, t) = -im*b.α̇*f.U
+
+
+function dinduce_velocity_dz(ζ::Complex{T}, b::ConformalBody, t) where {T}
+  # Also, this is the velocity in the circle plane, not physical plane
+    @get b (m, minv, dm, c, α, ċ, α̇, img)
+    @get m (ps,)
+    @get ps (ccoeff,dcoeff)
+
+    #ζ = minv(z)
+
+    dz̃, ddz̃ = dm(ζ)
+
+    c̃̇ = ċ*exp(-im*α)
+
+    ζ⁻ˡ = 1/ζ^3
+    dw̃dζ = -2.0*c̃̇*conj(ccoeff[1])*ζ⁻ˡ + conj(c̃̇)*ddz̃
+    for l = 2:length(dcoeff)
+        dw̃dζ -= im*(l-1)*l*α̇*dcoeff[l]*ζ⁻ˡ
+        ζ⁻ˡ /= ζ
+    end
+
+    # add the influence of images
+    dw̃dζ += dinduce_velocity_dz(ζ,img,t)
+
+    return dw̃dζ
+
+end
+
+dinduce_velocity_dzstar(ζ::Complex{T}, b::ConformalBody, t) where {T} = zero(ζ)
 
 """
     transform_velocity!(wout, win, targets, body::ConformalBody)
@@ -363,14 +393,14 @@ function transform_velocity(win,targ::T,b::ConformalBody) where T <: Union{Blob,
 end
 
 
-function transform_velocity(win,ζ::ComplexF64,b::ConformalBody)
+function transform_velocity(win,ζ::Complex{T},b::ConformalBody) where {T}
   wout = win
   z̃ = b.m(ζ)
   dz̃, ddz̃ = b.dm(ζ)
   wout /= conj(dz̃*exp(im*b.α))
 end
 
-transform_velocity(win,ζ::Array{ComplexF64,N},b::ConformalBody) where {N} =
+transform_velocity(win,ζ::Array{T,N},b::ConformalBody) where {T<:Complex,N} =
       map((x,y) -> transform_velocity(x,y,b),win,ζ)
 
 function transform_velocity!(wout,win,targ::ConformalBody,b::ConformalBody)
@@ -388,7 +418,7 @@ include("bodies/basisfields.jl")
 include("bodies/pressure.jl")
 
 
-function Elements.complexpotential(ζ::ComplexF64, b::ConformalBody)
+function Elements.complexpotential(ζ::Complex{T}, b::ConformalBody) where {T}
   @get b (m, minv, c, α, ċ, α̇, img)
   @get m (ps,)
   @get ps (ccoeff,dcoeff)
@@ -409,7 +439,7 @@ function Elements.complexpotential(ζ::ComplexF64, b::ConformalBody)
 
 end
 
-function Elements.streamfunction(ζ::ComplexF64, b::ConformalBody)
+function Elements.streamfunction(ζ::Complex{T}, b::ConformalBody) where {T}
   @get b (m, minv, c, α, ċ, α̇, img)
   @get m (ps,)
   @get ps (ccoeff,dcoeff)
@@ -481,17 +511,17 @@ function advect!(body₊::ConformalBody, body₋::ConformalBody, ṗ::RigidBodyM
 
     @get body₊ (m, c, α)
 
-    @. body₊.zs = rigid_transform(m.z,ComplexF64(c),α)
+    @. body₊.zs = rigid_transform(m.z,complex(c),α)
 
     return body₊
 end
 
-function advect!(f₊::Freestream,f₋::Freestream,w::ComplexF64, Δt)
+function advect!(f₊::Freestream,f₋::Freestream,w::Complex{T}, Δt) where {T}
   f₊ = advect(f₋::Freestream, w, Δt)
   return f₊
 end
 
-advect(f₋::Freestream, w::ComplexF64, Δt) = Freestream(f₋.U+w*Δt)
+advect(f₋::Freestream, w::Complex{T}, Δt) where {T} = Freestream(f₋.U+w*Δt)
 
 function Elements.impulse(body::ConformalBody)
 
@@ -526,7 +556,7 @@ vortex sheet on the conformally mapped `body` (its image vortex)
 In both cases, the position associated with `src` is interpreted in the
 circle plane of the conformal map.
 """
-unit_impulse(ζ::ComplexF64, body::ConformalBody) =
+unit_impulse(ζ::Complex{T}, body::ConformalBody) where {T} =
           -im*body.m.ps.ccoeff[1]*(ζ - Elements.image(ζ))
 
 unit_impulse(src, body::ConformalBody) = unit_impulse(Elements.position(src), body)

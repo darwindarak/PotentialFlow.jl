@@ -4,7 +4,7 @@ export Blob
 
 using ..Elements
 import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect,
-                  allocate_velocity
+                  allocate_velocity, allocate_dveldz, allocate_dveldzstar, dinduce_velocity_dz, dinduce_velocity_dzstar
 
 #== Type definition ==#
 
@@ -59,20 +59,37 @@ Elements.streamfunction(z::Complex{T}, b::Blob) where {T} = real(-0.5b.S*log(z -
 
 Elements.complexpotential(z::Complex{T}, b::Blob) where {T} = -0.5im*b.S*log(z - b.z)/π
 
-
+# This is the conjugate (K_delta)* of the regularized Cauchy kernel
 blob_kernel(z, δ) = 0.5im*z/(π*(abs2(z) + δ^2))
+
+# This is d(K_delta)*/dz* = (dK_delta/dz)*
+dblob_kernel_dzstar(z, δ) = -0.5im*z^2/(π*(abs2(z) + δ^2)^2)
+
+# This is d(K_delta)*/dz = (dK_delta/dz*)*
+dblob_kernel_dz(z, δ) = 0.5im*δ^2/(π*(abs2(z) + δ^2)^2)
+
 
 # ensures that the velocity is of same type as position
 allocate_velocity(v::Vector{Blob{T,R}}) where {T,R} = zeros(Complex{R},length(v))
+allocate_dveldz(v::Vector{Blob{T,R}}) where {T,R} = zeros(Complex{R},length(v))
+allocate_dveldzstar(v::Vector{Blob{T,R}}) where {T,R} = zeros(Complex{R},length(v))
+
 
 function induce_velocity(z::Complex{T}, b::Blob, t) where {T}
     b.S'*blob_kernel(z - b.z, b.δ)
 end
 
-
 function induce_velocity(target::Blob, source::Blob, t)
     δ = √(0.5(target.δ^2 + source.δ^2))
     source.S'*blob_kernel(target.z - source.z, δ)
+end
+
+function dinduce_velocity_dz(z::Complex{T}, b::Blob, t) where {T}
+    b.S*conj(dblob_kernel_dzstar(z - b.z,b.δ))
+end
+
+function dinduce_velocity_dzstar(z::Complex{T}, b::Blob, t) where {T}
+    b.S*conj(dblob_kernel_dz(z - b.z,b.δ))
 end
 
 function mutually_induce_velocity!(ws₁, ws₂,

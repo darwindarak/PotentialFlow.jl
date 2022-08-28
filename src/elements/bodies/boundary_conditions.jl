@@ -54,7 +54,7 @@ function clear_images!(b)
     return b
 end
 
-Elements.image(z::ComplexF64,b::ConformalBody) = isinf(z) ? complex(0.0) : 1.0/conj(z)
+Elements.image(z::Complex{T},b::ConformalBody) where {T} = isinf(z) ? complex(0.0) : 1.0/conj(z)
 
 Elements.image(s::T,b::ConformalBody) where T <: Union{Blob,Point} = Elements.image(s.z,b)
 

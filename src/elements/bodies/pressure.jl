@@ -47,13 +47,14 @@ Calculates the derivative of the scalar potential field ``\\phi`` with respect t
 the body-fixed coordinates of element `v`, also accounting for the change in the image of `v`.
 """
 function dphivdzv(ζ,b::Bodies.ConformalBody,v::Element)
-    return conj(Bodies.transform_velocity(_dphivdzetav_conj(ζ,b,v),v.z,b))
+    return conj(Bodies.transform_velocity(_dphivdζv_conj(ζ,b,v),v.z,b))
 end
 
-function _dphivdzetav_conj(ζ,b::Bodies.ConformalBody,v::Element)
+function _dphivdζv_conj(ζ,b::Bodies.ConformalBody,v::Element)
     out = induce_velocity(ζ,_unit_strength_copy(v),0.0)
     b_img = _set_image_for_stationary_body(b,v,Val(false))
-    out -= conj(induce_velocity(ζ,b_img,0.0)/Elements.position(v)^2)
+    img = first(b_img.img)
+    out -= conj(induce_velocity(ζ,b_img,0.0))*Elements.position(img)^2
     return -0.5*out
 end
 
@@ -66,6 +67,54 @@ it makes the Routh correction.
 """
 @inline wvv(targ::Element,src::Element,b::Bodies.ConformalBody) = wv(targ.z,b,src) +
                                                                    conj(Bodies.transform_velocity(_routh_conj(targ.z,b,Val(targ==src)),targ.z,b))
+
+#### Derivatives ####
+"""
+    d2phivdζv2(ζ,b::ConformalBody,v::Element)
+
+Calculates the second derivative of the scalar potential field ``\\phi`` with respect to a change in
+the body-fixed coordinates of element `v`, also accounting for the change in the image of `v`.
+"""
+function d2phivdζv2(ζ,b::ConformalBody,v::Element)
+    out = dinduce_velocity_dz(ζ,_unit_strength_copy(v),0.0)
+    b_img = _set_image_for_stationary_body(b,v,Val(false))
+    img = first(b_img.img)
+    out -= 2.0*induce_velocity(ζ,b_img,0.0)*conj(position(img)^3)
+    out += conj(dinduce_velocity_dz(ζ,b_img,0.0)*position(img)^4)
+    return 0.5*out
+end
+
+"""
+    d2phivdζv2(ζ,b::ConformalBody,v::Element)
+
+Calculates the second derivative of the scalar potential field ``\\phi`` with respect to a change in
+the body-fixed coordinates of element `v` and its conjugate, also accounting for the change in the image of `v`.
+"""
+d2phivdζvdζvstar(ζ,b::ConformalBody,v::Element) = 0.5*dinduce_velocity_dzstar(ζ,_unit_strength_copy(v),0.0)
+
+"""
+    dwvvdzeta_src(targ::Element,src::Element,b::ConformalBody)
+
+Calculate the derivative of the complex velocity ``w = u - iv`` of
+induced on the target element `targ` by the element `src` with unit strength,
+with respect to position of `src` in the circle plane.
+"""
+function dwvvdzeta_src(targ::Element,src::Element,b::Bodies.ConformalBody)
+  out = dwcvdζv(targ.z,b,src)
+  return conj(Bodies.transform_velocity(conj(out),targ.z,b))
+end
+
+"""
+    dwvvdzetastar_src(targ::Element,src::Element,b::ConformalBody)
+
+Calculate the derivative of the complex velocity ``w = u - iv`` of
+induced on the target element `targ` by the element `src` with unit strength,
+with respect to conjugate position of `src` in the circle plane.
+"""
+function dwvvdzetastar_src(targ::Element,src::Element,b::Bodies.ConformalBody)
+  out = dwcvdζvstar(targ.z,b,src)
+  return conj(Bodies.transform_velocity(conj(out),targ.z,b))
+end
 
 function _routh_conj(ζ,b,::Val{true})
     dz̃, ddz̃ = b.dm(ζ)
