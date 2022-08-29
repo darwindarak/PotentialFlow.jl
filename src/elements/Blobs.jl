@@ -66,7 +66,7 @@ blob_kernel(z, δ) = 0.5im*z/(π*(abs2(z) + δ^2))
 dblob_kernel_dzstar(z, δ) = -0.5im*z^2/(π*(abs2(z) + δ^2)^2)
 
 # This is d(K_delta)*/dz = (dK_delta/dz*)*
-dblob_kernel_dz(z, δ) = 0.5im*δ^2/(π*(abs2(z) + δ^2)^2)
+dblob_kernel_dz(z, δ) = z != zero(z) ? 0.5im*δ^2/(π*(abs2(z) + δ^2)^2) : zero(z)
 
 
 # ensures that the velocity is of same type as position

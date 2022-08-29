@@ -1,7 +1,7 @@
 """
     pressure(ζ,v::Vector{Element},b::ConformalBody)
 
-Return the pressure at ζ (which can be an array of points),
+Return the pressure at `ζ` (which can be an array of points),
 due to the vortex elements in `v` and any motion in `b`.
 """
 function pressure(ζ,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
@@ -40,6 +40,35 @@ function pressure(ζ,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:E
         return out
 end
 
+"""
+    dpdzv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
+
+Return the derivative of the pressure at `ζ` (which can be an array of points),
+due to the vortex elements in `v` and any motion in `b`, with respect to
+the change of position of the vortex with index `l`.
+"""
+function dpdzv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+        @assert l <= length(v) "Index exceeds length of vector of elements"
+
+        out = real(zero(ζ))
+
+        Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+        Ω = b.α̇
+
+        vl = v[l]
+        Γl = circulation(vl)
+
+        for (j,vj) in enumerate(v)
+            Γj  = circulation(vj)
+            out -= Γj*Γl*dΠvvdzv(ζ,vl,vj,b;kwargs...)
+        end
+        out -= Γl*Ũ*dΠUvdzv(ζ,vl,b;kwargs...)
+        out -= Γl*Ṽ*dΠVvdzv(ζ,vl,b;kwargs...)
+        out -= Γl*Ω*dΠΩvdzv(ζ,vl,b;kwargs...)
+
+        return out
+end
+
 
 #=
 function P(ζ,v::Element,b::Bodies.ConformalBody)
@@ -53,10 +82,13 @@ function Πvv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody)
            2.0*real(dphivdzv(ζ,b,src)*conj(wvv(src,targ,b)))
 end
 
+dΠvvdzv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody) = _dΠvvdzv_targ(ζ,targ,src,b) #+ _dΠvvdzv_targ(ζ,src,targ,b)
+
+
 # This computes the derivative of Πvv with respect to the
 # target's position. Note that the derivative with respect to
 # the source's position is simply the same with targ and src swapped.
-function dΠvvdzv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody)
+function _dΠvvdzv_targ(ζ,targ::Element,src::Element,b::Bodies.ConformalBody)
     out = dwvdzv(ζ,b,targ).*conj(wv(ζ,b,src)) +
           2.0*d2phivdzv2(ζ,b,targ)*conj(wvv(targ,src,b)) +
           2.0*dphivdzv(ζ,b,targ)*conj(dwvvdzstar_targ(targ,src,b)) +

@@ -528,12 +528,7 @@ dwvvdzetastar_targ(targ::Element,src::Element,b::Bodies.ConformalBody) =
                     _dwvvdzetastar_targ(targ,src,b,Val(targ==src))
 
 
-function _dwvvdzetastar_targ(targ,src,b,::Val{true})
-  b_img = _set_image_for_stationary_body(b,src,Val(false))
-  img = first(b_img.img)
-  out = dinduce_velocity_dz(targ.z,b_img,0.0)*position(img)^2
-  return conj(Bodies.transform_velocity(conj(out),targ.z,b))
-end
+_dwvvdzetastar_targ(targ,src,b,::Val{true}) = zero(targ.z)
 
 function _dwvvdzetastar_targ(targ,src,b,::Val{false})
   out = dwcvdζstar(targ.z,b,src)
