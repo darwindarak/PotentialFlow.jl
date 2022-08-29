@@ -32,96 +32,14 @@ function pressure(ζ,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:E
         out -= Ũ*Ω*ΠUΩ(ζ,b)
         out -= Ṽ*Ω*ΠVΩ(ζ,b)
 
-        out -= Ũ̇*PU(ζ,b)
-        out -= Ṽ̇*PV(ζ,b)
-        out -= Ω̇*PΩ(ζ,b)
+        out -= Ũ̇*ΦU(ζ,b)
+        out -= Ṽ̇*ΦV(ζ,b)
+        out -= Ω̇*ΦΩ(ζ,b)
 
 
         return out
 end
 
-"""
-    dphivdzv(ζ,b::ConformalBody,v::Element)
-
-Calculates the derivative of the scalar potential field ``\\phi`` with respect to a change in
-the body-fixed coordinates of element `v`, also accounting for the change in the image of `v`.
-"""
-function dphivdzv(ζ,b::Bodies.ConformalBody,v::Element)
-    return conj(Bodies.transform_velocity(_dphivdζv_conj(ζ,b,v),v.z,b))
-end
-
-function _dphivdζv_conj(ζ,b::Bodies.ConformalBody,v::Element)
-    out = induce_velocity(ζ,_unit_strength_copy(v),0.0)
-    b_img = _set_image_for_stationary_body(b,v,Val(false))
-    img = first(b_img.img)
-    out -= conj(induce_velocity(ζ,b_img,0.0))*Elements.position(img)^2
-    return -0.5*out
-end
-
-"""
-    wvv(targ::Element,src::Element,b::ConformalBody)
-
-Calculate the complex velocity ``w = u - iv`` of the target element `targ` due to element `src` with unit strength,
-also accounting for the images of `src`. If `targ` and `src` are the same element, then
-it makes the Routh correction.
-"""
-@inline wvv(targ::Element,src::Element,b::Bodies.ConformalBody) = wv(targ.z,b,src) +
-                                                                   conj(Bodies.transform_velocity(_routh_conj(targ.z,b,Val(targ==src)),targ.z,b))
-
-#### Derivatives ####
-"""
-    d2phivdζv2(ζ,b::ConformalBody,v::Element)
-
-Calculates the second derivative of the scalar potential field ``\\phi`` with respect to a change in
-the body-fixed coordinates of element `v`, also accounting for the change in the image of `v`.
-"""
-function d2phivdζv2(ζ,b::ConformalBody,v::Element)
-    out = dinduce_velocity_dz(ζ,_unit_strength_copy(v),0.0)
-    b_img = _set_image_for_stationary_body(b,v,Val(false))
-    img = first(b_img.img)
-    out -= 2.0*induce_velocity(ζ,b_img,0.0)*conj(position(img)^3)
-    out += conj(dinduce_velocity_dz(ζ,b_img,0.0)*position(img)^4)
-    return 0.5*out
-end
-
-"""
-    d2phivdζv2(ζ,b::ConformalBody,v::Element)
-
-Calculates the second derivative of the scalar potential field ``\\phi`` with respect to a change in
-the body-fixed coordinates of element `v` and its conjugate, also accounting for the change in the image of `v`.
-"""
-d2phivdζvdζvstar(ζ,b::ConformalBody,v::Element) = 0.5*dinduce_velocity_dzstar(ζ,_unit_strength_copy(v),0.0)
-
-"""
-    dwvvdzeta_src(targ::Element,src::Element,b::ConformalBody)
-
-Calculate the derivative of the complex velocity ``w = u - iv`` of
-induced on the target element `targ` by the element `src` with unit strength,
-with respect to position of `src` in the circle plane.
-"""
-function dwvvdzeta_src(targ::Element,src::Element,b::Bodies.ConformalBody)
-  out = dwcvdζv(targ.z,b,src)
-  return conj(Bodies.transform_velocity(conj(out),targ.z,b))
-end
-
-"""
-    dwvvdzetastar_src(targ::Element,src::Element,b::ConformalBody)
-
-Calculate the derivative of the complex velocity ``w = u - iv`` of
-induced on the target element `targ` by the element `src` with unit strength,
-with respect to conjugate position of `src` in the circle plane.
-"""
-function dwvvdzetastar_src(targ::Element,src::Element,b::Bodies.ConformalBody)
-  out = dwcvdζvstar(targ.z,b,src)
-  return conj(Bodies.transform_velocity(conj(out),targ.z,b))
-end
-
-function _routh_conj(ζ,b,::Val{true})
-    dz̃, ddz̃ = b.dm(ζ)
-    return -conj(ddz̃/(4π*im*dz̃))
-end
-
-_routh_conj(ζ,b,::Val{false}) = complex(0.0)
 
 #=
 function P(ζ,v::Element,b::Bodies.ConformalBody)
@@ -135,19 +53,19 @@ function Πvv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody)
            2.0*real(dphivdzv(ζ,b,src)*conj(wvv(src,targ,b)))
 end
 
-function ΠUv(ζ,v::Element,b::Bodies.ConformalBody)
-    return -real(winf1(ζ,b).*conj(wv(ζ,b,v))) -
-           4.0*real(dphivdzv(ζ,b,v)*conj(winf1(v.z,b)))
-end
-
-function ΠVv(ζ,v::Element,b::Bodies.ConformalBody)
-    return -real(winf2(ζ,b).*conj(wv(ζ,b,v))) -
-           4.0*real(dphivdzv(ζ,b,v)*conj(winf2(v.z,b)))
-end
-
-function ΠΩv(ζ,v::Element,b::Bodies.ConformalBody)
-    return -real(wrinf(ζ,b).*conj(wv(ζ,b,v))) -
-           4.0*real(dphivdzv(ζ,b,v)*conj(wrinf(v.z,b)))
+# This computes the derivative of Πvv with respect to the
+# target's position. Note that the derivative with respect to
+# the source's position is simply the same with targ and src swapped.
+function dΠvvdzv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody)
+    out = dwvdzv(ζ,b,targ).*conj(wv(ζ,b,src)) +
+          2.0*d2phivdzv2(ζ,b,targ)*conj(wvv(targ,src,b)) +
+          2.0*dphivdzv(ζ,b,targ)*conj(dwvvdzstar_targ(targ,src,b)) +
+          2.0*dphivdzv(ζ,b,src)*conj(dwvvdzstar_src(src,targ,b))
+    out += conj(dwvdzvstar(ζ,b,targ).*conj(wv(ζ,b,src)) +
+          2.0*d2phivdzvdzvstar(ζ,b,targ)*conj(wvv(targ,src,b)) +
+          2.0*dphivdzv(ζ,b,targ)*conj(dwvvdz_targ(targ,src,b)) +
+          2.0*dphivdzv(ζ,b,src)*conj(dwvvdz_src(src,targ,b)))
+    return 0.5*out
 end
 
 ΠUU(ζ,b::Bodies.ConformalBody) = abs2.(winf1(ζ,b)) .- 1.0
@@ -158,6 +76,34 @@ end
 ΠUΩ(ζ,b::Bodies.ConformalBody) = real(winf1(ζ,b).*conj(wrinf(ζ,b))) + imag(b.m.(ζ))
 ΠVΩ(ζ,b::Bodies.ConformalBody) = real(winf2(ζ,b).*conj(wrinf(ζ,b))) - real(b.m.(ζ))
 
-PU(ζ,b::Bodies.ConformalBody) = real(Fbt1(ζ,b))
-PV(ζ,b::Bodies.ConformalBody) = real(Fbt2(ζ,b))
-PΩ(ζ,b::Bodies.ConformalBody) = real(Fbr(ζ,b))
+ΦU(ζ,b::Bodies.ConformalBody) = real(Fbt1(ζ,b))
+ΦV(ζ,b::Bodies.ConformalBody) = real(Fbt2(ζ,b))
+ΦΩ(ζ,b::Bodies.ConformalBody) = real(Fbr(ζ,b))
+
+# Coupled body motion - vortex terms
+
+for (wtype,c) in [(:inf1,:U),(:inf2,:V),(:rinf,:Ω)]
+  Πfcn = Symbol("Π",c,"v")
+  dΠfcn = Symbol("dΠ",c,"vdzv")
+  winf = Symbol("w",wtype)
+  dwinfdz = Symbol("d",winf,"dz")
+  dwinfdzstar = Symbol("d",winf,"dzstar")
+
+  # ΠUv, ΠVv, ΠΩv
+  @eval function $Πfcn(ζ,v::Element,b::Bodies.ConformalBody)
+      return -real(conj($winf(ζ,b)).*wv(ζ,b,v)) -
+             4.0*real(dphivdzv(ζ,b,v)*conj($winf(v.z,b)))
+  end
+
+  # dΠUvdz, dΠVvdz, dΠΩvdz
+  @eval function $dΠfcn(ζ,v::Element,b::Bodies.ConformalBody)
+    winf_ζ_star = conj($winf(ζ,b))
+    winf_v_star = conj($winf(v.z,b))
+    dwinfstar_v = conj($dwinfdzstar(v.z,b))
+    dwinfstar_vstar = conj($dwinfdz(v.z,b))
+    out = winf_ζ_star*dwvdzv(ζ,b,v)+4.0*winf_v_star*d2phivdzv2(ζ,b,v)+4.0*dphivdzv(ζ,b,v)*dwinfstar_v
+    out += conj(winf_ζ_star*dwvdzvstar(ζ,b,v)+4.0*winf_v_star*d2phivdzvdzvstar(ζ,b,v)+4.0*dphivdzv(ζ,b,v)*dwinfstar_vstar)
+    return -0.5*out
+    return -out
+  end
+end

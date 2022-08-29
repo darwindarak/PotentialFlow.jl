@@ -18,7 +18,8 @@ import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, 
                   self_induce_velocity!, allocate_velocity, advect!, advect, streamfunction, complexpotential,
                   dinduce_velocity_dz, dinduce_velocity_dzstar
 import SchwarzChristoffel: Polygon, ExteriorMap, ConformalMap, PowerMap, addedmass,
-                            InverseMap, DerivativeMap, coefficients, LinkedLines
+                            InverseMap, DerivativeMap, coefficients, LinkedLines,
+                            derivatives
 
 import ..Utils:@get, MappedVector
 
@@ -146,7 +147,7 @@ julia> Bodies.normal(exp(im*0),exp(im*π/4),b)
 ```
 """
 function normal(ζ::ComplexF64,v::ComplexF64,b::ConformalBody)
-  dz̃, ddz̃ = b.dm(ζ)
+  dz̃, ddz̃, _ = derivatives(ζ,b.m)
   real(v*conj(ζ*dz̃*exp(im*b.α))/abs(dz̃))
 end
 
@@ -173,7 +174,7 @@ julia> Bodies.tangent(exp(im*0),exp(im*π/4),b)
 ```
 """
 function tangent(ζ::Complex{T},v::Complex{S},b::ConformalBody) where {T,S}
-  dz̃, ddz̃ = b.dm(ζ)
+  dz̃, ddz̃, _ = derivatives(ζ,b.m)
   imag(v*conj(ζ*dz̃*exp(im*b.α))/abs(dz̃))
 end
 
@@ -221,7 +222,7 @@ function allocate_jacobian(::ConformalBody)
 end
 
 function Elements.jacobian(ζ::Complex{T},b::ConformalBody) where {T}
-  dz, ddz = b.dm(ζ)
+  dz, ddz, _ = derivatives(ζ,b.m)
   return dz
 end
 
@@ -246,7 +247,7 @@ function induce_velocity(ζ::Complex{T}, b::ConformalBody, t) where {T}
 
     #ζ = minv(z)
 
-    dz̃, ddz̃ = dm(ζ)
+    dz̃, ddz̃, _ = derivatives(ζ,m)
 
     c̃̇ = ċ*exp(-im*α)
 
@@ -280,7 +281,7 @@ function dinduce_velocity_dz(ζ::Complex{T}, b::ConformalBody, t) where {T}
 
     #ζ = minv(z)
 
-    dz̃, ddz̃ = dm(ζ)
+    dz̃, ddz̃, _ = derivatives(ζ,m)
 
     c̃̇ = ċ*exp(-im*α)
 
@@ -384,7 +385,7 @@ end
 function transform_velocity(win,targ::T,b::ConformalBody) where T <: Union{Blob,Point}
   wout = win
   z̃ = b.m(targ.z)
-  dz̃, ddz̃ = b.dm(targ.z)
+  dz̃, ddz̃, _ = derivatives(targ.z,b.m)
   wout += targ.S*conj(ddz̃)/(4π*im*conj(dz̃))
   wout /= conj(dz̃)
   wout -= b.ċ*exp(-im*b.α) + im*b.α̇*z̃
@@ -396,7 +397,7 @@ end
 function transform_velocity(win,ζ::Complex{T},b::ConformalBody) where {T}
   wout = win
   z̃ = b.m(ζ)
-  dz̃, ddz̃ = b.dm(ζ)
+  dz̃, ddz̃, _ = derivatives(ζ,b.m)
   wout /= conj(dz̃*exp(im*b.α))
 end
 

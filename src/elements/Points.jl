@@ -72,9 +72,7 @@ function dinduce_velocity_dz(z::Complex{T}, p::Point, t) where {T}
     p.S*conj(dcauchy_kernel_dzstar(z - p.z))
 end
 
-function dinduce_velocity_dzstar(z::Complex{T}, p::Point, t) where {T}
-    p.S*conj(dcauchy_kernel_dz(z - p.z))
-end
+dinduce_velocity_dzstar(z::Complex{T}, p::Point, t) where {T} = zero(z)
 
 function mutually_induce_velocity!(ws₁, ws₂,
                                    points₁::Vector{Point{T₁}},
