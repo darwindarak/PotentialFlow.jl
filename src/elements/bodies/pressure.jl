@@ -1,8 +1,10 @@
 """
     pressure(ζ,v::Vector{Element},b::ConformalBody)
 
-Return the pressure at `ζ` (which can be an array of points),
+Return the pressure at `ζ` in the circle plane (which can be an array of points),
 due to the vortex elements in `v` and any motion in `b`.
+Note that it is presumed that the elements `v` are given in
+the circle plane.
 """
 function pressure(ζ,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
         out = real(zero(ζ))
@@ -43,9 +45,10 @@ end
 """
     dpdxv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
 
-Return the derivative of the pressure at `ζ` (which can be an array of points),
-due to the vortex elements in `v` and any motion in `b`, with respect to
-the change of ``x`` position of the vortex with index `l`.
+Return the derivative with respect to the change of ``x`` position of the vortex with index `l`
+of the pressure at `ζ` in the circle plane (which can be an array of points),
+due to the vortex elements in `v` and any motion in `b`. Note that it is presumed that the elements `v` are given in
+the circle plane.
 """
 function dpdxv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
   dp = dpdzv(ζ,l,v,b;kwargs...)
@@ -55,9 +58,10 @@ end
 """
     dpdyv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
 
-Return the derivative of the pressure at `ζ` (which can be an array of points),
-due to the vortex elements in `v` and any motion in `b`, with respect to
-the change of ``y`` position of the vortex with index `l`.
+Return the derivative with respect to the change of ``y`` position of the vortex with index `l`
+of the pressure at `ζ` in the circle plane (which can be an array of points),
+due to the vortex elements in `v` and any motion in `b`. Note that it is presumed that the elements `v` are given in
+the circle plane.
 """
 function dpdyv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
   dp = dpdzv(ζ,l,v,b;kwargs...)
@@ -68,9 +72,10 @@ end
 """
     dpdzv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
 
-Return the derivative of the pressure at `ζ` (which can be an array of points),
-due to the vortex elements in `v` and any motion in `b`, with respect to
-the change of position of the vortex with index `l`.
+Return the derivative with respect to the change of physical-plane ``z`` position of the vortex with index `l`
+of the pressure at `ζ` in the circle plane (which can be an array of points),
+due to the vortex elements in `v` and any motion in `b`. Note that it is presumed that the elements `v` are given in
+the circle plane.
 """
 function dpdzv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
         @assert l <= length(v) "Index exceeds length of vector of elements"
@@ -99,7 +104,8 @@ end
 
 Return the derivative of the pressure at `ζ` (which can be an array of points),
 due to the vortex elements in `v` and any motion in `b`, with respect to
-the change of circulation of the vortex with index `l`.
+the change of circulation of the vortex with index `l`.  Note that it is presumed that the elements `v` are given in
+the circle plane.
 """
 function dpdΓv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
         @assert l <= length(v) "Index exceeds length of vector of elements"
@@ -128,7 +134,9 @@ end
 Return the derivative of the pressure at `ζ` (which can be an array of points),
 due to the vortex elements in `v` and any motion in `b`, with respect to
 the change of rigid-body motion component with index `l`. Note that
-these components are index as follows: ``[\\Omega,\\tilde{U}_r,\\tilde{V}_r]``
+these components are index as follows: ``[\\Omega,\\tilde{U}_r,\\tilde{V}_r]``.
+Note that it is presumed that the elements `v` are given in
+the circle plane.
 """
 dpdU(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element} =
     _dpdU(ζ,v,b,Val(l);kwargs...)
