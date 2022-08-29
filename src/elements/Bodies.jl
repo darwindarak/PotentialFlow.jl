@@ -25,7 +25,7 @@ import ..Utils:@get, MappedVector
 
 export ConformalBody,Polygon,enforce_no_flow_through!,normal,tangent,
           transform_velocity!,transform_velocity,unit_impulse,addedmass,
-          clear_images!
+          clear_images!, pressure, dpdzv, dpdxv, dpdyv, dpdΓv, dpdU, dpdUdot
 
 
 mutable struct ConformalBody <: Element

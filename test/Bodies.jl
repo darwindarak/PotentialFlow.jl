@@ -39,9 +39,30 @@
     @testset "Derivatives" begin
 
     a1 = 0.5; b1 = 0.1; ccoeff = ComplexF64[0.5(a1+b1),0,0.5(a1-b1)]
-    b = Bodies.ConformalBody(ccoeff,complex(0.0),0.0)
+    b = Bodies.ConformalBody(ccoeff,ComplexF64(0.0),π/4)
 
-    
+    vort_z = [Vortex.Blob(0.5 + 0.2im, 1.0, 0.01),
+              Vortex.Blob(0.2im, 1.0, 0.01),
+              Vortex.Blob(-1.0im, -2.0, 0.01)]
+
+    vort_ζ = Elements.inverse_conftransform(vort_z,b)
+
+    ζ = 1.0+0.1im
+    @test Bodies.dpdzv(ζ,1,vort_ζ,b) ≈ -1.3941088515895026 + 1.1089339580694477im
+    @test Bodies.dpdzv(ζ,2,vort_ζ,b) ≈ 0.8402098734913479 + 0.8115186077355655im
+
+    motion = RigidBodyMotion(RigidBodyMotions.UnsteadyTransRot(-0.5 + 1.0im,0.0im,0.2,0.0))
+    Bodies.enforce_no_flow_through!(b, motion, Element[], 0.0)
+    @test Bodies.dpdzv(ζ,1,vort_ζ,b) ≈ -14.91887479595418 + 11.326836023135279im
+    @test Bodies.dpdΓv(ζ,1,vort_ζ,b) ≈ -0.10685330645316929
+
+    @test Bodies.dpdU(ζ,1,vort_ζ,b) ≈ -7.445770018204262
+    @test Bodies.dpdU(ζ,2,vort_ζ,b) ≈ 7.489634497871336
+    @test Bodies.dpdU(ζ,3,vort_ζ,b) ≈ -22.042738470789313
+
+    @test Bodies.dpdUdot(ζ,1,vort_ζ,b) ≈ 0.01176355259288305
+    @test Bodies.dpdUdot(ζ,2,vort_ζ,b) ≈ 0.09900990099009899
+    @test Bodies.dpdUdot(ζ,3,vort_ζ,b) ≈ 0.04950495049504951
 
 
     end

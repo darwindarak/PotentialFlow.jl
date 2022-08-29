@@ -41,6 +41,31 @@ function pressure(ζ,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:E
 end
 
 """
+    dpdxv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
+
+Return the derivative of the pressure at `ζ` (which can be an array of points),
+due to the vortex elements in `v` and any motion in `b`, with respect to
+the change of ``x`` position of the vortex with index `l`.
+"""
+function dpdxv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+  dp = dpdzv(ζ,l,v,b;kwargs...)
+  return 2real(dp)
+end
+
+"""
+    dpdyv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
+
+Return the derivative of the pressure at `ζ` (which can be an array of points),
+due to the vortex elements in `v` and any motion in `b`, with respect to
+the change of ``y`` position of the vortex with index `l`.
+"""
+function dpdyv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+  dp = dpdzv(ζ,l,v,b;kwargs...)
+  return -2imag(dp)
+end
+
+
+"""
     dpdzv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
 
 Return the derivative of the pressure at `ζ` (which can be an array of points),
