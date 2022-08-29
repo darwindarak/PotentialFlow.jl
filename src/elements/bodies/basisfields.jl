@@ -289,10 +289,12 @@ for w in [:inf1,:inf2,:rinf,:bt1,:bt2,:br]
 
 end
 
+#=
 function dwinf1dz(ζ,b::Bodies.ConformalBody)
   out = _dwinf1dζ(ζ,b)
   return conj(Bodies.transform_velocity(conj(out),ζ,b))
 end
+=#
 
 # Derivative of wbt1, wbt2, wbr (in physical plane) with respect to zeta, zeta* (in circle plane)
 for w in [:bt1,:bt2,:br]

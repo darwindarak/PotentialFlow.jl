@@ -50,7 +50,7 @@ the change of position of the vortex with index `l`.
 function dpdzv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
         @assert l <= length(v) "Index exceeds length of vector of elements"
 
-        out = real(zero(ζ))
+        out = zero(ζ)
 
         Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
         Ω = b.α̇
@@ -69,6 +69,113 @@ function dpdzv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) whe
         return out
 end
 
+"""
+    dpdΓv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
+
+Return the derivative of the pressure at `ζ` (which can be an array of points),
+due to the vortex elements in `v` and any motion in `b`, with respect to
+the change of circulation of the vortex with index `l`.
+"""
+function dpdΓv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+        @assert l <= length(v) "Index exceeds length of vector of elements"
+
+        out = real(zero(ζ))
+
+        Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+        Ω = b.α̇
+
+        vl = v[l]
+
+        for (j,vj) in enumerate(v)
+            Γj  = circulation(vj)
+            out -= Γj*Πvv(ζ,vl,vj,b;kwargs...)
+        end
+        out -= Ũ*ΠUv(ζ,vl,b;kwargs...)
+        out -= Ṽ*ΠVv(ζ,vl,b;kwargs...)
+        out -= Ω*ΠΩv(ζ,vl,b;kwargs...)
+
+        return out
+end
+
+"""
+    dpdU(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
+
+Return the derivative of the pressure at `ζ` (which can be an array of points),
+due to the vortex elements in `v` and any motion in `b`, with respect to
+the change of rigid-body motion component with index `l`. Note that
+these components are index as follows: ``[\\Omega,\\tilde{U}_r,\\tilde{V}_r]``
+"""
+dpdU(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element} =
+    _dpdU(ζ,v,b,Val(l);kwargs...)
+
+
+function _dpdU(ζ,v,b,::Val{1};kwargs...)
+  out = real(zero(ζ))
+
+  Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+  Ω = b.α̇
+
+  for (j,vj) in enumerate(v)
+      Γj  = circulation(vj)
+      out -= Γj*ΠΩv(ζ,vj,b;kwargs...)
+  end
+  out -= Ω*ΠΩΩ(ζ,b)
+  out -= Ũ*ΠUΩ(ζ,b)
+  out -= Ṽ*ΠVΩ(ζ,b)
+
+  return out
+end
+
+function _dpdU(ζ,v,b,::Val{2};kwargs...)
+  out = real(zero(ζ))
+
+  Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+  Ω = b.α̇
+
+  for (j,vj) in enumerate(v)
+      Γj  = circulation(vj)
+      out -= Γj*ΠUv(ζ,vj,b;kwargs...)
+  end
+  out -= Ω*ΠUΩ(ζ,b)
+  out -= Ũ*ΠUU(ζ,b)
+  out -= Ṽ*ΠUV(ζ,b)
+
+  return out
+end
+
+function _dpdU(ζ,v,b,::Val{3};kwargs...)
+  out = real(zero(ζ))
+
+  Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+  Ω = b.α̇
+
+  for (j,vj) in enumerate(v)
+      Γj  = circulation(vj)
+      out -= Γj*ΠVv(ζ,vj,b;kwargs...)
+  end
+  out -= Ω*ΠVΩ(ζ,b)
+  out -= Ũ*ΠUV(ζ,b)
+  out -= Ṽ*ΠVV(ζ,b)
+
+  return out
+end
+
+"""
+    dpdUdot(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
+
+Return the derivative of the pressure at `ζ` (which can be an array of points),
+due to the vortex elements in `v` and any motion in `b`, with respect to
+the change of rigid-body acceleration component with index `l`. Note that
+these components are index as follows: ``[\\dot{\\Omega},\\dot{\\tilde{U}}_r,\\dot{\\tilde{V}}_r]``
+"""
+dpdUdot(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element} =
+    _dpdUdot(ζ,v,b,Val(l);kwargs...)
+
+
+_dpdUdot(ζ,v,b,::Val{1};kwargs...) = -ΦΩ(ζ,b)
+_dpdUdot(ζ,v,b,::Val{2};kwargs...) = -ΦU(ζ,b)
+_dpdUdot(ζ,v,b,::Val{3};kwargs...) = -ΦV(ζ,b)
+
 
 #=
 function P(ζ,v::Element,b::Bodies.ConformalBody)
@@ -82,8 +189,7 @@ function Πvv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody)
            2.0*real(dphivdzv(ζ,b,src)*conj(wvv(src,targ,b)))
 end
 
-dΠvvdzv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody) = _dΠvvdzv_targ(ζ,targ,src,b) #+ _dΠvvdzv_targ(ζ,src,targ,b)
-
+dΠvvdzv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody) = _dΠvvdzv_targ(ζ,targ,src,b)
 
 # This computes the derivative of Πvv with respect to the
 # target's position. Note that the derivative with respect to
@@ -133,8 +239,8 @@ for (wtype,c) in [(:inf1,:U),(:inf2,:V),(:rinf,:Ω)]
     winf_v_star = conj($winf(v.z,b))
     dwinfstar_v = conj($dwinfdzstar(v.z,b))
     dwinfstar_vstar = conj($dwinfdz(v.z,b))
-    out = winf_ζ_star*dwvdzv(ζ,b,v)+4.0*winf_v_star*d2phivdzv2(ζ,b,v)+4.0*dphivdzv(ζ,b,v)*dwinfstar_v
-    out += conj(winf_ζ_star*dwvdzvstar(ζ,b,v)+4.0*winf_v_star*d2phivdzvdzvstar(ζ,b,v)+4.0*dphivdzv(ζ,b,v)*dwinfstar_vstar)
+    out = winf_ζ_star.*dwvdzv(ζ,b,v)+4.0*winf_v_star*d2phivdzv2(ζ,b,v)+4.0*dphivdzv(ζ,b,v)*dwinfstar_v
+    out += conj(winf_ζ_star.*dwvdzvstar(ζ,b,v)+4.0*winf_v_star*d2phivdzvdzvstar(ζ,b,v)+4.0*dphivdzv(ζ,b,v)*dwinfstar_vstar)
     return -0.5*out
     return -out
   end
