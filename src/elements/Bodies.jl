@@ -558,7 +558,7 @@ In both cases, the position associated with `src` is interpreted in the
 circle plane of the conformal map.
 """
 unit_impulse(ζ::Complex{T}, body::ConformalBody) where {T} =
-          -im*body.m.ps.ccoeff[1]*(ζ - Elements.image(ζ))
+          -im*body.m.ps.ccoeff[1]*(ζ - Elements.image(ζ,body))
 
 unit_impulse(src, body::ConformalBody) = unit_impulse(Elements.position(src), body)
 

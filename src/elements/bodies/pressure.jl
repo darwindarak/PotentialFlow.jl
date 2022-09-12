@@ -38,7 +38,6 @@ function pressure(ζ,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:E
         out -= Ṽ̇*ΦV(ζ,b)
         out -= Ω̇*ΦΩ(ζ,b)
 
-
         return out
 end
 
@@ -276,19 +275,21 @@ for (wtype,c) in [(:inf1,:U),(:inf2,:V),(:rinf,:Ω)]
   dwinfdzstar = Symbol("d",winf,"dzstar")
 
   # ΠUv, ΠVv, ΠΩv
+  # switched from 4 to 2 in front of second term
   @eval function $Πfcn(ζ,v::Element,b::Bodies.ConformalBody)
       return -real(conj($winf(ζ,b)).*wv(ζ,b,v)) -
-             4.0*real(dphivdzv(ζ,b,v)*conj($winf(v.z,b)))
+             2.0*real(dphivdzv(ζ,b,v)*conj($winf(v.z,b)))
   end
 
   # dΠUvdz, dΠVvdz, dΠΩvdz
+  # switched from 4 to 2
   @eval function $dΠfcn(ζ,v::Element,b::Bodies.ConformalBody)
     winf_ζ_star = conj($winf(ζ,b))
     winf_v_star = conj($winf(v.z,b))
     dwinfstar_v = conj($dwinfdzstar(v.z,b))
     dwinfstar_vstar = conj($dwinfdz(v.z,b))
-    out = winf_ζ_star.*dwvdzv(ζ,b,v)+4.0*winf_v_star*d2phivdzv2(ζ,b,v)+4.0*dphivdzv(ζ,b,v)*dwinfstar_v
-    out += conj(winf_ζ_star.*dwvdzvstar(ζ,b,v)+4.0*winf_v_star*d2phivdzvdzvstar(ζ,b,v)+4.0*dphivdzv(ζ,b,v)*dwinfstar_vstar)
+    out = winf_ζ_star.*dwvdzv(ζ,b,v)+2.0*winf_v_star*d2phivdzv2(ζ,b,v)+2.0*dphivdzv(ζ,b,v)*dwinfstar_v
+    out += conj(winf_ζ_star.*dwvdzvstar(ζ,b,v)+2.0*winf_v_star*d2phivdzvdzvstar(ζ,b,v)+2.0*dphivdzv(ζ,b,v)*dwinfstar_vstar)
     return -0.5*out
     return -out
   end
@@ -296,62 +297,82 @@ end
 
 #### Force and moment ####
 function force(v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
-        fx = 0.0
-        fy = 0.0
-        mr = 0.0
+        f = zeros(ComplexF64,3)
+
+        mr = view(f,1)
+        fx = view(f,2)
+        fy = view(f,3)
+
+        Ma = addedmass(b)
 
         Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
         Ω = b.α̇
+        Uvec = [Ω,Ũ,Ṽ]
+
         Ũ̇, Ṽ̇ = reim(b.c̈*exp(-im*b.α))
         Ω̇ = b.α̈
+        U̇vec = [Ω̇,Ũ̇,Ṽ̇]
 
         for (j,vj) in enumerate(v)
             zj,Γj  = Elements.position(vj), circulation(vj)
-            fx -= 0.5*Γj^2*Fvv_x(vj,vj,b;kwargs...)
-            fy -= 0.5*Γj^2*Fvv_y(vj,vj,b;kwargs...)
-            mr -= 0.5*Γj^2*Fvv_r(vj,vj,b;kwargs...)
+            fx .-= 0.5*Γj^2*Fvv_x(vj,vj,b;kwargs...)
+            fy .-= 0.5*Γj^2*Fvv_y(vj,vj,b;kwargs...)
+            mr .-= 0.5*Γj^2*Fvv_r(vj,vj,b;kwargs...)
             for vk in v[1:j-1]
                 zk,Γk  = Elements.position(vk), circulation(vk)
-                fx -= Γj*Γk*Fvv_x(vj,vk,b;kwargs...)
-                fy -= Γj*Γk*Fvv_y(vj,vk,b;kwargs...)
-                mr -= Γj*Γk*Fvv_r(vj,vk,b;kwargs...)
+                fx .-= Γj*Γk*Fvv_x(vj,vk,b;kwargs...)
+                fy .-= Γj*Γk*Fvv_y(vj,vk,b;kwargs...)
+                mr .-= Γj*Γk*Fvv_r(vj,vk,b;kwargs...)
             end
 
-            #out -= Γj*Ũ*ΠUv(ζ,vj,b;kwargs...)
-            #out -= Γj*Ṽ*ΠVv(ζ,vj,b;kwargs...)
-            #out -= Γj*Ω*ΠΩv(ζ,vj,b;kwargs...)
+            fx .+= Γj*FUv_x(vj,b)*Uvec
+            fy .+= Γj*FUv_y(vj,b)*Uvec
+            mr .+= Γj*FUv_r(vj,b)*Uvec
         end
-        #=
-        out -= 0.5*Ũ^2*ΠUU(ζ,b)
-        out -= 0.5*Ṽ^2*ΠVV(ζ,b)
-        out -= 0.5*Ω^2*ΠΩΩ(ζ,b)
-        out -= Ũ*Ṽ*ΠUV(ζ,b)
-        out -= Ũ*Ω*ΠUΩ(ζ,b)
-        out -= Ṽ*Ω*ΠVΩ(ζ,b)
 
-        out -= Ũ̇*ΦU(ζ,b)
-        out -= Ṽ̇*ΦV(ζ,b)
-        out -= Ω̇*ΦΩ(ζ,b)
-        =#
+        P̃U = Ma*Uvec
+        fx .+= Ω*P̃U[3]
+        fy .-= Ω*P̃U[2]
+        mr .+= Ṽ*P̃U[2]-Ũ*P̃U[3]
 
-        return fx, fy, mr
+        f .-= Ma*U̇vec
+
+        return fx[1]+im*fy[1], real(mr[1])
 end
 
 # Fvv
-function Fvv_x(targ::Element,src::Element,b::Bodies.ConformalBody)
+function Fvv_x(targ::Element,src::Element,b::ConformalBody)
   ζtarg = Elements.position(targ)
   ζsrc = Elements.position(src)
   return imag(winf1(ζtarg,b)*conj(wvv(targ,src,b))) + imag(winf1(ζsrc,b)*conj(wvv(src,targ,b)))
 end
 
-function Fvv_y(targ::Element,src::Element,b::Bodies.ConformalBody)
+function Fvv_y(targ::Element,src::Element,b::ConformalBody)
   ζtarg = Elements.position(targ)
   ζsrc = Elements.position(src)
   return imag(winf2(ζtarg,b)*conj(wvv(targ,src,b))) + imag(winf2(ζsrc,b)*conj(wvv(src,targ,b)))
 end
 
-function Fvv_r(targ::Element,src::Element,b::Bodies.ConformalBody)
+function Fvv_r(targ::Element,src::Element,b::ConformalBody)
   ζtarg = Elements.position(targ)
   ζsrc = Elements.position(src)
   return imag(wrinf(ζtarg,b)*conj(wvv(targ,src,b))) + imag(wrinf(ζsrc,b)*conj(wvv(src,targ,b)))
+end
+
+function FUv_x(v::Element,b::ConformalBody)
+  Pv = unit_impulse(v,b)
+  ζv = Elements.position(v)
+  return transpose([imag(Pv)+imag(winf1(ζv,b)*conj(wrinf(ζv,b))), 0.0, imag(winf1(ζv,b)*conj(winf2(ζv,b)))])
+end
+
+function FUv_y(v::Element,b::ConformalBody)
+  Pv = unit_impulse(v,b)
+  ζv = Elements.position(v)
+  return transpose([-real(Pv)+imag(winf2(ζv,b)*conj(wrinf(ζv,b))), imag(winf2(ζv,b)*conj(winf1(ζv,b))), 0.0])
+end
+
+function FUv_r(v::Element,b::ConformalBody)
+  Pv = unit_impulse(v,b)
+  ζv = Elements.position(v)
+  return transpose([0.0,-imag(Pv)+imag(wrinf(ζv,b)*conj(winf1(ζv,b))), real(Pv)+imag(wrinf(ζv,b)*conj(winf2(ζv,b)))])
 end
