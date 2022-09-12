@@ -293,3 +293,65 @@ for (wtype,c) in [(:inf1,:U),(:inf2,:V),(:rinf,:Ω)]
     return -out
   end
 end
+
+#### Force and moment ####
+function force(v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+        fx = 0.0
+        fy = 0.0
+        mr = 0.0
+
+        Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+        Ω = b.α̇
+        Ũ̇, Ṽ̇ = reim(b.c̈*exp(-im*b.α))
+        Ω̇ = b.α̈
+
+        for (j,vj) in enumerate(v)
+            zj,Γj  = Elements.position(vj), circulation(vj)
+            fx -= 0.5*Γj^2*Fvv_x(vj,vj,b;kwargs...)
+            fy -= 0.5*Γj^2*Fvv_y(vj,vj,b;kwargs...)
+            mr -= 0.5*Γj^2*Fvv_r(vj,vj,b;kwargs...)
+            for vk in v[1:j-1]
+                zk,Γk  = Elements.position(vk), circulation(vk)
+                fx -= Γj*Γk*Fvv_x(vj,vk,b;kwargs...)
+                fy -= Γj*Γk*Fvv_y(vj,vk,b;kwargs...)
+                mr -= Γj*Γk*Fvv_r(vj,vk,b;kwargs...)
+            end
+
+            #out -= Γj*Ũ*ΠUv(ζ,vj,b;kwargs...)
+            #out -= Γj*Ṽ*ΠVv(ζ,vj,b;kwargs...)
+            #out -= Γj*Ω*ΠΩv(ζ,vj,b;kwargs...)
+        end
+        #=
+        out -= 0.5*Ũ^2*ΠUU(ζ,b)
+        out -= 0.5*Ṽ^2*ΠVV(ζ,b)
+        out -= 0.5*Ω^2*ΠΩΩ(ζ,b)
+        out -= Ũ*Ṽ*ΠUV(ζ,b)
+        out -= Ũ*Ω*ΠUΩ(ζ,b)
+        out -= Ṽ*Ω*ΠVΩ(ζ,b)
+
+        out -= Ũ̇*ΦU(ζ,b)
+        out -= Ṽ̇*ΦV(ζ,b)
+        out -= Ω̇*ΦΩ(ζ,b)
+        =#
+
+        return fx, fy, mr
+end
+
+# Fvv
+function Fvv_x(targ::Element,src::Element,b::Bodies.ConformalBody)
+  ζtarg = Elements.position(targ)
+  ζsrc = Elements.position(src)
+  return imag(winf1(ζtarg,b)*conj(wvv(targ,src,b))) + imag(winf1(ζsrc,b)*conj(wvv(src,targ,b)))
+end
+
+function Fvv_y(targ::Element,src::Element,b::Bodies.ConformalBody)
+  ζtarg = Elements.position(targ)
+  ζsrc = Elements.position(src)
+  return imag(winf2(ζtarg,b)*conj(wvv(targ,src,b))) + imag(winf2(ζsrc,b)*conj(wvv(src,targ,b)))
+end
+
+function Fvv_r(targ::Element,src::Element,b::Bodies.ConformalBody)
+  ζtarg = Elements.position(targ)
+  ζsrc = Elements.position(src)
+  return imag(wrinf(ζtarg,b)*conj(wvv(targ,src,b))) + imag(wrinf(ζsrc,b)*conj(wvv(src,targ,b)))
+end

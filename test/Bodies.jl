@@ -53,17 +53,49 @@
 
     motion = RigidBodyMotion(RigidBodyMotions.UnsteadyTransRot(-0.5 + 1.0im,0.0im,0.2,0.0))
     Bodies.enforce_no_flow_through!(b, motion, Element[], 0.0)
-    @test Bodies.dpdzv(ζ,1,vort_ζ,b) ≈ -14.91887479595418 + 11.326836023135279im
-    @test Bodies.dpdΓv(ζ,1,vort_ζ,b) ≈ -0.10685330645316929
+    #@test Bodies.dpdzv(ζ,1,vort_ζ,b) ≈ -14.91887479595418 + 11.326836023135279im
+    #@test Bodies.dpdΓv(ζ,1,vort_ζ,b) ≈ -0.10685330645316929
+    @test Bodies.dpdzv(ζ,1,vort_ζ,b) ≈ -13.627679048940704 + 15.338188603251274im
+    @test Bodies.dpdΓv(ζ,1,vort_ζ,b) ≈ -10.1198639053807
 
-    @test Bodies.dpdU(ζ,1,vort_ζ,b) ≈ -7.445770018204262
-    @test Bodies.dpdU(ζ,2,vort_ζ,b) ≈ 7.489634497871336
-    @test Bodies.dpdU(ζ,3,vort_ζ,b) ≈ -22.042738470789313
+    #@test Bodies.dpdU(ζ,1,vort_ζ,b) ≈ -7.445770018204262
+    #@test Bodies.dpdU(ζ,2,vort_ζ,b) ≈ 7.489634497871336
+    #@test Bodies.dpdU(ζ,3,vort_ζ,b) ≈ -22.042738470789313
+    @test Bodies.dpdU(ζ,1,vort_ζ,b) ≈ -8.609062347838938
+    @test Bodies.dpdU(ζ,2,vort_ζ,b) ≈ 4.678149028519098
+    @test Bodies.dpdU(ζ,3,vort_ζ,b) ≈ -30.14502330068259
 
     @test Bodies.dpdUdot(ζ,1,vort_ζ,b) ≈ 0.01176355259288305
     @test Bodies.dpdUdot(ζ,2,vort_ζ,b) ≈ 0.09900990099009899
     @test Bodies.dpdUdot(ζ,3,vort_ζ,b) ≈ 0.04950495049504951
 
+
+    end
+
+    @testset "Force and moment" begin
+    a1 = 0.5; b1 = 0.1; ccoeff = ComplexF64[0.5(a1+b1),0,0.5(a1-b1)]
+    b = Bodies.ConformalBody(ccoeff,ComplexF64(0.0),π/4)
+
+    vort_z = [Vortex.Point(0.5 + 0.2im, 1.0),
+              Vortex.Point(0.2im, 1.0),
+              Vortex.Point(-1.0im, -2.0)]
+
+    vort_ζ = Elements.inverse_conftransform(vort_z,b)
+
+    fx, fy, mr = Bodies.force(vort_ζ,b)
+
+    θ = range(0,2π,length=2001)
+    ζc = exp.(im*θ[1:end-1])
+
+    dz̃c = map(ζ -> b.dm(ζ)[1],ζc)
+    f_test = -sum(Bodies.pressure(ζc,vort_ζ,b).*dz̃c.*ζc*(θ[2]-θ[1]))
+
+    z̃c = map(ζ -> b.m(ζ),ζc)
+    mr_test = -sum(Bodies.pressure(ζc,vort_ζ,b).*imag(conj(z̃c).*dz̃c.*ζc)*(θ[2]-θ[1]))
+
+    @test isapprox(fx,real(f_test),atol=1e-8)
+    @test isapprox(fy,imag(f_test),atol=1e-8)
+    @test isapprox(mr,mr_test,atol=1e-8)
 
     end
 
