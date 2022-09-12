@@ -68,6 +68,21 @@ function dpdyv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) whe
   return -2imag(dp)
 end
 
+"""
+    dpdζv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
+
+Return the derivative with respect to the change of circle-plane ``\\zeta`` position of the vortex with index `l`
+of the pressure at `ζ` in the circle plane (which can be an array of points),
+due to the vortex elements in `v` and any motion in `b`. Note that it is presumed that the elements `v` are given in
+the circle plane.
+"""
+function dpdζv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+
+  out = dpdzv(ζ,l,v,b;kwargs...)
+  dz̃, ddz̃, _ = derivatives(v[l].z,b.m)
+  out *= dz̃*exp(im*b.α)
+  return out
+end
 
 """
     dpdzv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
