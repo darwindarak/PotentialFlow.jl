@@ -42,6 +42,57 @@ function pressure(ζ,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:E
 end
 
 """
+    force(v::Vector{Element},b::ConformalBody) -> Tuple{Float64,Float64,Float64}
+
+Return the force and moment due to the vortex elements in `v` and any motion in `b`.
+Note that it is presumed that the elements `v` are given in
+the circle plane.
+"""
+function force(v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+
+        mr, fx, fy = 0.0, 0.0, 0.0
+
+        Ma = addedmass(b)
+
+        Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+        Ω = b.α̇
+        Uvec = [Ω,Ũ,Ṽ]
+
+        Ũ̇, Ṽ̇ = reim(b.c̈*exp(-im*b.α))
+        Ω̇ = b.α̈
+        U̇vec = [Ω̇,Ũ̇,Ṽ̇]
+
+        for (j,vj) in enumerate(v)
+            zj,Γj  = Elements.position(vj), circulation(vj)
+            fx -= 0.5*Γj^2*Fvv_x(vj,vj,b;kwargs...)
+            fy -= 0.5*Γj^2*Fvv_y(vj,vj,b;kwargs...)
+            mr -= 0.5*Γj^2*Fvv_r(vj,vj,b;kwargs...)
+            for vk in v[1:j-1]
+                zk,Γk  = Elements.position(vk), circulation(vk)
+                fx -= Γj*Γk*Fvv_x(vj,vk,b;kwargs...)
+                fy -= Γj*Γk*Fvv_y(vj,vk,b;kwargs...)
+                mr -= Γj*Γk*Fvv_r(vj,vk,b;kwargs...)
+            end
+
+            fx += Γj*FUv_x(vj,b)*Uvec
+            fy += Γj*FUv_y(vj,b)*Uvec
+            mr += Γj*FUv_r(vj,b)*Uvec
+        end
+
+        P̃U = Ma*Uvec
+        fx += Ω*P̃U[3]
+        fy -= Ω*P̃U[2]
+        mr += Ṽ*P̃U[2]-Ũ*P̃U[3]
+
+        f = -Ma*U̇vec
+        mr += f[1]
+        fx += f[2]
+        fy += f[3]
+
+        return fx, fy, mr
+end
+
+"""
     dpdxv(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
 
 Return the derivative with respect to the change of ``x`` position of the vortex with index `l`
@@ -224,6 +275,186 @@ _dpdUdot(ζ,v,b,::Val{2};kwargs...) = -ΦU(ζ,b)
 _dpdUdot(ζ,v,b,::Val{3};kwargs...) = -ΦV(ζ,b)
 
 
+"""
+    dfdζv(l::Integer,v::Vector{Element},b::ConformalBody) -> Tuple{ComplexF64,ComplexF64,ComplexF64}
+
+Return the derivatives with respect to the change of circle-plane ``\\zeta`` position of the vortex with index `l`
+of the force and moment,
+due to the vortex elements in `v` and any motion in `b`. Note that it is presumed that the elements `v` are given in
+the circle plane.
+"""
+function dfdζv(l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+
+  dfx, dfy, dmr = dfdzv(l,v,b;kwargs...)
+  dz̃, ddz̃, _ = derivatives(v[l].z,b.m)
+  dfx *= dz̃*exp(im*b.α)
+  dfy *= dz̃*exp(im*b.α)
+  dmr *= dz̃*exp(im*b.α)
+
+  return dfx, dfy, dmr
+end
+
+"""
+    dfdzv(l::Integer,v::Vector{Element},b::ConformalBody) -> Tuple{ComplexF64,ComplexF64,ComplexF64}
+
+Return the derivatives with respect to the change of physical-plane ``z`` position of the vortex with index `l`
+of the force and moment,
+due to the vortex elements in `v` and any motion in `b`. Note that it is presumed that the elements `v` are given in
+the circle plane.
+"""
+function dfdzv(l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+        @assert l <= length(v) "Index exceeds length of vector of elements"
+
+        dfx, dfy, dmr = complex(0.0), complex(0.0), complex(0.0)
+
+        Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+        Ω = b.α̇
+        Uvec = [Ω,Ũ,Ṽ]
+
+        vl = v[l]
+        Γl = circulation(vl)
+
+        for (j,vj) in enumerate(v)
+            Γj  = circulation(vj)
+            dfx -= Γj*Γl*dFvv_xdzv(vl,vj,b;kwargs...)
+            dfy -= Γj*Γl*dFvv_ydzv(vl,vj,b;kwargs...)
+            dmr -= Γj*Γl*dFvv_rdzv(vl,vj,b;kwargs...)
+
+        end
+        dfx += Γl*dFUv_xdzv(vl,b;kwargs...)*Uvec
+        dfy += Γl*dFUv_ydzv(vl,b;kwargs...)*Uvec
+        dmr += Γl*dFUv_rdzv(vl,b;kwargs...)*Uvec
+
+        return dfx,dfy,dmr
+end
+
+"""
+    dfdΓv(l::Integer,v::Vector{Element},b::ConformalBody) -> Tuple{Float64,Float64,Float64}
+
+Return the derivatives of the force and moment with respect to
+the change of circulation of the vortex with index `l`, due to the vortex elements in `v` and any motion in `b`. Note that it is presumed that the elements `v` are given in
+the circle plane.
+"""
+function dfdΓv(l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+
+        dmr, dfx, dfy = 0.0, 0.0, 0.0
+
+        Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+        Ω = b.α̇
+        Uvec = [Ω,Ũ,Ṽ]
+
+        vl = v[l]
+        Γl = circulation(vl)
+
+        for (j,vj) in enumerate(v)
+            Γj  = circulation(vj)
+            dfx -= Γj*Fvv_x(vl,vj,b;kwargs...)
+            dfy -= Γj*Fvv_y(vl,vj,b;kwargs...)
+            dmr -= Γj*Fvv_r(vl,vj,b;kwargs...)
+        end
+        dfx += FUv_x(vl,b)*Uvec
+        dfy += FUv_y(vl,b)*Uvec
+        dmr += FUv_r(vl,b)*Uvec
+
+        return dfx, dfy, dmr
+end
+
+"""
+    dfdU(ζ,l::Integer,v::Vector{Element},b::ConformalBody)
+
+Return the derivative of the force and moment
+due to the vortex elements in `v` and any motion in `b`, with respect to
+the change of rigid-body motion component with index `l`. Note that
+these components are index as follows: ``[\\Omega,\\tilde{U}_r,\\tilde{V}_r]``.
+Note that it is presumed that the elements `v` are given in
+the circle plane.
+"""
+function dfdU(l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+
+  dmr, dfx, dfy = 0.0, 0.0, 0.0
+
+  Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+  Ω = b.α̇
+
+  for (j,vj) in enumerate(v)
+      Γj  = circulation(vj)
+      dfx += Γj*FUv_x(vj,b)[l]
+      dfy += Γj*FUv_y(vj,b)[l]
+      dmr += Γj*FUv_r(vj,b)[l]
+  end
+  dfxU, dfyU, dmrU = _dfdU(b,Val(l);kwargs...)
+
+  return dfx+dfxU, dfy+dfyU, dmr+dmrU
+end
+
+# derivative wrt Ω
+function _dfdU(b,::Val{1};kwargs...)
+  dmr, dfx, dfy = 0.0, 0.0, 0.0
+
+  Ma = addedmass(b)
+
+  Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+  Ω = b.α̇
+  Uvec = [Ω,Ũ,Ṽ]
+  P̃U = Ma*Uvec
+
+  dfx =  P̃U[3] + Ω*Ma[3,1]
+  dfy = -P̃U[2] - Ω*Ma[2,1]
+  dmr = Ṽ*Ma[2,1] - Ũ*Ma[3,1]
+
+  return dfx, dfy, dmr
+end
+
+# derivative wrt Ũ
+function _dfdU(b,::Val{2};kwargs...)
+  dmr, dfx, dfy = 0.0, 0.0, 0.0
+
+  Ma = addedmass(b)
+
+  Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+  Ω = b.α̇
+  Uvec = [Ω,Ũ,Ṽ]
+  P̃U = Ma*Uvec
+
+  dfx =  Ω*Ma[3,2]
+  dfy = -Ω*Ma[2,2]
+  dmr = -P̃U[3] + Ṽ*Ma[2,2] - Ũ*Ma[3,2]
+
+  return dfx, dfy, dmr
+end
+
+# derivative wrt Ṽ
+function _dfdU(b,::Val{3};kwargs...)
+  dmr, dfx, dfy = 0.0, 0.0, 0.0
+
+  Ma = addedmass(b)
+
+  Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
+  Ω = b.α̇
+  Uvec = [Ω,Ũ,Ṽ]
+  P̃U = Ma*Uvec
+
+  dfx =  Ω*Ma[3,3]
+  dfy = -Ω*Ma[2,3]
+  dmr = P̃U[2] + Ṽ*Ma[2,3] - Ũ*Ma[3,3]
+
+  return dfx, dfy, dmr
+end
+
+"""
+    dfdUdot(l::Integer,v::Vector{Element},b::ConformalBody)
+
+Return the derivative of the force and moment
+due to the vortex elements in `v` and any motion in `b`, with respect to
+the change of rigid-body acceleration component with index `l`. Note that
+these components are index as follows: ``[\\dot{\\Omega},\\dot{\\tilde{U}}_r,\\dot{\\tilde{V}}_r]``
+"""
+function dfdUdot(l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
+  Ma = addedmass(b)
+  return -Ma[2,l], -Ma[3,l], -Ma[1,l]
+end
+
+
 #=
 function P(ζ,v::Element,b::Bodies.ConformalBody)
     return abs2.(wv(ζ,b,v)) + 4.0*real(dphivdzv(ζ,b,v)*conj(wvv(v,v,b)))
@@ -267,9 +498,13 @@ end
 
 # Coupled body motion - vortex terms
 
-for (wtype,c) in [(:inf1,:U),(:inf2,:V),(:rinf,:Ω)]
+for (wtype,c,comp) in [(:inf1,:U,:x),(:inf2,:V,:y),(:rinf,:Ω,:r)]
   Πfcn = Symbol("Π",c,"v")
   dΠfcn = Symbol("dΠ",c,"vdzv")
+
+  Ffcn = Symbol("Fvv_",comp)
+  dFfcn = Symbol("dFvv_",comp,"dzv")
+
   winf = Symbol("w",wtype)
   dwinfdz = Symbol("d",winf,"dz")
   dwinfdzstar = Symbol("d",winf,"dzstar")
@@ -293,71 +528,32 @@ for (wtype,c) in [(:inf1,:U),(:inf2,:V),(:rinf,:Ω)]
     return -0.5*out
     return -out
   end
+
+  # Fvv_x, Fvv_y, Fvv_r
+  @eval function $Ffcn(targ::Element,src::Element,b::ConformalBody)
+    winf_targ = $winf(targ.z,b)
+    winf_src = $winf(src.z,b)
+    return imag(winf_targ*conj(wvv(targ,src,b))) + imag(winf_src*conj(wvv(src,targ,b)))
+  end
+
+  # dFvv_xdzv, dFvv_ydzv, dFvv_rdzv (with respect to target)
+  @eval function $dFfcn(targ::Element,src::Element,b::ConformalBody)
+    winf_targ = $winf(targ.z,b)
+    dwinf_targ = $dwinfdz(targ.z,b)
+    dwinfstar_targ = $dwinfdzstar(targ.z,b)
+    wvv_targ = wvv(targ,src,b)
+    winf_src = $winf(src.z,b)
+
+    out = dwinf_targ*conj(wvv_targ)+ winf_targ*conj(dwvvdzstar_targ(targ,src,b))
+    out -= conj(dwinfstar_targ)*wvv_targ + conj(winf_targ)*dwvvdz_targ(targ,src,b)
+    out += winf_src*conj(dwvvdzstar_src(src,targ,b))
+    out -= conj(winf_src)*dwvvdz_src(src,targ,b)
+    return -0.5im*out
+  end
 end
 
-#### Force and moment ####
-function force(v::Vector{T},b::Bodies.ConformalBody;kwargs...) where {T<:Element}
-        f = zeros(ComplexF64,3)
 
-        mr = view(f,1)
-        fx = view(f,2)
-        fy = view(f,3)
 
-        Ma = addedmass(b)
-
-        Ũ, Ṽ = reim(b.ċ*exp(-im*b.α))
-        Ω = b.α̇
-        Uvec = [Ω,Ũ,Ṽ]
-
-        Ũ̇, Ṽ̇ = reim(b.c̈*exp(-im*b.α))
-        Ω̇ = b.α̈
-        U̇vec = [Ω̇,Ũ̇,Ṽ̇]
-
-        for (j,vj) in enumerate(v)
-            zj,Γj  = Elements.position(vj), circulation(vj)
-            fx .-= 0.5*Γj^2*Fvv_x(vj,vj,b;kwargs...)
-            fy .-= 0.5*Γj^2*Fvv_y(vj,vj,b;kwargs...)
-            mr .-= 0.5*Γj^2*Fvv_r(vj,vj,b;kwargs...)
-            for vk in v[1:j-1]
-                zk,Γk  = Elements.position(vk), circulation(vk)
-                fx .-= Γj*Γk*Fvv_x(vj,vk,b;kwargs...)
-                fy .-= Γj*Γk*Fvv_y(vj,vk,b;kwargs...)
-                mr .-= Γj*Γk*Fvv_r(vj,vk,b;kwargs...)
-            end
-
-            fx .+= Γj*FUv_x(vj,b)*Uvec
-            fy .+= Γj*FUv_y(vj,b)*Uvec
-            mr .+= Γj*FUv_r(vj,b)*Uvec
-        end
-
-        P̃U = Ma*Uvec
-        fx .+= Ω*P̃U[3]
-        fy .-= Ω*P̃U[2]
-        mr .+= Ṽ*P̃U[2]-Ũ*P̃U[3]
-
-        f .-= Ma*U̇vec
-
-        return fx[1]+im*fy[1], real(mr[1])
-end
-
-# Fvv
-function Fvv_x(targ::Element,src::Element,b::ConformalBody)
-  ζtarg = Elements.position(targ)
-  ζsrc = Elements.position(src)
-  return imag(winf1(ζtarg,b)*conj(wvv(targ,src,b))) + imag(winf1(ζsrc,b)*conj(wvv(src,targ,b)))
-end
-
-function Fvv_y(targ::Element,src::Element,b::ConformalBody)
-  ζtarg = Elements.position(targ)
-  ζsrc = Elements.position(src)
-  return imag(winf2(ζtarg,b)*conj(wvv(targ,src,b))) + imag(winf2(ζsrc,b)*conj(wvv(src,targ,b)))
-end
-
-function Fvv_r(targ::Element,src::Element,b::ConformalBody)
-  ζtarg = Elements.position(targ)
-  ζsrc = Elements.position(src)
-  return imag(wrinf(ζtarg,b)*conj(wvv(targ,src,b))) + imag(wrinf(ζsrc,b)*conj(wvv(src,targ,b)))
-end
 
 function FUv_x(v::Element,b::ConformalBody)
   Pv = unit_impulse(v,b)
@@ -381,4 +577,29 @@ function FUv_r(v::Element,b::ConformalBody)
   return transpose([0.0,
                     -imag(Pv)+imag(wrinf(ζv,b)*conj(winf1(ζv,b))),
                      real(Pv)+imag(wrinf(ζv,b)*conj(winf2(ζv,b)))])
+end
+
+function dFUv_xdzv(v::Element,b::ConformalBody)
+  ζv = Elements.position(v)
+  winf_v = winf1(ζv,b)
+  winf_v_star = conj(winf_v)
+  return transpose([dPvydzv(v,b)-0.5im*(dwinf1dz(ζv,b)*conj(wrinf(ζv,b))-winf_v_star*dwrinfdz(ζv,b)-conj(dwinf1dzstar(ζv,b))*wrinf(ζv,b)+winf_v*conj(dwrinfdzstar(ζv,b))),
+                    0.0,
+                    -0.5im*(dwinf1dz(ζv,b)*conj(winf2(ζv,b))-winf_v_star*dwinf2dz(ζv,b))])
+end
+
+function dFUv_ydzv(v::Element,b::ConformalBody)
+  ζv = Elements.position(v)
+  winf_v = winf2(ζv,b)
+  winf_v_star = conj(winf_v)
+  return transpose([-dPvxdzv(v,b) - 0.5im*(dwinf2dz(ζv,b)*conj(wrinf(ζv,b))-winf_v_star*dwrinfdz(ζv,b)-conj(dwinf2dzstar(ζv,b))*wrinf(ζv,b)+winf2(ζv,b)*conj(dwrinfdzstar(ζv,b))),
+                    -0.5im*(dwinf2dz(ζv,b)*conj(winf1(ζv,b))-winf_v_star*dwinf1dz(ζv,b)),
+                    0.0])
+end
+
+function dFUv_rdzv(v::Element,b::ConformalBody)
+  ζv = Elements.position(v)
+  return transpose([0.0,
+                    -dPvydzv(v,b)-0.5im*(dwrinfdz(ζv,b)*conj(winf1(ζv,b))+wrinf(ζv,b)*conj(dwinf1dzstar(ζv,b))-conj(dwrinfdzstar(ζv,b))*winf1(ζv,b)-conj(wrinf(ζv,b))*dwinf1dz(ζv,b)),
+                     dPvxdzv(v,b)-0.5im*(dwrinfdz(ζv,b)*conj(winf2(ζv,b))+wrinf(ζv,b)*conj(dwinf2dzstar(ζv,b))-conj(dwrinfdzstar(ζv,b))*winf2(ζv,b)-conj(wrinf(ζv,b))*dwinf2dz(ζv,b))])
 end

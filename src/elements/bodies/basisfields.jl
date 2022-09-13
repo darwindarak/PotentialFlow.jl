@@ -394,6 +394,14 @@ it makes the Routh correction.
 @inline wvv(targ::Element,src::Element,b::Bodies.ConformalBody) = wv(targ.z,b,src) +
                                                                    conj(Bodies.transform_velocity(conj(_routh(targ.z,b,Val(targ==src))),targ.z,b))
 
+"""
+    Pv(v::Element,b::ConformalBody)
+
+Calculate the unit impulse (in body-fixed coordinates) associated with element `v` and body `b`.
+"""
+@inline Pv(v::Element,b::ConformalBody) = unit_impulse(v,b)
+
+
 #### Derivatives ####
 """
     d2phivdzv2(ζ,b::ConformalBody,v::Element)
@@ -538,6 +546,46 @@ with respect to conjugate position of `targ` in the circle plane.
 """
 dwvvdzetastar_targ(targ::Element,src::Element,b::Bodies.ConformalBody) =
                     _dwvvdzetastar_targ(targ,src,b,Val(targ==src))
+
+
+"""
+    dPvxdzv(v::Element,b::ConformalBody)
+
+Calculate the derivative of the x component of the unit impulse (in body-fixed coordinates) associated with element `v` and body `b`
+with respect to the position of the element.
+"""
+@inline dPvxdzv(v::Element,b::ConformalBody) = conj(transform_velocity(conj(dPvxdζv(v,b)),v.z,b))
+
+"""
+    dPvydzv(v::Element,b::ConformalBody)
+
+Calculate the derivative of the y component of the unit impulse (in body-fixed coordinates) associated with element `v` and body `b`
+with respect to the position of the element.
+"""
+@inline dPvydzv(v::Element,b::ConformalBody) = conj(transform_velocity(conj(dPvydζv(v,b)),v.z,b))
+
+
+"""
+    dPvxdζv(v::Element,b::ConformalBody)
+
+Calculate the derivative of the x component of the unit impulse (in body-fixed coordinates) associated with element `v` and body `b`
+with respect to the circle-plane position of the element.
+"""
+@inline dPvxdζv(v::Element,b::ConformalBody) = 0.5*(_dPvdζv(v,b) + conj(_dPvdζvstar(v,b)))
+
+"""
+    dPvydζv(v::Element,b::ConformalBody)
+
+Calculate the derivative of the y component of the unit impulse (in body-fixed coordinates) associated with element `v` and body `b`
+with respect to the circle-plane position of the element.
+"""
+@inline dPvydζv(v::Element,b::ConformalBody) = -0.5im*(_dPvdζv(v,b) - conj(_dPvdζvstar(v,b)))
+
+
+
+_dPvdζv(v::Element,b::ConformalBody) = -im*b.m.ps.ccoeff[1]
+_dPvdζvstar(v::Element,b::ConformalBody) = -im*b.m.ps.ccoeff[1]*Elements.image(v,b)^2
+
 
 
 _dwvvdzetastar_targ(targ,src,b,::Val{true}) = zero(targ.z)
