@@ -109,6 +109,26 @@
     @test isapprox(fy,imag(f_test),atol=1e-8)
     @test isapprox(mr,mr_test,atol=1e-8)
 
+    dfx, dfy, dmr = Bodies.dfdζv(1,vort_ζ,b)
+    @test dfx ≈ 0.05485653979295437 - 0.07194068122327663im
+    @test dfy ≈ 0.24453023532535287 + 0.16744312706002326im
+    @test dmr ≈ 0.05191822399942642 + 0.02464208893429553im
+
+    dfx, dfy, dmr = Bodies.dfdΓv(2,vort_ζ,b)
+    @test dfx ≈ 0.039574773841931005
+    @test dfy ≈ 0.41003529078480333
+    @test dmr ≈ 0.07257588376846925
+
+    dfx, dfy, dmr = Bodies.dfdU(3,vort_ζ,b)
+    @test dfx ≈ -0.4712768984660649
+    @test dfy ≈ 0.0
+    @test dmr ≈ 0.3519164237283604
+
+    dfx, dfy, dmr = Bodies.dfdUdot(2,vort_ζ,b)
+    @test dfx ≈ -0.03141592653589796
+    @test dfy ≈ 0.0
+    @test dmr ≈ 0.0
+
     end
 
 end
