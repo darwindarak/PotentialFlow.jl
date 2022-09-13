@@ -82,7 +82,7 @@
 
     vort_ζ = Elements.inverse_conftransform(vort_z,b)
 
-    f, mr = Bodies.force(vort_ζ,b)
+    fx, fy, mr = Bodies.force(vort_ζ,b)
 
     θ = range(0,2π,length=2001)
     dΘ = θ[2]-θ[1]
@@ -94,19 +94,19 @@
     z̃c = map(ζ -> b.m(ζ),ζc)
     mr_test = -sum(Bodies.pressure(ζc,vort_ζ,b).*imag(conj(z̃c).*dz̃c.*ζc)*dΘ)
 
-    @test isapprox(real(f),real(f_test),atol=1e-8)
-    @test isapprox(imag(f),imag(f_test),atol=1e-8)
+    @test isapprox(fx,real(f_test),atol=1e-8)
+    @test isapprox(fy,imag(f_test),atol=1e-8)
     @test isapprox(mr,mr_test,atol=1e-8)
 
     motion = RigidBodyMotion(RigidBodyMotions.UnsteadyTransRot(-0.2 - 0.3im,0.3im,0.5,-0.2))
     Bodies.enforce_no_flow_through!(b, motion, Element[], 0.0)
 
-    f, mr = Bodies.force(vort_ζ,b)
+    fx, fy, mr = Bodies.force(vort_ζ,b)
     f_test = -sum(Bodies.pressure(ζc,vort_ζ,b).*dz̃c.*ζc*dΘ)
     mr_test = -sum(Bodies.pressure(ζc,vort_ζ,b).*imag(conj(z̃c).*dz̃c.*ζc)*dΘ)
 
-    @test isapprox(real(f),real(f_test),atol=1e-8)
-    @test isapprox(imag(f),imag(f_test),atol=1e-8)
+    @test isapprox(fx,real(f_test),atol=1e-8)
+    @test isapprox(fy,imag(f_test),atol=1e-8)
     @test isapprox(mr,mr_test,atol=1e-8)
 
     end
