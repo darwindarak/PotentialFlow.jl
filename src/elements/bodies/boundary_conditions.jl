@@ -29,19 +29,32 @@ julia> b.img
 ```
 """
 function enforce_no_flow_through!(b::ConformalBody, ṗ, elements, t)
-    @get ṗ (ċ, α̇)
+    #@get ṗ (ċ, α̇, c̈, α̈)
+    ċ, c̈, α̇, α̈ = ṗ(t)
 
     # should set up images here
 
     b.ċ = ċ
     b.α̇ = α̇
+    b.c̈ = c̈
+    b.α̈ = α̈
 
     get_image!(b,elements)
 
     nothing
 end
 
-Elements.image(z::ComplexF64,b::ConformalBody) = isinf(z) ? complex(0.0) : 1.0/conj(z)
+"""
+    clear_images!(b::ConformalBody)
+
+Return the body `b` with its images removed.
+"""
+function clear_images!(b)
+    b.img = Element[]
+    return b
+end
+
+Elements.image(z::Complex{T},b::ConformalBody) where {T} = isinf(z) ? complex(0.0) : 1.0/conj(z)
 
 Elements.image(s::T,b::ConformalBody) where T <: Union{Blob,Point} = Elements.image(s.z,b)
 

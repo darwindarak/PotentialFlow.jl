@@ -3,7 +3,8 @@ module Motions
 export induce_velocity, induce_velocity!, allocate_velocity,
        self_induce_velocity, self_induce_velocity!,
        mutually_induce_velocity!, reset_velocity!,
-       advect, advect!
+       advect, advect!, dinduce_velocity_dz, dinduce_velocity_dzstar,
+       allocate_dveldz, allocate_dveldzstar
 
 using ..Properties
 using ..Elements
@@ -306,5 +307,101 @@ function advect!(group₊::T, group₋::T, ws, Δt) where {T <: Tuple}
     end
     group₊
 end
+
+
+"""
+    dinduce_velocity_dz(target, element, time)
+
+Compute the derivative (with respect to the target position)
+of the velocity induced by `element` on `target`. Note that
+this treats the induced velocity as the true complex velocity, u - iv,
+rather than the complex conjugate velocity (as returned by induce_velocity).
+
+`target` can be:
+
+- a `ComplexF64`
+- a subtype of `Vortex.PointSource`
+- an array or tuple of vortex elements
+
+while the `element` can be:
+
+- any subtype of `Vortex.Element`
+- an array or tuple of vortex elements
+
+# Example
+```jldoctest
+julia> z = rand(ComplexF64)
+0.23603334566204692 + 0.34651701419196046im
+
+julia> point = Vortex.Point(z, rand());
+
+julia> srcs = Vortex.Point.(rand(ComplexF64, 10), rand(10));
+
+julia> induce_velocity(z, srcs[1], 0.0)
+0.08722212007570912 + 0.14002850279102955im
+
+julia> induce_velocity(point, srcs[1], 0.0)
+0.08722212007570912 + 0.14002850279102955im
+
+julia> induce_velocity(z, srcs, 0.0)
+-0.4453372874427177 - 0.10592646656959151im
+
+julia> induce_velocity(point, srcs, 0.0)
+-0.4453372874427177 - 0.10592646656959151im
+```
+"""
+@property begin
+    signature = dinduce_velocity_dz(targ::Target, src::Source, t)
+    preallocator = allocate_dveldz
+    stype = ComplexF64
+end
+
+"""
+    dinduce_velocity_dzstar(target, element, time)
+
+Compute the derivative (with respect to the conjugate of the target position)
+of the velocity induced by `element` on `target`.  Note that
+this treats the induced velocity as the true complex velocity, u - iv
+rather than the complex conjugate velocity (as returned by induce_velocity).
+
+`target` can be:
+
+- a `ComplexF64`
+- a subtype of `Vortex.PointSource`
+- an array or tuple of vortex elements
+
+while the `element` can be:
+
+- any subtype of `Vortex.Element`
+- an array or tuple of vortex elements
+
+# Example
+```jldoctest
+julia> z = rand(ComplexF64)
+0.23603334566204692 + 0.34651701419196046im
+
+julia> point = Vortex.Point(z, rand());
+
+julia> srcs = Vortex.Point.(rand(ComplexF64, 10), rand(10));
+
+julia> induce_velocity(z, srcs[1], 0.0)
+0.08722212007570912 + 0.14002850279102955im
+
+julia> induce_velocity(point, srcs[1], 0.0)
+0.08722212007570912 + 0.14002850279102955im
+
+julia> induce_velocity(z, srcs, 0.0)
+-0.4453372874427177 - 0.10592646656959151im
+
+julia> induce_velocity(point, srcs, 0.0)
+-0.4453372874427177 - 0.10592646656959151im
+```
+"""
+@property begin
+    signature = dinduce_velocity_dzstar(targ::Target, src::Source, t)
+    preallocator = allocate_dveldzstar
+    stype = ComplexF64
+end
+
 
 end

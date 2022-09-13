@@ -5,3 +5,5 @@
 *.jl.mem
 *.ipynb_checkpoints
 docs/build
+*.pdf
+*.png

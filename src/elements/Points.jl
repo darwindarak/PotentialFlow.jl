@@ -4,7 +4,7 @@ export Point
 
 using ..Elements
 import ..Motions: induce_velocity, mutually_induce_velocity!, self_induce_velocity!, advect,
-                  allocate_velocity
+                  allocate_velocity, allocate_dveldz, allocate_dveldzstar, dinduce_velocity_dz, dinduce_velocity_dzstar
 
 #== Type definition ==#
 
@@ -53,16 +53,26 @@ Elements.streamfunction(z::Complex{T}, p::Point) where {T} = real(-0.5p.S*log(z 
 
 Elements.complexpotential(z::Complex{T}, p::Point) where {T} = -0.5im*p.S*log(z - p.z)/π
 
-
+# This is actually the conjugate K* of the Cauchy kernel
 cauchy_kernel(z) = z != zero(z) ? 0.5im/(π*conj(z)) : zero(z)
+
+# This is dK*/dz* = (dK/dz)*
+dcauchy_kernel_dzstar(z) = z != zero(z) ? -0.5im/(π*conj(z)^2) : zero(z)
 
 # ensures that the velocity is of same type as position
 allocate_velocity(v::Vector{Point{T,R}}) where {T,R} = zeros(Complex{R},length(v))
+allocate_dveldz(v::Vector{Point{T,R}}) where {T,R} = zeros(Complex{R},length(v))
+allocate_dveldzstar(v::Vector{Point{T,R}}) where {T,R} = zeros(Complex{R},length(v))
 
 function induce_velocity(z::Complex{T}, p::Point, t) where {T}
     p.S'*cauchy_kernel(z - p.z)
 end
 
+function dinduce_velocity_dz(z::Complex{T}, p::Point, t) where {T}
+    p.S*conj(dcauchy_kernel_dzstar(z - p.z))
+end
+
+dinduce_velocity_dzstar(z::Complex{T}, p::Point, t) where {T} = zero(z)
 
 function mutually_induce_velocity!(ws₁, ws₂,
                                    points₁::Vector{Point{T₁}},

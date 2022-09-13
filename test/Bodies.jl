@@ -36,5 +36,99 @@
     @test b₊.α ≈ 1.0
     end
 
+    @testset "Derivatives" begin
+
+    a1 = 0.5; b1 = 0.1; ccoeff = ComplexF64[0.5(a1+b1),0,0.5(a1-b1)]
+    b = Bodies.ConformalBody(ccoeff,ComplexF64(0.0),π/4)
+
+    vort_z = [Vortex.Blob(0.5 + 0.2im, 1.0, 0.01),
+              Vortex.Blob(0.2im, 1.0, 0.01),
+              Vortex.Blob(-1.0im, -2.0, 0.01)]
+
+    vort_ζ = Elements.inverse_conftransform(vort_z,b)
+
+    ζ = 1.0+0.1im
+    @test Bodies.dpdzv(ζ,1,vort_ζ,b) ≈ -1.3941088515895026 + 1.1089339580694477im
+    @test Bodies.dpdzv(ζ,2,vort_ζ,b) ≈ 0.8402098734913479 + 0.8115186077355655im
+
+    motion = RigidBodyMotion(RigidBodyMotions.UnsteadyTransRot(-0.5 + 1.0im,0.0im,0.2,0.0))
+    Bodies.enforce_no_flow_through!(b, motion, Element[], 0.0)
+    #@test Bodies.dpdzv(ζ,1,vort_ζ,b) ≈ -14.91887479595418 + 11.326836023135279im
+    #@test Bodies.dpdΓv(ζ,1,vort_ζ,b) ≈ -0.10685330645316929
+    @test Bodies.dpdzv(ζ,1,vort_ζ,b) ≈ -13.564956302107685 + 18.2006953682202im
+    @test Bodies.dpdΓv(ζ,1,vort_ζ,b) ≈ -10.74045898676263
+
+    #@test Bodies.dpdU(ζ,1,vort_ζ,b) ≈ -7.445770018204262
+    #@test Bodies.dpdU(ζ,2,vort_ζ,b) ≈ 7.489634497871336
+    #@test Bodies.dpdU(ζ,3,vort_ζ,b) ≈ -22.042738470789313
+    @test Bodies.dpdU(ζ,1,vort_ζ,b) ≈ -8.548018373889507
+    @test Bodies.dpdU(ζ,2,vort_ζ,b) ≈ 4.126900666032036
+    @test Bodies.dpdU(ζ,3,vort_ζ,b) ≈ -30.61646732613466
+
+    @test Bodies.dpdUdot(ζ,1,vort_ζ,b) ≈ 0.01176355259288305
+    @test Bodies.dpdUdot(ζ,2,vort_ζ,b) ≈ 0.09900990099009899
+    @test Bodies.dpdUdot(ζ,3,vort_ζ,b) ≈ 0.04950495049504951
+
+
+    end
+
+    @testset "Force and moment" begin
+    a1 = 0.5; b1 = 0.1; ccoeff = ComplexF64[0.5(a1+b1),0,0.5(a1-b1)]
+    b = Bodies.ConformalBody(ccoeff,ComplexF64(0.0),π/4)
+
+    vort_z = [Vortex.Point(0.5 + 0.2im, 1.0),
+              Vortex.Point(0.2im, 1.0),
+              Vortex.Point(-1.0im, -2.0)]
+
+    vort_ζ = Elements.inverse_conftransform(vort_z,b)
+
+    fx, fy, mr = Bodies.force(vort_ζ,b)
+
+    θ = range(0,2π,length=2001)
+    dΘ = θ[2]-θ[1]
+    ζc = exp.(im*θ[1:end-1])
+
+    dz̃c = map(ζ -> b.dm(ζ)[1],ζc)
+    f_test = -sum(Bodies.pressure(ζc,vort_ζ,b).*dz̃c.*ζc*dΘ)
+
+    z̃c = map(ζ -> b.m(ζ),ζc)
+    mr_test = -sum(Bodies.pressure(ζc,vort_ζ,b).*imag(conj(z̃c).*dz̃c.*ζc)*dΘ)
+
+    @test isapprox(fx,real(f_test),atol=1e-8)
+    @test isapprox(fy,imag(f_test),atol=1e-8)
+    @test isapprox(mr,mr_test,atol=1e-8)
+
+    motion = RigidBodyMotion(RigidBodyMotions.UnsteadyTransRot(-0.2 - 0.3im,0.3im,0.5,-0.2))
+    Bodies.enforce_no_flow_through!(b, motion, Element[], 0.0)
+
+    fx, fy, mr = Bodies.force(vort_ζ,b)
+    f_test = -sum(Bodies.pressure(ζc,vort_ζ,b).*dz̃c.*ζc*dΘ)
+    mr_test = -sum(Bodies.pressure(ζc,vort_ζ,b).*imag(conj(z̃c).*dz̃c.*ζc)*dΘ)
+
+    @test isapprox(fx,real(f_test),atol=1e-8)
+    @test isapprox(fy,imag(f_test),atol=1e-8)
+    @test isapprox(mr,mr_test,atol=1e-8)
+
+    dfx, dfy, dmr = Bodies.dfdζv(1,vort_ζ,b)
+    @test dfx ≈ 0.05485653979295437 - 0.07194068122327663im
+    @test dfy ≈ 0.24453023532535287 + 0.16744312706002326im
+    @test dmr ≈ 0.05191822399942642 + 0.02464208893429553im
+
+    dfx, dfy, dmr = Bodies.dfdΓv(2,vort_ζ,b)
+    @test dfx ≈ 0.039574773841931005
+    @test dfy ≈ 0.41003529078480333
+    @test dmr ≈ 0.07257588376846925
+
+    dfx, dfy, dmr = Bodies.dfdU(3,vort_ζ,b)
+    @test dfx ≈ -0.4712768984660649
+    @test dfy ≈ 0.0
+    @test dmr ≈ 0.3519164237283604
+
+    dfx, dfy, dmr = Bodies.dfdUdot(2,vort_ζ,b)
+    @test dfx ≈ -0.03141592653589796
+    @test dfy ≈ 0.0
+    @test dmr ≈ 0.0
+
+    end
 
 end
