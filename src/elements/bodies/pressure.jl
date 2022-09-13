@@ -362,17 +362,23 @@ end
 function FUv_x(v::Element,b::ConformalBody)
   Pv = unit_impulse(v,b)
   ζv = Elements.position(v)
-  return transpose([imag(Pv)+imag(winf1(ζv,b)*conj(wrinf(ζv,b))), 0.0, imag(winf1(ζv,b)*conj(winf2(ζv,b)))])
+  return transpose([imag(Pv)+imag(winf1(ζv,b)*conj(wrinf(ζv,b))),
+                    0.0,
+                    imag(winf1(ζv,b)*conj(winf2(ζv,b)))])
 end
 
 function FUv_y(v::Element,b::ConformalBody)
   Pv = unit_impulse(v,b)
   ζv = Elements.position(v)
-  return transpose([-real(Pv)+imag(winf2(ζv,b)*conj(wrinf(ζv,b))), imag(winf2(ζv,b)*conj(winf1(ζv,b))), 0.0])
+  return transpose([-real(Pv)+imag(winf2(ζv,b)*conj(wrinf(ζv,b))),
+                     imag(winf2(ζv,b)*conj(winf1(ζv,b))),
+                     0.0])
 end
 
 function FUv_r(v::Element,b::ConformalBody)
   Pv = unit_impulse(v,b)
   ζv = Elements.position(v)
-  return transpose([0.0,-imag(Pv)+imag(wrinf(ζv,b)*conj(winf1(ζv,b))), real(Pv)+imag(wrinf(ζv,b)*conj(winf2(ζv,b)))])
+  return transpose([0.0,
+                    -imag(Pv)+imag(wrinf(ζv,b)*conj(winf1(ζv,b))),
+                     real(Pv)+imag(wrinf(ζv,b)*conj(winf2(ζv,b)))])
 end
