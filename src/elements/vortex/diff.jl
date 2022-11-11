@@ -34,12 +34,12 @@ for fiip in (:seed!,)
       vseed .= Blob.(posduals,real(strduals),Elements.blobradius(v))
   end
 
-  @eval function $fiip(vseed::Vector{<:Point},v::Vector{<:Point},posduals,strduals,index) where {N,V,M}
+  @eval function $fiip(vseed::Vector{<:Point},v::Vector{<:Point},posduals,strduals,index)
       $fiip(posduals,strduals,circulation,v,index)
       vseed .= Point.(posduals,real(strduals))
   end
 
-  @eval function $fiip(vseed::Vector{<:Blob},v::Vector{<:Blob},posduals,strduals,index) where {N,V,M}
+  @eval function $fiip(vseed::Vector{<:Blob},v::Vector{<:Blob},posduals,strduals,index)
       $fiip(posduals,strduals,circulation,v,index)
       vseed .= Blob.(posduals,real(strduals),Elements.blobradius(v))
   end

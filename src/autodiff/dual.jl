@@ -79,7 +79,7 @@ end
 @inline Base.@propagate_inbounds dz_partials(::Type{T}, d::AbstractVector{ComplexDual{T,V,N}}, i...) where {T,V,N} = dz_partials(d, i...)
 
 # Given complex Partials for d/dz and d/dz*, return partials for dr/dx,y and di/dx,y
-@inline function reim_partials(dz::Partials{N,V},dzstar::Partials{N,V}) where {T,V<:Complex,N}
+@inline function reim_partials(dz::Partials{N,V},dzstar::Partials{N,V}) where {V<:Complex,N}
     drx, dix = reim(dz+dzstar)
     dry, diy = reim(im*dz-im*dzstar)
     return _splice_xy(drx,dry), _splice_xy(dix,diy)

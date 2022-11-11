@@ -461,25 +461,25 @@ function P(ζ,v::Element,b::Bodies.ConformalBody)
 end
 =#
 
-function Πvv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody)
-    return real(wv(ζ,b,targ).*conj(wv(ζ,b,src))) +
-           2.0*real(dphivdzv(ζ,b,targ)*conj(wvv(targ,src,b))) +
-           2.0*real(dphivdzv(ζ,b,src)*conj(wvv(src,targ,b)))
+function Πvv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody;kwargs...)
+    return real(wv(ζ,b,targ;kwargs...).*conj(wv(ζ,b,src;kwargs...))) +
+           2.0*real(dphivdzv(ζ,b,targ;kwargs...)*conj(wvv(targ,src,b;kwargs...))) +
+           2.0*real(dphivdzv(ζ,b,src)*conj(wvv(src,targ,b;kwargs...)))
 end
 
-dΠvvdzv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody) = _dΠvvdzv_targ(ζ,targ,src,b)
+dΠvvdzv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody;kwargs...) = _dΠvvdzv_targ(ζ,targ,src,b;kwargs...)
 
 # This computes the derivative of Πvv with respect to the
 # target's position. Note that the derivative with respect to
 # the source's position is simply the same with targ and src swapped.
-function _dΠvvdzv_targ(ζ,targ::Element,src::Element,b::Bodies.ConformalBody)
-    out = dwvdzv(ζ,b,targ).*conj(wv(ζ,b,src)) +
-          2.0*d2phivdzv2(ζ,b,targ)*conj(wvv(targ,src,b)) +
+function _dΠvvdzv_targ(ζ,targ::Element,src::Element,b::Bodies.ConformalBody;kwargs...)
+    out = dwvdzv(ζ,b,targ).*conj(wv(ζ,b,src;kwargs...)) +
+          2.0*d2phivdzv2(ζ,b,targ)*conj(wvv(targ,src,b;kwargs...)) +
           2.0*dphivdzv(ζ,b,targ)*conj(dwvvdzstar_targ(targ,src,b)) +
           2.0*dphivdzv(ζ,b,src)*conj(dwvvdzstar_src(src,targ,b))
-    out += conj(dwvdzvstar(ζ,b,targ).*conj(wv(ζ,b,src)) +
-          2.0*d2phivdzvdzvstar(ζ,b,targ)*conj(wvv(targ,src,b)) +
-          2.0*dphivdzv(ζ,b,targ)*conj(dwvvdz_targ(targ,src,b)) +
+    out += conj(dwvdzvstar(ζ,b,targ).*conj(wv(ζ,b,src;kwargs...)) +
+          2.0*d2phivdzvdzvstar(ζ,b,targ)*conj(wvv(targ,src,b;kwargs...)) +
+          2.0*dphivdzv(ζ,b,targ)*conj(dwvvdz_targ(targ,src,b;kwargs...)) +
           2.0*dphivdzv(ζ,b,src)*conj(dwvvdz_src(src,targ,b)))
     return 0.5*out
 end
@@ -511,8 +511,8 @@ for (wtype,c,comp) in [(:inf1,:U,:x),(:inf2,:V,:y),(:rinf,:Ω,:r)]
 
   # ΠUv, ΠVv, ΠΩv
   # switched from 4 to 2 in front of second term
-  @eval function $Πfcn(ζ,v::Element,b::Bodies.ConformalBody)
-      return -real(conj($winf(ζ,b)).*wv(ζ,b,v)) -
+  @eval function $Πfcn(ζ,v::Element,b::Bodies.ConformalBody;kwargs...)
+      return -real(conj($winf(ζ,b)).*wv(ζ,b,v;kwargs...)) -
              2.0*real(dphivdzv(ζ,b,v)*conj($winf(v.z,b)))
   end
 
@@ -530,22 +530,22 @@ for (wtype,c,comp) in [(:inf1,:U,:x),(:inf2,:V,:y),(:rinf,:Ω,:r)]
   end
 
   # Fvv_x, Fvv_y, Fvv_r
-  @eval function $Ffcn(targ::Element,src::Element,b::ConformalBody)
+  @eval function $Ffcn(targ::Element,src::Element,b::ConformalBody;kwargs...)
     winf_targ = $winf(targ.z,b)
     winf_src = $winf(src.z,b)
-    return imag(winf_targ*conj(wvv(targ,src,b))) + imag(winf_src*conj(wvv(src,targ,b)))
+    return imag(winf_targ*conj(wvv(targ,src,b;kwargs...))) + imag(winf_src*conj(wvv(src,targ,b;kwargs...)))
   end
 
   # dFvv_xdzv, dFvv_ydzv, dFvv_rdzv (with respect to target)
-  @eval function $dFfcn(targ::Element,src::Element,b::ConformalBody)
+  @eval function $dFfcn(targ::Element,src::Element,b::ConformalBody;kwargs...)
     winf_targ = $winf(targ.z,b)
     dwinf_targ = $dwinfdz(targ.z,b)
     dwinfstar_targ = $dwinfdzstar(targ.z,b)
-    wvv_targ = wvv(targ,src,b)
+    wvv_targ = wvv(targ,src,b;kwargs...)
     winf_src = $winf(src.z,b)
 
     out = dwinf_targ*conj(wvv_targ)+ winf_targ*conj(dwvvdzstar_targ(targ,src,b))
-    out -= conj(dwinfstar_targ)*wvv_targ + conj(winf_targ)*dwvvdz_targ(targ,src,b)
+    out -= conj(dwinfstar_targ)*wvv_targ + conj(winf_targ)*dwvvdz_targ(targ,src,b;kwargs...)
     out += winf_src*conj(dwvvdzstar_src(src,targ,b))
     out -= conj(winf_src)*dwvvdz_src(src,targ,b)
     return -0.5im*out
@@ -553,7 +553,8 @@ for (wtype,c,comp) in [(:inf1,:U,:x),(:inf2,:V,:y),(:rinf,:Ω,:r)]
 end
 
 
-
+# Note that these rely on unit_impulse of the vortex, which only
+# strictly computes the impulse for the image of equal/opposite strength.
 
 function FUv_x(v::Element,b::ConformalBody)
   Pv = unit_impulse(v,b)
