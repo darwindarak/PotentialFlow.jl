@@ -40,7 +40,7 @@ about its reference point
 @inline Fbr(ζ,b::ConformalBody) = Elements.complexpotential(ζ,_set_motion_in_quiescent(b,0.0,0.0,1.0))
 
 """
-    Fv(ζ,b::ConformalBody,v::Element)
+    Fv(ζ,b::ConformalBody,v::Element[;preserve_circ=false])
 
 Calculate ``\\hat{F}_{v}``, the complex potential at `ζ` in the circle plane due to a unit-strength vortex at the location of `v`,
 along with its images inside the body `b`. It is presumed that the location of `v` is given in the circle plane.
@@ -385,13 +385,13 @@ function _dphivdζv(ζ,b::Bodies.ConformalBody,v::Element)
 end
 
 """
-    wvv(targ::Element,src::Element,b::ConformalBody)
+    wvv(targ::Element,src::Element,b::ConformalBody;[preserve_circ=false])
 
 Calculate the complex velocity ``w = u - iv`` of the target element `targ` due to element `src` with unit strength,
 also accounting for the images of `src`. If `targ` and `src` are the same element, then
 it makes the Routh correction.
 """
-@inline wvv(targ::Element,src::Element,b::Bodies.ConformalBody) = wv(targ.z,b,src) +
+@inline wvv(targ::Element,src::Element,b::Bodies.ConformalBody;preserve_circ=DEFAULT_PRESERVE_CIRC_FLAG) = wv(targ.z,b,src;preserve_circ=preserve_circ) +
                                                                    conj(Bodies.transform_velocity(conj(_routh(targ.z,b,Val(targ==src))),targ.z,b))
 
 """
@@ -466,14 +466,14 @@ function dwvvdz_src(targ::Element,src::Element,b::Bodies.ConformalBody)
 end
 
 """
-    dwvvdz_targ(targ::Element,src::Element,b::ConformalBody)
+    dwvvdz_targ(targ::Element,src::Element,b::ConformalBody;[preserve_circ=false])
 
 Calculate the derivative of the complex velocity ``w = u - iv`` of
 induced on the target element `targ` by the element `src` with unit strength,
 with respect to physical-plane position of `targ`.
 """
-function dwvvdz_targ(targ::Element,src::Element,b::Bodies.ConformalBody)
-  out = dwvvdzeta_targ(targ,src,b)
+function dwvvdz_targ(targ::Element,src::Element,b::Bodies.ConformalBody;preserve_circ=DEFAULT_PRESERVE_CIRC_FLAG)
+  out = dwvvdzeta_targ(targ,src,b;preserve_circ=preserve_circ)
   return conj(Bodies.transform_velocity(conj(out),targ.z,b))
 end
 

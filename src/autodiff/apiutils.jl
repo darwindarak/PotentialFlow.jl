@@ -4,7 +4,7 @@
 end
 
 function seed!(duals::AbstractArray{<:ComplexDual{T,V,M}}, x,
-               rseed::Partials{M,V} = zero(Partials{M,V}),iseed::Partials{M,V} = zero(Partials{M,V})) where {T,V,N,M}
+               rseed::Partials{M,V} = zero(Partials{M,V}),iseed::Partials{M,V} = zero(Partials{M,V})) where {T,V,M}
     for i in eachindex(duals)
         duals[i] = ComplexDual{T,V,M}(x[i],rseed,iseed)
     end
