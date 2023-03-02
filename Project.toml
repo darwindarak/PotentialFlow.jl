@@ -2,7 +2,7 @@ name = "PotentialFlow"
 uuid = "73af2aaf-3f58-5b29-82a9-435ecf827f5b"
 authors = ["Darwin Darakananda <darwindarak@gmail.com>", "Jeff Eldredge <jdeldre@g.ucla.edu>"]
 repo = "https://github.com/darwindarak/PotentialFlow.jl.git"
-version = "0.2.6"
+version = "0.2.7"
 
 [deps]
 ColorTypes = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
@@ -32,7 +32,7 @@ PlotUtils = "1.0"
 RecipesBase = "1.0"
 Reexport = "0.2.0, 1"
 SchwarzChristoffel = "0.1.13"
-julia = "1"
+julia = "1.6"
 
 [extras]
 NBInclude = "0db19996-df87-5ea3-a455-e3a50d440464"
