@@ -19,14 +19,14 @@ import ..Motions: induce_velocity, induce_velocity!, mutually_induce_velocity!, 
                   dinduce_velocity_dz, dinduce_velocity_dzstar
 import SchwarzChristoffel: Polygon, ExteriorMap, ConformalMap, PowerMap, addedmass,
                             InverseMap, DerivativeMap, coefficients, LinkedLines,
-                            derivatives
+                            derivatives, isinside
 
 import ..Utils:@get, MappedVector
 
 export ConformalBody,Polygon,enforce_no_flow_through!,normal,tangent,
           transform_velocity!,transform_velocity,unit_impulse,addedmass,
           clear_images!, pressure, dpdzv, dpdxv, dpdyv, dpdζv, dpdΓv, dpdU, dpdUdot,
-          force, dfdzv, dfdζv, dfdΓv, dfdU, dfdUdot
+          force, dfdzv, dfdζv, dfdΓv, dfdU, dfdUdot, rigid_transform, inverse_rigid_transform
 
 
 mutable struct ConformalBody <: Element
@@ -122,9 +122,10 @@ function Base.show(io::IO, b::ConformalBody)
 end
 
 
-rigid_transform(z̃::Union{ComplexF64,Vector{ComplexF64}},
-                c::ComplexF64,α::Float64) = c .+ z̃*exp(im*α)
+rigid_transform(z̃,c::ComplexF64,α::Float64) = c .+ z̃*exp(im*α)
 
+
+inverse_rigid_transform(z,c::ComplexF64,α::Float64) = (z .- c).*exp(-im*α)
 
 Base.length(b::ConformalBody) = b.m.N
 
@@ -202,6 +203,13 @@ Elements.conftransform(f::Freestream,b::ConformalBody) =
       Freestream(f.U/conj(b.m.ps.ccoeff[1])*exp(im*b.α))
 
 
+function Elements.conftransform(ζ::Matrix{Complex{T}},b::ConformalBody) where {T}
+    z = zero(ζ)
+    vec(z) .= conftransform(vec(ζ),b)
+    return z
+end
+
+
 function allocate_inv_conftransform(::ConformalBody)
     nothing
 end
@@ -217,6 +225,19 @@ Elements.inverse_conftransform(s::Blob{T},b::ConformalBody) where {T} =
 Elements.inverse_conftransform(f::Freestream,b::ConformalBody) =
         Freestream(f.U*conj(b.m.ps.ccoeff[1])*exp(-im*b.α))
 
+
+function Elements.inverse_conftransform(z::Matrix{Complex{T}},b::Bodies.ConformalBody) where {T}
+    ζ = zero(z)
+    inside = map(zi -> isinside(zi,b.m,2e-3),inverse_rigid_transform(z,b.c,b.α))
+    z_trans = (z[.~inside].-b.c).*exp(-im*b.α)
+    ζ[.~inside] .= b.minv(vec(z_trans))
+
+    # compute number of points placed inside the unit circle
+    #ζinside = abs.(ζ).<1.0
+    #sum(.~inside .&& ζinside))
+
+    return ζ
+end
 
 function allocate_jacobian(::ConformalBody)
     nothing

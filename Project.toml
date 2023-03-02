@@ -31,7 +31,7 @@ MappedArrays = "0.3.0"
 PlotUtils = "1.0"
 RecipesBase = "1.0"
 Reexport = "0.2.0, 1"
-SchwarzChristoffel = "0.1.11"
+SchwarzChristoffel = "0.1.13"
 julia = "1"
 
 [extras]
@@ -42,4 +42,4 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "NBInclude", "Plots", "Statistics", "PyPlot"]
+test = ["Test", "NBInclude", "Plots", "PyPlot", "Statistics"]

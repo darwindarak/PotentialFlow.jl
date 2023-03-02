@@ -157,9 +157,9 @@ function dpdzv(ζ,l::Integer,v::Vector{T},b::Bodies.ConformalBody;kwargs...) whe
             Γj  = circulation(vj)
             out -= Γj*Γl*dΠvvdzv(ζ,vl,vj,b;kwargs...)
         end
-        out -= Γl*Ũ*dΠUvdzv(ζ,vl,b;kwargs...)
-        out -= Γl*Ṽ*dΠVvdzv(ζ,vl,b;kwargs...)
-        out -= Γl*Ω*dΠΩvdzv(ζ,vl,b;kwargs...)
+        out -= Γl*Ũ*dΠUvdzv(ζ,vl,b)
+        out -= Γl*Ṽ*dΠVvdzv(ζ,vl,b)
+        out -= Γl*Ω*dΠΩvdzv(ζ,vl,b)
 
         return out
 end
@@ -463,7 +463,7 @@ end
 
 function Πvv(ζ,targ::Element,src::Element,b::Bodies.ConformalBody;kwargs...)
     return real(wv(ζ,b,targ;kwargs...).*conj(wv(ζ,b,src;kwargs...))) +
-           2.0*real(dphivdzv(ζ,b,targ;kwargs...)*conj(wvv(targ,src,b;kwargs...))) +
+           2.0*real(dphivdzv(ζ,b,targ)*conj(wvv(targ,src,b;kwargs...))) +
            2.0*real(dphivdzv(ζ,b,src)*conj(wvv(src,targ,b;kwargs...)))
 end
 

@@ -9,28 +9,20 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
 @userplot Streamlines
 
 @recipe function f(s::Streamlines)
-    elements = s.args[3]
 
-    if (isa(elements, Array) || isa(elements, Tuple)) &&
-        ConformalBody in typeof.(elements)
 
-        b = elements[findfirst(isa.(elements,PotentialFlow.ConformalBody))]
-        ζ = [r*exp(im*θ) for θ in s.args[2], r in s.args[1]]
+    #if (isa(elements, Array) || isa(elements, Tuple)) &&
+    #    ConformalBody in typeof.(elements)
+    if (length(s.args)==4)
+
+        ζ = s.args[3]
+        elements = s.args[4]
+
         ψ = streamfunction(ζ,elements)
-        Z = conftransform(ζ,b)
 
-        # Determine an automatic range of contour levels
-        vmin = minimum(ψ)
-        vmax = maximum(ψ)
-        vmean = vmax-vmin
-        vfact = 1
-        n = 31
-        vmin = vmean+vfact*(vmin-vmean)
-        vmax = vmean+vfact*(vmax-vmean)
-        v = range(vmin,vmax,length=n)
-        if (sign(vmin) != sign(vmax))
-            v = v .- v[abs.(v).==minimum(abs.(v))];
-        end
+        #ζ = [r*exp(im*θ) for θ in s.args[2], r in s.args[1]]
+        #b = elements[findfirst(isa.(elements,PotentialFlow.ConformalBody))]
+        #Z = conftransform(ζ,b)
 
         @series begin
           seriestype --> :contour
@@ -39,11 +31,14 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
             linewidth --> 1
             legend --> :none
             seriescolor --> [:black, :black]
-            levels --> v
-            real.(Z), imag.(Z), ψ
+            #levels --> v
+            #real.(Z), imag.(Z), ψ
+            s.args[1], s.args[2], ψ
         end
 
     else
+      elements = s.args[3]
+
       z = [x + im*y for y in s.args[2], x in s.args[1]]
       ψ = streamfunction(z, elements)
 
