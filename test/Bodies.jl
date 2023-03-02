@@ -15,6 +15,16 @@
     @test Bodies.normal(ζ,v,b) ≈ 0.7071067811865475
     @test Bodies.tangent(ζ,v,b) ≈ 0.7071067811865475
     @test conftransform(ζ,b) ≈ 1.0
+
+    xg = range(-2,2,length=11)
+    yg = range(-2,2,length=11)
+    zg = [x + im*y for y in yg, x in xg]
+    ζg = inverse_conftransform(zg,b)
+    zg2 = conftransform(ζg,b)
+    inside = map(zi -> isinside(zi,b.m,2e-3),Bodies.inverse_rigid_transform(zg,b.c,b.α))
+    @test isapprox(sum(abs.(zg2[.~inside] .- zg[.~inside])),0.0,atol=1e-8)
+
+
     end
 
     @testset "Motion" begin
