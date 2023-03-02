@@ -68,7 +68,7 @@ function get_image!(b::ConformalBody, sources::T) where T <: Union{Tuple, Abstra
     nothing
 end
 
-function get_image!(b::ConformalBody, source::T) where T <: Union{Blob,Point}
+function get_image!(b::ConformalBody, source::T) where T <: Union{Blob,Point,Freestream}
   get_image!(b.img,source,b)
 end
 
