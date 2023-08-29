@@ -7,24 +7,28 @@ import ..Utils: dz_partials, value, Dual, ComplexDual, Partials, valtype
 
 
 import Base: *, \
-struct Transform{T,I,D}
-    dct!::FFTW.r2rFFTWPlan{T,(3,),true,D}
+struct Transform{T,I,FT}
+    dct!::FT #FFTW.r2rFFTWPlan{T,(3,),true,D}
 end
 
 function plan_transform!(x::Vector{T}) where T
-    Transform{T,true,1}(FFTW.plan_r2r!(x, FFTW.REDFT00))
+    plan = FFTW.plan_r2r!(x, FFTW.REDFT00)
+    Transform{T,true,typeof(plan)}(plan)
 end
 
 function plan_transform(x::Vector{T}) where T
-    Transform{T,false,1}(FFTW.plan_r2r!(x, FFTW.REDFT00))
+    plan = FFTW.plan_r2r!(x, FFTW.REDFT00)
+    Transform{T,false,typeof(plan)}(plan)
 end
 
 function plan_transform!(x::Array{T,2}) where T
-    Transform{T,true,2}(FFTW.plan_r2r!(x, FFTW.REDFT00,1))
+    plan = FFTW.plan_r2r!(x, FFTW.REDFT00,1)
+    Transform{T,true,typeof(plan)}(plan)
 end
 
 function plan_transform(x::Array{T,2}) where T
-    Transform{T,false,2}(FFTW.plan_r2r!(x, FFTW.REDFT00,1))
+    plan = FFTW.plan_r2r!(x, FFTW.REDFT00,1)
+    Transform{T,false,typeof(plan)}(plan)
 end
 
 (C::Transform{T,true}  * x::Vector{T}) where T = transform!(x, C.dct!)

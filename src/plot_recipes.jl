@@ -2,9 +2,9 @@ using RecipesBase
 using ColorTypes
 import PlotUtils: cgrad
 
-const mygreen = RGBA{Float64}(151/255,180/255,118/255,1)
-const mygreen2 = RGBA{Float64}(113/255,161/255,103/255,1)
-const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
+const mygreen = RGBA(151/255,180/255,118/255,1)
+const mygreen2 = RGBA(113/255,161/255,103/255,1)
+const myblue = RGBA(74/255,144/255,226/255,1)
 
 @userplot Streamlines
 

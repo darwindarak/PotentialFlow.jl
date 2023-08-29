@@ -3,6 +3,7 @@ __precompile__()
 module PotentialFlow
 
 using Reexport
+using UnPack
 
 include("Properties.jl")
 include("Utils.jl")
@@ -51,6 +52,8 @@ import .Doublets: Doublet
 
 import .Freestreams: Freestream
 
+
+include("vorticity_transfer.jl")
 
 #== Plot Recipes ==#
 

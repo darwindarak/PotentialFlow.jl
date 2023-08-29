@@ -1,5 +1,6 @@
 module Plates
 
+using UnPack
 using DocStringExtensions
 using LinearAlgebra: rmul!
 
