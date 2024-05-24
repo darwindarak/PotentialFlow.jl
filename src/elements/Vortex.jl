@@ -34,10 +34,10 @@ Vortex.Point(1.0 + 0.0im, 2.0)
 """ Vortex.Point(::ComplexF64,::Float64)
 #const Point = Points.Point{Float64,Float64}
 const Point = Points.Point{T,R} where {T<: Real, R<:Real}
-Point(z::Complex{R},Γ::T) where {T<:Real,R<:Real} = Points.Point{T}(z,Γ)
-Point(z::Real,Γ::T) where {T} = Points.Point{T}(complex(z),Γ)
+Point(z::Complex{R},Γ::T;period=Inf) where {T<:Real,R<:Real} = Points.Point{T}(z,Γ,period)
+Point(z::Real,Γ::T;period=Inf) where {T} = Points.Point{T}(complex(z),Γ,period)
 
-(p::Point)(; z = p.z, Γ = p.S) = Point(z, Γ)
+(p::Point)(; z = p.z, Γ = p.S) = Point(z, Γ, p.period)
 
 circulation(p::Point) = p.S
 flux(::Point) = 0.0
@@ -71,18 +71,18 @@ Vortex.Blob(1.0 + 0.0im, 2.0, 0.01)
 """ Vortex.Blob(::ComplexF64,::Float64,::Float64)
 #const Blob = Blobs.Blob{Float64,Float64}
 const Blob = Blobs.Blob{T,R} where {T<:Real,R<:Real}
-Blob(z::Complex{R},Γ::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{T}(z,Γ,δ)
-Blob(z::Real,Γ::T,δ) where {T<:Real} = Blobs.Blob{T}(complex(z),Γ,δ)
+Blob(z::Complex{R},Γ::T,δ::Float64;period=Inf) where {T<:Real,R<:Real} = Blobs.Blob{T}(z,Γ,δ,period)
+Blob(z::Real,Γ::T,δ;period=Inf) where {T<:Real} = Blobs.Blob{T}(complex(z),Γ,δ,period)
 
 
 
-(b::Blob)(; z = b.z, Γ = b.S, δ = b.δ) = Blob(z, Γ, δ)
+(b::Blob)(; z = b.z, Γ = b.S, δ = b.δ) = Blob(z, Γ, δ, b.period)
 
 circulation(b::Blob) = b.S
 flux(::Blob) = 0.0
 impulse(b::Blob) = -im*b.z*b.S
 angularimpulse(b::Blob) = -0.5*b.z*conj(b.z)*b.S
-Base.show(io::IO, s::Blob) = print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ))")
+Base.show(io::IO, s::Blob) = print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ), $(s.period))")
 
 
 
