@@ -70,9 +70,9 @@ periodic_cauchy_kernel(z, λ) = mod(abs(z)/λ,1) != zero(z) ? 0.5*im/λ*cot(π*c
 dcauchy_kernel_dzstar(z) = z != zero(z) ? -0.5im/(π*conj(z)^2) : zero(z)
 
 # ensures that the velocity is of same type as position
-allocate_velocity(v::Vector{Point{T,R}}) where {T,R} = zeros(Complex{R},length(v))
-allocate_dveldz(v::Vector{Point{T,R}}) where {T,R} = zeros(Complex{R},length(v))
-allocate_dveldzstar(v::Vector{Point{T,R}}) where {T,R} = zeros(Complex{R},length(v))
+allocate_velocity(v::Vector{Point{T,R,P}}) where {T,R,P} = zeros(Complex{R},length(v))
+allocate_dveldz(v::Vector{Point{T,R,P}}) where {T,R,P} = zeros(Complex{R},length(v))
+allocate_dveldzstar(v::Vector{Point{T,R,P}}) where {T,R,P} = zeros(Complex{R},length(v))
 
 function induce_velocity(z::Complex{T}, p::Point{S,R,Val{Inf}}, t) where {T,S,R}
     p.S'*cauchy_kernel(z - p.z)

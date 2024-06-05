@@ -84,9 +84,9 @@ dblob_kernel_dz(z, δ) = z != zero(z) ? 0.5im*δ^2/(π*(abs2(z) + δ^2)^2) : zer
 
 
 # ensures that the velocity is of same type as position
-allocate_velocity(v::Vector{Blob{T,R}}) where {T,R} = zeros(Complex{R},length(v))
-allocate_dveldz(v::Vector{Blob{T,R}}) where {T,R} = zeros(Complex{R},length(v))
-allocate_dveldzstar(v::Vector{Blob{T,R}}) where {T,R} = zeros(Complex{R},length(v))
+allocate_velocity(v::Vector{Blob{T,R,P}}) where {T,R,P} = zeros(Complex{R},length(v))
+allocate_dveldz(v::Vector{Blob{T,R,P}}) where {T,R,P} = zeros(Complex{R},length(v))
+allocate_dveldzstar(v::Vector{Blob{T,R,P}}) where {T,R,P} = zeros(Complex{R},length(v))
 
 
 function induce_velocity(z::Complex{T}, b::Blob{S,R,Val{Inf}}, t) where {T,S,R}

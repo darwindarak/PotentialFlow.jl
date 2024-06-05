@@ -37,7 +37,7 @@ const Point = Points.Point{T,R} where {T<: Real, R<:Real}
 Point(z::Complex{R},Γ::T;period=Inf) where {T<:Real,R<:Real} = Points.Point{T}(z,Γ,period)
 Point(z::Real,Γ::T;period=Inf) where {T} = Points.Point{T}(complex(z),Γ,period)
 
-(p::Point)(; z = p.z, Γ = p.S) = Point(z, Γ, p.period)
+(p::Point)(; z = p.z, Γ = p.S, period=p.period) = Point(z, Γ, period)
 
 circulation(p::Point) = p.S
 flux(::Point) = 0.0
@@ -70,13 +70,13 @@ Vortex.Blob(1.0 + 0.0im, 2.0, 0.01)
 ```
 """ Vortex.Blob(::ComplexF64,::Float64,::Float64)
 #const Blob = Blobs.Blob{Float64,Float64}
-const Blob = Blobs.Blob{T,R} where {T<:Real,R<:Real}
+const Blob = Blobs.Blob{T,R,P} where {T<:Real,R<:Real,P}
 Blob(z::Complex{R},Γ::T,δ::Float64;period=Inf) where {T<:Real,R<:Real} = Blobs.Blob{T}(z,Γ,δ,period)
 Blob(z::Real,Γ::T,δ;period=Inf) where {T<:Real} = Blobs.Blob{T}(complex(z),Γ,δ,period)
 
 
 
-(b::Blob)(; z = b.z, Γ = b.S, δ = b.δ) = Blob(z, Γ, δ, b.period)
+(b::Blob)(; z = b.z, Γ = b.S, δ = b.δ, period=b.period) = Blob(z, Γ, δ, period)
 
 circulation(b::Blob) = b.S
 flux(::Blob) = 0.0
@@ -105,9 +105,9 @@ A vortex sheet represented by vortex blob control points
 - `Vortex.Sheet(blobs, Γs, δ)`
 - `Vortex.Sheet(zs, Γs, δ)` where `zs` is an array of positions for the control points
 """
-const Sheet = Sheets.Sheet{T,R} where {T<:Real,R<:Real}
-Sheet(blobs::Vector{Blob}, Ss::AbstractVector{Float64}, δ::Float64) = Sheets.Sheet(blobs, Ss, δ)
-Sheet(zs::AbstractVector,  Ss::AbstractVector{Float64}, δ::Float64) = Sheets.Sheet(zs, Ss, δ)
+const Sheet = Sheets.Sheet{T,R,P} where {T<:Real,R<:Real,P}
+Sheet(blobs::Vector{Blob{T,R,P}}, Ss::AbstractVector{Float64}, δ::Float64) where {T,R,P }= Sheets.Sheet(blobs, Ss, δ)
+Sheet(zs::AbstractVector,  Ss::AbstractVector{Float64}, δ::Float64;period=Inf) = Sheets.Sheet(zs, Ss, δ)
 
 function Base.show(io::IO, s::Sheet)
     L = Sheets.arclength(s)

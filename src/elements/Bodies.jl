@@ -194,10 +194,10 @@ end
 Elements.conftransform(ζ::Complex{T},b::ConformalBody) where {T} = b.c + b.m(ζ)*exp(im*b.α)
 
 Elements.conftransform(s::Point{T},b::ConformalBody) where {T} =
-                Point{T}(Elements.conftransform(s.z,b),s.S)
+                Point{T}(Elements.conftransform(s.z,b),s.S,s.period)
 
 Elements.conftransform(s::Blob{T},b::ConformalBody) where {T} =
-                Blob{T}(Elements.conftransform(s.z,b),s.S,s.δ)
+                Blob{T}(Elements.conftransform(s.z,b),s.S,s.δ,s.period)
 
 Elements.conftransform(f::Freestream,b::ConformalBody) =
       Freestream(f.U/conj(b.m.ps.ccoeff[1])*exp(im*b.α))
@@ -217,10 +217,10 @@ end
 Elements.inverse_conftransform(z::Complex{T},b::ConformalBody) where {T} = b.minv((z-b.c)*exp(-im*b.α))
 
 Elements.inverse_conftransform(s::Point{T},b::ConformalBody) where {T} =
-                Point{T}(Elements.inverse_conftransform(s.z,b),s.S)
+                Point{T}(Elements.inverse_conftransform(s.z,b),s.S,s.period)
 
 Elements.inverse_conftransform(s::Blob{T},b::ConformalBody) where {T} =
-                Blob{T}(Elements.inverse_conftransform(s.z,b),s.S,s.δ)
+                Blob{T}(Elements.inverse_conftransform(s.z,b),s.S,s.δ,s.period)
 
 Elements.inverse_conftransform(f::Freestream,b::ConformalBody) =
         Freestream(f.U*conj(b.m.ps.ccoeff[1])*exp(-im*b.α))
@@ -503,7 +503,7 @@ end
 
 # Note that we are assuming here that the blobs/points are in the circle plane
 function _singular_velocity!(ws, b, src::Blob{T}, t, ::Type{Singleton}) where {T}
-    induce_velocity!(ws, b.zetas, Point{T}(src.z, src.S), t)
+    induce_velocity!(ws, b.zetas, Point{T}(src.z, src.S, src.period), t)
 end
 
 function _singular_velocity!(ws, b, src, t, ::Type{Singleton})
