@@ -9,30 +9,30 @@ using ..Elements
 using Base: copy!
 import ..Motions: position, mutually_induce_velocity!, self_induce_velocity!, advect!
 
-const MappedPositions{T,R} = MappedArrays.ReadonlyMappedArray{ComplexF64,1,Array{Blob{T,R},1},typeof(Elements.position)} where {T,R}
+const MappedPositions{T,R,P} = MappedArrays.ReadonlyMappedArray{ComplexF64,1,Array{Blob{T,R,P},1},typeof(Elements.position)} where {T,R,P}
 
-mutable struct Sheet{T,R} <: Element
-    blobs::Vector{Blob{T,R}}
+mutable struct Sheet{T,R,P} <: Element
+    blobs::Vector{Blob{T,R,P}}
     Ss::Vector{T}
     δ::Float64
-    zs::MappedPositions{T,R}
+    zs::MappedPositions{T,R,P}
 end
 
 Elements.unwrap(s::Sheet) = s.blobs
 
-function Sheet(zs::AbstractVector{Complex{T}}, Ss::AbstractVector{S}, δ::Float64) where {T <: Number, S <: Number}
+function Sheet(zs::AbstractVector{Complex{T}}, Ss::AbstractVector{S}, δ::Float64; period = Inf) where {T <: Number, S <: Number}
     dSs = compute_trapezoidal_weights(Ss)
-    blobs = Blob{S}.(zs, dSs, δ)
+    blobs = Blob{S}.(zs, dSs, δ, period)
 
     zs = mappedarray(Elements.position, blobs)
 
-    Sheet{S,T}(blobs, copy(Ss), δ, zs)
+    Sheet{S,T,Val{period}}(blobs, copy(Ss), δ, zs)
 end
 
-function Sheet(blobs::Vector{Blob{T,R}}, Ss::AbstractVector, δ::Float64) where {T,R}
+function Sheet(blobs::Vector{Blob{T,R,P}}, Ss::AbstractVector, δ::Float64) where {T,R,P}
     newblobs = copy(blobs)
     zs = mappedarray(Elements.position, blobs)
-    Sheet{T,R}(newblobs, copy(Ss), δ, zs)
+    Sheet{T,R,P}(newblobs, copy(Ss), δ, zs)
 end
 
 Base.length(s::Sheet) = length(s.blobs)
@@ -59,7 +59,7 @@ function compute_trapezoidal_weights(Ss)
     return dSs
 end
 
-function advect!(sheet₊::Sheet{S,R}, sheet₋::Sheet{S,R}, ws, Δt) where {S,R}
+function advect!(sheet₊::Sheet{S,R,P}, sheet₋::Sheet{S,R}, ws, Δt) where {S,R,P}
     if sheet₊ != sheet₋
         N₊ = length(sheet₊)
         N₋ = length(sheet₋)

@@ -86,11 +86,11 @@ function get_image!(tmp,src,b::ConformalBody,::Type{Group})
 end
 
 function get_image(src::Union{Blob{T},Point{T}}, b::ConformalBody) where {T<: Complex}
-    Point{T}(Elements.image(src.z,b),src.S)
+    Point{T}(Elements.image(src.z,b),src.S,src.period)
 end
 
 function get_image(src::Union{Blob{T},Point{T}}, b::ConformalBody) where {T <: Real}
-    Point{T}(Elements.image(src.z,b),-src.S)
+    Point{T}(Elements.image(src.z,b),-src.S,src.period)
 end
 
 function get_image(src::Freestream, b::ConformalBody)

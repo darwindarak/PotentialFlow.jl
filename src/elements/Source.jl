@@ -31,10 +31,10 @@ Source.Point(1.0 + 0.0im, 2.0)
 ```
 """
 const Point = Points.Point{T,R} where {T<:Complex, R <: Real}
-Point(z::Complex{R},S::T) where {T<:Real,R<:Real} = Points.Point{Complex{T}}(z,S)
-Point(z::Real,S::T) where {T} = Points.Point{Complex{T}}(complex(z),S)
+Point(z::Complex{R},S::T;period=Inf) where {T<:Real,R<:Real} = Points.Point{Complex{T}}(z,S,period)
+Point(z::Real,S::T;period=Inf) where {T} = Points.Point{Complex{T}}(complex(z),S,period)
 
-(p::Point)(; z = p.z, S = imag(p.S)) = Point(z, S)
+(p::Point)(; z = p.z, S = imag(p.S), period=p.period) = Point(z, S, period)
 
 function Base.show(io::IO, s::Point)
     if iszero(real(s.S))
@@ -69,12 +69,12 @@ julia> b(S = 2.0, δ = 0.01)
 Source.Blob(1.0 + 0.0im, 2.0, 0.01)
 ```
 """
-const Blob = Blobs.Blob{T,R} where {T<:Complex, R <: Real}
-Blob(z::Complex{R},S::T,δ::Float64) where {T<:Real,R<:Real} = Blobs.Blob{Complex{T}}(z,S,δ)
-Blob(z::Real,S::T,δ) where {T<:Real} = Blobs.Blob{Complex{T}}(complex(z),S,δ)
+const Blob = Blobs.Blob{T,R,P} where {T<:Complex, R <: Real, P}
+Blob(z::Complex{R},S::T,δ::Float64;period=Inf) where {T<:Real,R<:Real} = Blobs.Blob{Complex{T}}(z,S,δ,period)
+Blob(z::Real,S::T,δ;period=Inf) where {T<:Real} = Blobs.Blob{Complex{T}}(complex(z),S,δ,period)
 
 
-(b::Blob)(; z = b.z, S = imag(b.S), δ = b.δ) = Blob(z, S, δ)
+(b::Blob)(; z = b.z, S = imag(b.S), δ = b.δ, period = b.period) = Blob(z, S, δ, period)
 
 function Base.show(io::IO, s::Blob)
     if iszero(real(s.S))

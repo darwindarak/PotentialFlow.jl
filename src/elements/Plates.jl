@@ -171,7 +171,7 @@ function induce_velocity!(ws::Vector, p::Plate, src, t)
 end
 
 function _singular_velocity!(ws, p, src::Blob{T,R}, t, ::Type{Singleton}) where {T,R}
-    induce_velocity!(ws, p.zs, Point{T}(src.z, src.S), t)
+    induce_velocity!(ws, p.zs, Point{T}(src.z, src.S, src.period), t)
 end
 
 function _singular_velocity!(ws, p, src, t, ::Type{Singleton})

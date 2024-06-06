@@ -635,6 +635,6 @@ end
 
 _preimage_system(v,::Val{true}) = (_unit_strength_copy(v),_unit_at_origin(v)) # put an image at origin, too
 _preimage_system(v,::Val{false}) = (_unit_strength_copy(v),) # for no image at origin
-_unit_strength_copy(v::Blob{T}) where {T} = Blob{T}(v.z,1.0,v.δ)
-_unit_strength_copy(v::Point{T}) where {T} = Point{T}(v.z,1.0)
-_unit_at_origin(::Union{Blob{T},Point{T}}) where {T} = Point{T}(complex(Inf),-1.0)
+_unit_strength_copy(v::Blob{T}) where {T} = Blob{T}(v.z,1.0,v.δ,v.period)
+_unit_strength_copy(v::Point{T}) where {T} = Point{T}(v.z,1.0,v.period)
+_unit_at_origin(::Union{Blob{T},Point{T}}) where {T} = Point{T}(complex(Inf),-1.0,Inf)
