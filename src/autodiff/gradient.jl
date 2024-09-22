@@ -26,7 +26,7 @@ end
 
 
 function vector_mode_gradient(f::F, z, cfg::ComplexGradientConfig{T},
-                evalfcn=ForwardDiff.vector_mode_dual_eval) where {F,T}
+                evalfcn=ForwardDiff.vector_mode_dual_eval!) where {F,T}
     ydual = evalfcn(f, z, cfg)
     dz = similar(z, Complex{valtype(ydual)})
     dzstar = similar(z, Complex{valtype(ydual)})
