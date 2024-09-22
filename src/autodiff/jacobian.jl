@@ -28,7 +28,7 @@ end
 
 
 function vector_mode_jacobian(f::F, z, cfg::ComplexGradientConfig{T,V,N},
-            evalfcn=ForwardDiff.vector_mode_dual_eval) where {F,T,V,N}
+            evalfcn=ForwardDiff.vector_mode_dual_eval!) where {F,T,V,N}
     ydual = evalfcn(f, z, cfg)
     dz = similar(ydual, Complex{valtype(eltype(ydual))}, length(ydual), N)
     dzstar = similar(ydual, Complex{valtype(eltype(ydual))}, length(ydual), N)
