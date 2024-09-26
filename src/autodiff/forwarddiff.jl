@@ -10,6 +10,7 @@ import ForwardDiff: Dual, Partials, single_seed, partials, Chunk, Tag, seed!, va
 const AMBIGUOUS_TYPES = (AbstractFloat, Irrational, Integer, Rational,
                          Real, RoundingMode, ComplexF64)
 
+export complexderivative
 
 include("dual.jl")
 include("config.jl")
