@@ -2,7 +2,8 @@ using LinearAlgebra
 
 import PotentialFlow.Utils: derivative, extract_derivative, value, partials,
           Dual,ComplexDual, ComplexGradientConfig,
-          dz_partials, gradient, chunk_mode_gradient, chunk_mode_jacobian
+          dz_partials, gradient, chunk_mode_gradient, chunk_mode_jacobian,
+          complexderivative
 
 import PotentialFlow.Elements: gradient_position, gradient_strength,
           jacobian_position, jacobian_strength, jacobian_param
@@ -21,40 +22,40 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
 
     z = rand(ComplexF64)
 
-    dz1, dzstar1 = derivative(z -> log(sqrt(z)),z)
+    dz1, dzstar1 = complexderivative(z -> log(sqrt(z)),z)
 
     dzex = 1/(2*z)
 
     @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
     @test isapprox(abs(dzstar1),0,atol=BIGEPS)
 
-    dz1, dzstar1 = derivative(z -> conj(z),z)
+    dz1, dzstar1 = complexderivative(z -> conj(z),z)
     @test dzstar1 == one(z) && dz1 == zero(z)
 
     f(z) = 0.5im/(π*conj(z))
 
-    dz1, dzstar1 = derivative(f,z)
+    dz1, dzstar1 = complexderivative(f,z)
     dzstarex = -0.5im/(pi*conj(z)^2)
 
     @test isapprox(abs(dz1),0,atol=BIGEPS)
     @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
 
     z0 = rand(ComplexF64)
-    dz1, dzstar1 = derivative(z -> f(z-z0),z)
+    dz1, dzstar1 = complexderivative(z -> f(z-z0),z)
 
     dzstarex = -0.5im/(pi*conj(z-z0)^2)
 
     @test isapprox(abs(dz1),0,atol=BIGEPS)
     @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
 
-    dz1, dzstar1 = derivative(abs,z)
+    dz1, dzstar1 = complexderivative(abs,z)
 
     dzex = 0.5*conj(z)/abs(z)
     dzstarex = 0.5*z/abs(z)
     @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
     @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
 
-    dz1, dzstar1 = derivative(z -> z + sqrt(log(z)) - 1/z^2,z)
+    dz1, dzstar1 = complexderivative(z -> z + sqrt(log(z)) - 1/z^2,z)
 
     dzex = 1 + 1/(2*sqrt(log(z))*z) + 2/z^3
     dzstarex = 0.0
@@ -62,7 +63,7 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
     @test isapprox(abs(dz1-dzex),0,atol=BIGEPS)
     @test isapprox(abs(dzstar1-dzstarex),0,atol=BIGEPS)
 
-    dz1, dzstar1 = derivative(z -> real(z - √(z - 1)*√(z + 1)),z)
+    dz1, dzstar1 = complexderivative(z -> real(z - √(z - 1)*√(z + 1)),z)
 
     dzex = 0.5*(1 - 0.5*sqrt((z+1)/(z-1)) - 0.5*sqrt((z-1)/(z+1)))
     dzstarex = 0.5*conj(1 - 0.5*sqrt((z+1)/(z-1)) - 0.5*sqrt((z-1)/(z+1)))
@@ -76,7 +77,7 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
 
     z0 = rand(ComplexF64)
     y0 = rand(ComplexF64)
-    dyz, dystarz, dyzstar, dystarzstar = derivative(y -> derivative(z -> 1/(z-y),z0),y0)
+    dyz, dystarz, dyzstar, dystarzstar = complexderivative(y -> complexderivative(z -> 1/(z-y),z0),y0)
 
     dyzex = -2/(z0-y0)^3
     @test isapprox(abs(dyz-dyzex),0,atol=BIGEPS)
@@ -86,7 +87,7 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
 
     z0 = rand(ComplexF64)
     y0 = rand(ComplexF64)
-    dyz, dystarz, dyzstar, dystarzstar = derivative(y -> derivative(z -> 1/(z-conj(y)),z0),y0)
+    dyz, dystarz, dyzstar, dystarzstar = complexderivative(y -> complexderivative(z -> 1/(z-conj(y)),z0),y0)
 
     dystarzex = -2/(z0-conj(y0))^3
     @test isapprox(abs(dyz),0,atol=BIGEPS)
@@ -96,7 +97,7 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
 
     z0 = rand(ComplexF64)
     y0 = rand(ComplexF64)
-    dyz, dystarz, dyzstar, dystarzstar = derivative(y -> derivative(z -> 1/(conj(z)-y),z0),y0)
+    dyz, dystarz, dyzstar, dystarzstar = complexderivative(y -> complexderivative(z -> 1/(conj(z)-y),z0),y0)
 
     dyzstarex = -2/(conj(z0)-y0)^3
     @test isapprox(abs(dyz),0,atol=BIGEPS)
@@ -106,7 +107,7 @@ safenorm(a) = norm(filter(x -> ~isnan(x),a))
 
     z0 = rand(ComplexF64)
     y0 = rand(ComplexF64)
-    dyz, dystarz, dyzstar, dystarzstar = derivative(y -> derivative(z -> 1/conj(z-y),z0),y0)
+    dyz, dystarz, dyzstar, dystarzstar = complexderivative(y -> complexderivative(z -> 1/conj(z-y),z0),y0)
 
     dystarzstarex = -2/conj(z0-y0)^3
     @test isapprox(abs(dyz),0,atol=BIGEPS)

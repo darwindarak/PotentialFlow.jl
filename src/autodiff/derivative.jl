@@ -1,4 +1,5 @@
 
+#=
 """
     ForwardDiff.derivative(f,z::Complex)
 
@@ -10,6 +11,19 @@ Compute the derivative of function `f` with respect to `z` and `conj(z)`
     # for complex Duals rather than the native one in ForwardDiff
     return extract_derivative(T,complex.(f(one(ComplexDual{T},z))))
 end
+=#
+"""
+    complexderivative(f,z::Complex)
+
+Compute the derivative of function `f` with respect to `z` and `conj(z)`
+"""
+@inline function complexderivative(f::F, z::C) where {F,C<:Complex}
+    T = typeof(ForwardDiff.Tag(f, C))
+    # making f output complex ensures that it gets dispatched to our extract_derivative
+    # for complex Duals rather than the native one in ForwardDiff
+    return extract_derivative(T,complex.(f(one(ComplexDual{T},z))))
+end
+
 
 """
     ForwardDiff.extract_derivative(T,d::ComplexDual)
