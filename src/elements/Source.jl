@@ -34,7 +34,7 @@ const Point = Points.Point{T,R} where {T<:Complex, R <: Real}
 Point(z::Complex{R},S::T;period=Inf) where {T<:Real,R<:Real} = Points.Point{Complex{T}}(z,S,period)
 Point(z::Real,S::T;period=Inf) where {T} = Points.Point{Complex{T}}(complex(z),S,period)
 
-(p::Point)(; z = p.z, S = imag(p.S), period=p.period) = Point(z, S, period)
+(p::Point)(; z = p.z, S = imag(p.S), period=p.period) = Point(z, S; period=period)
 
 function Base.show(io::IO, s::Point)
     if iszero(real(s.S))
@@ -74,7 +74,7 @@ Blob(z::Complex{R},S::T,δ::Float64;period=Inf) where {T<:Real,R<:Real} = Blobs.
 Blob(z::Real,S::T,δ;period=Inf) where {T<:Real} = Blobs.Blob{Complex{T}}(complex(z),S,δ,period)
 
 
-(b::Blob)(; z = b.z, S = imag(b.S), δ = b.δ, period = b.period) = Blob(z, S, δ, period)
+(b::Blob)(; z = b.z, S = imag(b.S), δ = b.δ, period = b.period) = Blob(z, S, δ; period=period)
 
 function Base.show(io::IO, s::Blob)
     if iszero(real(s.S))

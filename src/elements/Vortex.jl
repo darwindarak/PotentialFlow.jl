@@ -37,7 +37,7 @@ const Point = Points.Point{T,R} where {T<: Real, R<:Real}
 Point(z::Complex{R},Γ::T;period=Inf) where {T<:Real,R<:Real} = Points.Point{T}(z,Γ,period)
 Point(z::Real,Γ::T;period=Inf) where {T} = Points.Point{T}(complex(z),Γ,period)
 
-(p::Point)(; z = p.z, Γ = p.S, period=p.period) = Point(z, Γ, period)
+(p::Point)(; z = p.z, Γ = p.S, period=p.period) = Point(z, Γ;period=period)
 
 circulation(p::Point) = p.S
 flux(::Point) = 0.0
@@ -76,7 +76,7 @@ Blob(z::Real,Γ::T,δ;period=Inf) where {T<:Real} = Blobs.Blob{T}(complex(z),Γ,
 
 
 
-(b::Blob)(; z = b.z, Γ = b.S, δ = b.δ, period=b.period) = Blob(z, Γ, δ, period)
+(b::Blob)(; z = b.z, Γ = b.S, δ = b.δ, period=b.period) = Blob(z, Γ, δ; period = period)
 
 circulation(b::Blob) = b.S
 flux(::Blob) = 0.0
