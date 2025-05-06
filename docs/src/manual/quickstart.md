@@ -243,6 +243,4 @@ for t in 0:Δt:1.0
     advect!(sys, sys, vels, Δt)
 end
 plot(sys, color = :reds, clim = (0, 1))
-savefig("final_clusters.svg"); nothing # hide
 ```
-![Final clusters](final_clusters.svg)
