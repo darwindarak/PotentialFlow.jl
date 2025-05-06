@@ -78,9 +78,17 @@ Blob(z::Real,S::T,δ;period=Inf) where {T<:Real} = Blobs.Blob{Complex{T}}(comple
 
 function Base.show(io::IO, s::Blob)
     if iszero(real(s.S))
-        print(io, "Source.Blob($(s.z), $(imag(s.S)), $(s.δ))")
+        if isinf(s.period)
+            print(io, "Source.Blob($(s.z), $(imag(s.S)), $(s.δ))")
+        else                                            
+            print(io, "Source.Blob($(s.z), $(imag(s.S)), $(s.δ), $(s.period))")
+        end
     else
-        print(io, "Blobs.Blob($(s.z), $(imag(s.S)), $(s.δ))")
+        if isinf(s.period)
+            print(io, "Blobs.Blob($(s.z), $(imag(s.S)), $(s.δ))")
+        else
+            print(io, "Blobs.Blob($(s.z), $(imag(s.S)), $(s.δ), $(s.period))")
+        end
     end
 end
 circulation(::Blob) = 0.0
