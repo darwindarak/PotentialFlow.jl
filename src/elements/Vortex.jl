@@ -82,7 +82,9 @@ circulation(b::Blob) = b.S
 flux(::Blob) = 0.0
 impulse(b::Blob) = -im*b.z*b.S
 angularimpulse(b::Blob) = -0.5*b.z*conj(b.z)*b.S
-Base.show(io::IO, s::Blob) = print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ), $(s.period))")
+#Base.show(io::IO, s::Blob) = print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ), $(s.period))")
+Base.show(io::IO, s::Blob) = isinf(s.period) ? print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ))") :
+                                               print(io, "Vortex.Blob($(s.z), $(s.S), $(s.δ), $(s.period))")
 
 
 

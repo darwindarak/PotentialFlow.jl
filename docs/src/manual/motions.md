@@ -36,10 +36,10 @@ Rigid Body Motion:
 Here, `Constant` is a subtype of [`Kinematics`](@ref) that returns the same `(ċ, c̈, α̇)` triple at all times
 ```jldoctest constant
 julia> motion.kin.([0.0, 1.0, 2.0])
-3-element Vector{Tuple{ComplexF64, ComplexF64, Float64, ComplexF64}}:
- (0.0 + 1.0im, 0.0 + 0.0im, 1.5707963267948966, 0.0 + 0.0im)
- (0.0 + 1.0im, 0.0 + 0.0im, 1.5707963267948966, 0.0 + 0.0im)
- (0.0 + 1.0im, 0.0 + 0.0im, 1.5707963267948966, 0.0 + 0.0im)
+3-element Vector{Tuple{ComplexF64, ComplexF64, Float64, Float64}}:
+ (0.0 + 1.0im, 0.0 + 0.0im, 1.5707963267948966, 0.0)
+ (0.0 + 1.0im, 0.0 + 0.0im, 1.5707963267948966, 0.0)
+ (0.0 + 1.0im, 0.0 + 0.0im, 1.5707963267948966, 0.0)
 
 ```
 Calling `Plates.RigidBodyMotion(1.0im, π/2)` is equivalent doing
