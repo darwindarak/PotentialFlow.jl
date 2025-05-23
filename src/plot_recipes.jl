@@ -8,7 +8,7 @@ const myblue = RGBA(74/255,144/255,226/255,1)
 
 @userplot Streamlines
 
-@recipe function f(s::Streamlines)
+@recipe function f(s::Streamlines; origin = complex(0.0))
 
 
     #if (isa(elements, Array) || isa(elements, Tuple)) &&
@@ -47,15 +47,16 @@ const myblue = RGBA(74/255,144/255,226/255,1)
           grid --> :none
             seriescolor --> cgrad([:grey, :grey])
 
-            s.args[1], s.args[2], ψ
+            s.args[1] .- real(origin), s.args[2] .- imag(origin), ψ
       end
     end
 end
 
 @recipe function plot(points::Array{P};
                       source_marker = :xcross,
-                      vortex_marker = :circle) where {P <: Union{Points.Point, Blobs.Blob}}
-    z = Elements.position(points)
+                      vortex_marker = :circle,
+                      origin = complex(0.0)) where {P <: Union{Points.Point, Blobs.Blob}}
+    z = Elements.position(points) .- origin
     x = real.(z)
     y = imag.(z)
 
@@ -91,8 +92,8 @@ end
     end
 end
 
-@recipe function plot(s::Vortex.Sheet)
-    z = s.zs
+@recipe function plot(s::Vortex.Sheet; origin = complex(0.0))
+    z = s.zs .- origin
     Γ = Elements.circulation.(s.blobs)
     line_z --> 0.5(Γ[1:end-1] + Γ[2:end])./abs.(diff(z))
     x := real.(z)
@@ -100,16 +101,16 @@ end
     ()
 end
 
-@recipe function plot(p::Plate)
-    z = [p.zs[1], p.zs[end]]
+@recipe function plot(p::Plate; origin = complex(0.0))
+    z = [p.zs[1], p.zs[end]] .- origin
     linecolor --> :black
     x := real.(z)
     y := imag.(z)
     ()
 end
 
-@recipe function plot(b::ConformalBody)
-    z = [b.zs; b.zs[1]]
+@recipe function plot(b::ConformalBody; origin = complex(0.0))
+    z = [b.zs; b.zs[1]] .- origin
     linecolor --> mygreen
     fillrange --> 0
     fillcolor --> mygreen
@@ -120,14 +121,14 @@ end
     ()
 end
 
-@recipe function plot(c::Corner{N};radius=2.0) where {N}
+@recipe function plot(c::Corner{N};radius=2.0, origin = complex(0.0)) where {N}
 
     θ0 = angle(c) - 0.5*N*π*c.ν
     θ1 = angle(c) + 0.5*N*π*c.ν
     θ = range(θ1-2π,θ0,length=200)
     xv = [0;2*radius*cos.(θ);0]
     yv = [0;2*radius*sin.(θ);0]
-    z = xv+im*yv
+    z = xv+im*yv .- origin
 
     linecolor --> mygreen
     fillrange --> 0
