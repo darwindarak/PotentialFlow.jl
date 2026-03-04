@@ -108,12 +108,14 @@ A vortex sheet represented by vortex blob control points
 - `Vortex.Sheet(zs, Γs, δ)` where `zs` is an array of positions for the control points
 """
 const Sheet = Sheets.Sheet{T,R,P} where {T<:Real,R<:Real,P}
+Sheet(blobs::Vector{Blob{T,R,P}}, Ss::AbstractVector{Float64}, δ::AbstractVector{Q}) where {T,R,P, Q<:Real }= Sheets.Sheet(blobs, Ss, δ)
 Sheet(blobs::Vector{Blob{T,R,P}}, Ss::AbstractVector{Float64}, δ::Float64) where {T,R,P }= Sheets.Sheet(blobs, Ss, δ)
+Sheet(zs::AbstractVector,  Ss::AbstractVector{Float64}, δ::AbstractVector{Q};period=Inf) where {Q <:Real} = Sheets.Sheet(zs, Ss, δ)
 Sheet(zs::AbstractVector,  Ss::AbstractVector{Float64}, δ::Float64;period=Inf) = Sheets.Sheet(zs, Ss, δ)
 
 function Base.show(io::IO, s::Sheet)
     L = Sheets.arclength(s)
-    print(io, "Vortex Sheet: L ≈ $(round(L, digits=3)), Γ = $(round(s.Ss[end] - s.Ss[1], digits=3)), δ = $(round(s.δ, digits=3))")
+    print(io, "Vortex Sheet: L ≈ $(round(L, digits=3)), Γ = $(round(s.Ss[end] - s.Ss[1], digits=3)), δ = $(round(s.δ[1], digits=3))")
 end
 
 circulation(s::Sheet) = s.Ss[end] - s.Ss[1]

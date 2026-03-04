@@ -14,19 +14,30 @@ const MappedPositions{T,R,P} = MappedArrays.ReadonlyMappedArray{ComplexF64,1,Arr
 mutable struct Sheet{T,R,P} <: Element
     blobs::Vector{Blob{T,R,P}}
     Ss::Vector{T}
-    δ::Float64
+    δ::Vector{Float64}
     zs::MappedPositions{T,R,P}
 end
 
 Elements.unwrap(s::Sheet) = s.blobs
 
-function Sheet(zs::AbstractVector{Complex{T}}, Ss::AbstractVector{S}, δ::Float64; period = Inf) where {T <: Number, S <: Number}
+function Sheet(zs::AbstractVector{Complex{T}}, Ss::AbstractVector{S}, δ::AbstractVector{R}; period = Inf) where {T <: Number, S <: Number, R <: Real}
     dSs = compute_trapezoidal_weights(Ss)
     blobs = Blob{S}.(zs, dSs, δ, period)
 
     zs = mappedarray(Elements.position, blobs)
 
     Sheet{S,T,Val{period}}(blobs, copy(Ss), δ, zs)
+end
+
+function Sheet(zs::AbstractVector{Complex{T}}, Ss::AbstractVector{S}, δ::Float64; period = Inf) where {T <: Number, S <: Number}
+    δa = zeros(Float64,length(zs))
+    fill!(δa,δ)
+    dSs = compute_trapezoidal_weights(Ss)
+    blobs = Blob{S}.(zs, dSs, δa, period)
+
+    zs = mappedarray(Elements.position, blobs)
+
+    Sheet{S,T,Val{period}}(blobs, copy(Ss), δa, zs)
 end
 
 function Sheet(blobs::Vector{Blob{T,R,P}}, Ss::AbstractVector, δ::Float64) where {T,R,P}

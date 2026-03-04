@@ -26,6 +26,9 @@ function redistribute_points!(sheet::Sheet{T,R,Val{period}}, zs, Ss) where {T,R,
         copy!(sheet.Ss, Ss)
     end
 
+    println(sheet.δ)
+    println(zs)
+    println(compute_trapezoidal_weights(Ss))
     sheet.blobs = Blob{T}.(zs, compute_trapezoidal_weights(Ss), sheet.δ, period)
     sheet.zs = mappedarray(Elements.position, sheet.blobs)
     sheet
@@ -279,10 +282,10 @@ julia> sheet.blobs[end]
 Vortex.Blob(1.1 + 0.0im, 1.0, 0.2)
 ```
 """
-function append_segment!(sheet::Sheet{T,R,Val{period}}, z, S::T) where {T,R,period}
+function append_segment!(sheet::Sheet{T,R,Val{period}}, z, S::T; δ = sheet.blobs[end].δ) where {T,R,period}
     b₋ = sheet.blobs[end]
-    sheet.blobs[end] = Blob{T}(b₋.z, b₋.S + 0.5S, b₋.δ, b₋.period)
-    push!(sheet.blobs, Blob{T}(z, 0.5S, sheet.δ, period))
+    sheet.blobs[end] = Blob{T}(b₋.z, b₋.S + 0.5S, δ, b₋.period)
+    push!(sheet.blobs, Blob{T}(z, 0.5S, δ, period))
     push!(sheet.Ss, sheet.Ss[end] + S)
     nothing
 end
